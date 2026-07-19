@@ -5,6 +5,12 @@ import { logger } from "@/utils/logger";
 
 import { appendThreadMessages, streamAgentMessage } from "./agent-service";
 import {
+  type AsignacionArgs,
+  asignacionArgsSchema,
+  correccionArgsSchema,
+  registrarCasoArgsSchema,
+} from "./chat-orchestrator-schemas";
+import {
   asignarClasificacion,
   corregirClasificacion,
   getOrCreateConversation,
@@ -16,19 +22,10 @@ import { threadIdForSession } from "./session";
 const ESCAPES = new Set(["fuera-de-universo", "categoria-no-habilitada"]);
 const RECEPCION_AGENT_ID = "recepcion";
 
-interface AsignacionArgs {
-  categoria: string;
-  subcategoria?: string;
-  brief?: string;
-  casoSensible?: boolean;
-  temaDetectado?: string;
-}
-
 interface ReceptorOutcome {
   kind: "clasificada" | "escape" | "pregunta";
   args?: AsignacionArgs;
   text: string;
-  rawEvents: string[];
 }
 
 function sseHeaders(): HeadersInit {
@@ -54,6 +51,7 @@ async function consumeUpstream(
   handlers: {
     onText?: (text: string, raw: string) => void | Promise<void>;
     onToolCall?: (toolName: string, args: Record<string, unknown>) => void | Promise<void>;
+    onError?: () => void | Promise<void>;
     onRaw?: (rawLine: string) => void | Promise<void>;
   },
 ): Promise<void> {
@@ -70,6 +68,7 @@ async function consumeUpstream(
       if (!event) continue;
       if (event.kind === "text") await handlers.onText?.(event.text, data);
       if (event.kind === "tool-call") await handlers.onToolCall?.(event.toolName, event.args);
+      if (event.kind === "error") await handlers.onError?.();
     }
   }
 }
@@ -89,24 +88,29 @@ async function runReceptor(params: { sessionId: string; message: string }): Prom
 
   let asignacion: AsignacionArgs | null = null;
   let text = "";
-  const rawEvents: string[] = [];
   await consumeUpstream(upstream, {
-    onRaw: (raw) => {
-      rawEvents.push(raw);
-    },
     onText: (delta) => {
       text += delta;
     },
     onToolCall: (toolName, args) => {
-      if (toolName === "asignar-clasificacion") asignacion = args as unknown as AsignacionArgs;
+      if (toolName !== "asignar-clasificacion") return;
+      const parsed = asignacionArgsSchema.safeParse(args);
+      if (!parsed.success) {
+        logger.warn("tool-call args failed validation", { toolName });
+        return;
+      }
+      asignacion = parsed.data;
+    },
+    onError: () => {
+      logger.warn("receptor stream error event", {});
     },
   });
 
   if (asignacion) {
     const kind = ESCAPES.has((asignacion as AsignacionArgs).categoria) ? "escape" : "clasificada";
-    return { kind, args: asignacion, text, rawEvents };
+    return { kind, args: asignacion, text };
   }
-  return { kind: "pregunta", text, rawEvents };
+  return { kind: "pregunta", text };
 }
 
 /** Streams a category-agent turn to the client while observing case tool-calls. */
@@ -128,13 +132,19 @@ function pipeCategoryTurn(params: {
         onToolCall: async (toolName, args) => {
           try {
             if (toolName === "registrar-caso") {
-              await registrarDatosCaso({ sessionId: params.sessionId, ...(args as object) });
+              const parsed = registrarCasoArgsSchema.safeParse(args);
+              if (!parsed.success) {
+                logger.warn("tool-call args failed validation", { toolName });
+                return;
+              }
+              await registrarDatosCaso({ sessionId: params.sessionId, ...parsed.data });
             } else if (toolName === "corregir-clasificacion") {
-              const result = await corregirClasificacion({
-                sessionId: params.sessionId,
-                categoria: String(args.categoria ?? ""),
-                motivo: String(args.motivo ?? ""),
-              });
+              const parsed = correccionArgsSchema.safeParse(args);
+              if (!parsed.success) {
+                logger.warn("tool-call args failed validation", { toolName });
+                return;
+              }
+              const result = await corregirClasificacion({ sessionId: params.sessionId, ...parsed.data });
               if (!result.aplicada) logger.warn("corregir-clasificacion rejected", { toolName });
             }
           } catch (error) {

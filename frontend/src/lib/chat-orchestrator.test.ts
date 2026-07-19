@@ -99,6 +99,40 @@ describe("orchestrateChatTurn", () => {
     );
   });
 
+  it("escape: persiste la señal sin encadenar y appendea la despedida del receptor", async () => {
+    clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: null });
+    clasificacion.asignarClasificacion.mockResolvedValue({ categoria: null, aplicada: false });
+    agentService.streamAgentMessage.mockResolvedValueOnce(
+      sseResponse([
+        { type: "text-delta", payload: { text: "Eso no es algo que podamos ayudarte por acá." } },
+        {
+          type: "tool-call",
+          payload: {
+            toolName: "asignar-clasificacion",
+            args: { categoria: "categoria-no-habilitada", temaDetectado: "sucesiones", confianza: "alta", casoSensible: false, brief: "b" },
+          },
+        },
+      ]),
+    );
+    const response = await orchestrateChatTurn({ sessionId: "s1", message: "quiero hacer una sucesión" });
+    const text = await drain(response);
+
+    expect(clasificacion.asignarClasificacion).toHaveBeenCalledWith(
+      expect.objectContaining({ categoria: "categoria-no-habilitada", temaDetectado: "sucesiones" }),
+    );
+    // no chaining to a category agent — only the receptor ran:
+    expect(agentService.streamAgentMessage).toHaveBeenCalledTimes(1);
+    expect(text).toContain("Eso no es algo que podamos ayudarte por acá.");
+    expect(agentService.appendThreadMessages).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: [
+          { role: "user", content: "quiero hacer una sucesión" },
+          { role: "assistant", content: "Eso no es algo que podamos ayudarte por acá." },
+        ],
+      }),
+    );
+  });
+
   it("observa registrar-caso en régimen y persiste los datos", async () => {
     clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral" });
     agentService.streamAgentMessage.mockResolvedValue(
@@ -111,5 +145,19 @@ describe("orchestrateChatTurn", () => {
     expect(clasificacion.registrarDatosCaso).toHaveBeenCalledWith(
       expect.objectContaining({ contactoNombre: "Ana", contactoTelefono: "099" }),
     );
+  });
+
+  it("args de tool-call con forma inválida se descartan sin persistir ni romper el stream", async () => {
+    clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral" });
+    agentService.streamAgentMessage.mockResolvedValue(
+      sseResponse([
+        // subcategorias debería ser array de strings, no un string suelto:
+        { type: "tool-call", payload: { toolName: "registrar-caso", args: { subcategorias: "despido" } } },
+        { type: "text-delta", payload: { text: "listo" } },
+      ]),
+    );
+    const response = await orchestrateChatTurn({ sessionId: "s1", message: "..." });
+    expect(await drain(response)).toContain("listo");
+    expect(clasificacion.registrarDatosCaso).not.toHaveBeenCalled();
   });
 });
