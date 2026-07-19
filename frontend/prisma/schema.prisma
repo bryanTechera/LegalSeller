@@ -1,0 +1,83 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [vector, pgcrypto]
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  documents Document[]
+  consultas Consulta[]
+}
+
+/// Legal document uploaded to the corpus. The extracted text is chunked and
+/// embedded by the backend (DocumentChunk); this row is the business-side
+/// record and ownership anchor.
+model Document {
+  id        String           @id @default(cuid())
+  userId    String
+  title     String
+  /// Original file location (S3 key or similar), if applicable.
+  sourceKey String?
+  status    ProcessingStatus @default(PENDING)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chunks DocumentChunk[]
+
+  @@unique([userId, title])
+  @@index([userId, updatedAt(sort: Desc)])
+}
+
+/// RAG unit: chunk of a document with its embedding. Written and queried by
+/// the backend via raw SQL (pgvector); Prisma only owns the schema.
+/// The vector dimension must match EMBEDDING_DIMENSION in
+/// backend/src/mastra/config/embedding.ts.
+model DocumentChunk {
+  id         String   @id @default(uuid())
+  documentId String
+  /// Section or article label within the document, when known (citations).
+  section    String?
+  position   Int
+  content    String
+  embedding  Unsupported("vector(3072)")?
+  createdAt  DateTime @default(now())
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, position])
+  @@index([documentId])
+}
+
+/// A user conversation with the agents (maps to a Mastra thread).
+model Consulta {
+  id        String   @id @default(cuid())
+  userId    String
+  /// Mastra thread id backing this conversation.
+  threadId  String   @unique
+  title     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, updatedAt(sort: Desc)])
+}
+
+enum ProcessingStatus {
+  PENDING
+  PROCESSING
+  READY
+  FAILED
+}

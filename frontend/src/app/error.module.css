@@ -1,0 +1,33 @@
+.container {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-8);
+}
+
+.title {
+  font-size: var(--text-xl);
+  color: var(--ink-900);
+}
+
+.message {
+  color: var(--ink-700);
+}
+
+.button {
+  font-size: var(--text-base);
+  color: var(--surface);
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-6);
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.button:hover {
+  background: var(--accent-strong);
+}

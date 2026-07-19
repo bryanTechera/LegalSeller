@@ -1,0 +1,46 @@
+{
+  "name": "legalseller-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "dev": "mastra dev",
+    "build": "mastra build",
+    "start": "mastra start",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src/",
+    "lint:fix": "eslint --fix src/",
+    "evals": "tsx src/test/run-evals.ts"
+  },
+  "dependencies": {
+    "@ai-sdk/gateway": "^3.0.125",
+    "@google/genai": "^1.45.0",
+    "@mastra/core": "^1.41.0",
+    "@mastra/loggers": "^1.1.2",
+    "@mastra/memory": "^1.20.2",
+    "@mastra/observability": "^1.14.1",
+    "@mastra/pg": "^1.12.1",
+    "ai": "^6.0.197",
+    "dotenv": "^16.4.7",
+    "pg": "^8.16.3",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.30.0",
+    "@types/node": "^22.10.0",
+    "@types/pg": "^8.11.10",
+    "eslint": "^9.30.0",
+    "eslint-plugin-import-x": "^4.16.0",
+    "jiti": "^2.7.0",
+    "mastra": "^1.12.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.58.1",
+    "vitest": "^4.0.18"
+  }
+}
