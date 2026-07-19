@@ -17,6 +17,7 @@ Detalle completo en `docs/guia-arquitectura.md`.
 |---|---|
 | `docs/lineamientos-generales.md` | Stack, idiomas/naming, principios, git workflow, env vars |
 | `docs/guia-arquitectura.md` | Servicios, RAG, canales de datos, deployment |
+| `docs/dominio-consultas.md` | Taxonomía de categorías de consulta y roadmap — define agentes/sub-agentes y división de responsabilidades. **v1: solo Laboral → Despido** |
 | `docs/guia-codificacion-backend.md` | Patrones Mastra: agentes, tools, prompting, evals, gotchas |
 | `docs/guia-codificacion-frontend.md` | Patrones Next.js: RSC, route handlers, SWR/Zustand, testing |
 | `docs/plans/` | Specs y planes de implementación fechados (registro de decisiones) |
@@ -35,11 +36,11 @@ Ante conflicto entre reglas, seguir la más estricta.
 - **SIEMPRE** imports por subpath de Mastra (`@mastra/core/agent`), nunca el barrel.
 - Naming: código inglés camelCase; IDs Mastra y archivos kebab-case español; prosa user/agent-facing en español; tags XML de prompts en español.
 - Gotchas de Mastra heredados de producción en `docs/guia-codificacion-backend.md` §3 (`maxSteps` en `defaultOptions`, `temperature: 1` explícito con gateway+Gemini, `keepAlive: true` en el pool, `MASTRA_DISABLE_STORAGE_INIT` en tests). Al descubrir un gotcha nuevo, documentarlo acá o en la guía correspondiente en el momento.
-- Gotchas propios descubiertos en vivo (2026-07-19): `PostgresStore` requiere `id` no vacío desde `@mastra/pg` 1.16; el stream nativo de Mastra (`POST /api/agents/:id/stream`) emite eventos con el texto anidado en `payload.text` (no el formato AI SDK top-level) — el parser en `frontend/src/utils/sse.ts` acepta ambos.
+- Gotchas propios descubiertos en vivo (2026-07-19): `PostgresStore` requiere `id` no vacío desde `@mastra/pg` 1.16; el stream nativo de Mastra (`POST /api/agents/:id/stream`) emite eventos con el texto anidado en `payload.text` (no el formato AI SDK top-level) — el parser en `frontend/src/utils/sse.ts` acepta ambos; `PostgresStore` va con `schemaName: "mastra"` porque si crea sus tablas en `public`, `prisma migrate dev` las detecta como drift y propone resetear la base.
 
 ## Comandos
 
 Por definir al inicializar cada servicio. Convención objetivo:
 
-- Backend: `pnpm dev` (mastra dev) · `pnpm test` · `pnpm lint` · `pnpm evals`
+- Backend: `pnpm dev` (mastra dev) · `pnpm test` · `pnpm lint` · `pnpm evals` · `pnpm ingest <archivo> --title "<título>"`
 - Frontend: `pnpm dev` · `pnpm typecheck` · `pnpm lint` · `pnpm test:unit` · `pnpm test` (e2e)

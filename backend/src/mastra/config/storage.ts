@@ -19,7 +19,10 @@ const pool = new pg.Pool({
 });
 
 // @mastra/pg >= 1.16 requires a non-empty store id (older docs omit it).
-export const postgresStore = new PostgresStore({ id: "legalseller-storage", pool });
+// schemaName aísla las tablas de Mastra del schema `public` que gestiona
+// Prisma: sin esto, `prisma migrate dev` las detecta como drift y propone
+// resetear la base.
+export const postgresStore = new PostgresStore({ id: "legalseller-storage", pool, schemaName: "mastra" });
 
 /** Exposes the shared pool to tools and services (pgvector queries). */
 export function getPool(): pg.Pool {
