@@ -14,7 +14,13 @@ export interface SseErrorEvent {
   message: string;
 }
 
-export type SseEvent = SseTextEvent | SseErrorEvent | null;
+export interface SseToolCallEvent {
+  kind: "tool-call";
+  toolName: string;
+  args: Record<string, unknown>;
+}
+
+export type SseEvent = SseTextEvent | SseErrorEvent | SseToolCallEvent | null;
 
 /** Parses one `data: ...` payload. Returns null for events without user-visible text. */
 export function parseSseData(data: string): SseEvent {
@@ -43,6 +49,13 @@ export function parseSseData(data: string): SseEvent {
     const raw = nested.error ?? nested.message ?? event.errorText ?? event.error;
     const message = typeof raw === "string" && raw.length > 0 ? raw : "El asistente devolvió un error";
     return { kind: "error", message };
+  }
+  if (type === "tool-call") {
+    const rawName = nested.toolName ?? event.toolName ?? nested.toolId ?? event.toolId;
+    const rawArgs = nested.args ?? event.args ?? nested.input ?? event.input;
+    if (typeof rawName !== "string" || rawName.length === 0) return null;
+    const args = rawArgs && typeof rawArgs === "object" ? (rawArgs as Record<string, unknown>) : {};
+    return { kind: "tool-call", toolName: rawName, args };
   }
   return null;
 }
