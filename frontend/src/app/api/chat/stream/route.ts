@@ -17,11 +17,19 @@ export async function POST(request: Request) {
     if (!validation.success) return validation.response;
 
     const sessionId = await getOrCreateSessionId();
-    const rate = checkRateLimit(sessionId);
-    if (!rate.allowed) {
+
+    // Two independent buckets: per-session (tight) and per-IP (looser, since
+    // several legit users can share an IP). Clearing the session cookie only
+    // resets the session bucket — the IP bucket still catches the abuser.
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    const sessionRate = checkRateLimit(`sess:${sessionId}`);
+    const ipRate = checkRateLimit(`ip:${ip}`, { limit: 30 });
+
+    if (!sessionRate.allowed || !ipRate.allowed) {
+      const retryAfterSeconds = Math.max(sessionRate.retryAfterSeconds ?? 0, ipRate.retryAfterSeconds ?? 0);
       return NextResponse.json(
         { error: "Demasiados mensajes seguidos. Esperá un momento e intentá de nuevo." },
-        { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds ?? 60) } },
+        { status: 429, headers: { "Retry-After": String(retryAfterSeconds || 60) } },
       );
     }
     return await orchestrateChatTurn({ sessionId, message: validation.data.message });
