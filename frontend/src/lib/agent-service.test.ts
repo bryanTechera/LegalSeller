@@ -20,6 +20,24 @@ describe("agent-service", () => {
     expect((fetchMock.mock.calls[0][0] as string)).toContain("/api/agents/recepcion/stream");
   });
 
+  it("sin memoryReadOnly igual manda memory {thread, resource} para que el turno persista", async () => {
+    // Gotcha en vivo (2026-07-19, Task 13, ver CLAUDE.md): el route
+    // /api/agents/:agentId/stream (no el -legacy) SOLO usa el body.memory
+    // para resolver el thread — el threadId/resourceId de nivel superior se
+    // ignoran para persistencia. Sin este campo, un turno "normal" no
+    // persiste ningún mensaje (confirmado con curl directo al backend).
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null));
+    vi.stubGlobal("fetch", fetchMock);
+    await streamAgentMessage({
+      agentId: "laboral",
+      threadId: "chat-s1",
+      userId: "s1",
+      message: "hola",
+    });
+    const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string) as Record<string, unknown>;
+    expect(body.memory).toEqual({ thread: "chat-s1", resource: "s1" });
+  });
+
   it("appendThreadMessages pega a /api/memory/save-messages con threadId/resourceId por mensaje", async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ messages: [] })));
     vi.stubGlobal("fetch", fetchMock);

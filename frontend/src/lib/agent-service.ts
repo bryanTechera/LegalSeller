@@ -36,9 +36,17 @@ export async function streamAgentMessage(params: StreamAgentParams): Promise<Res
       messages: [{ role: "user", content: params.message }],
       threadId: params.threadId,
       resourceId: params.userId,
-      ...(params.memoryReadOnly
-        ? { memory: { thread: params.threadId, resource: params.userId, options: { readOnly: true } } }
-        : {}),
+      // Gotcha en vivo (2026-07-19, Task 13, ver CLAUDE.md): el modern
+      // `/stream` route (no el `-legacy`) resuelve memoria SOLO desde
+      // `body.memory` — el threadId/resourceId de nivel superior se ignoran
+      // para persistencia (confirmado con curl directo: sin este campo, un
+      // turno sin memoryReadOnly no persiste NADA en el thread). Debe
+      // enviarse siempre, con `options.readOnly` solo cuando corresponde.
+      memory: {
+        thread: params.threadId,
+        resource: params.userId,
+        ...(params.memoryReadOnly ? { options: { readOnly: true } } : {}),
+      },
       requestContext: {
         threadId: params.threadId,
         resourceId: params.userId,
