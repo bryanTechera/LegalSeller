@@ -1,19 +1,107 @@
- 
 /**
- * Eval runner (skeleton).
- *
- * Target design (proven in the previous project, see
- * docs/guia-codificacion-backend.md §9):
- *  - Fresh agent per dataset item with intercepted tools (write tools mocked,
- *    read tools pass-through with tracing).
- *  - LLM-as-judge scorers (createScorer from @mastra/core/evals, cheap judge
- *    model) + programmatic tool-call matcher.
- *  - Results persisted to SQLite; quality gates per dataset threshold.
- *  - Gated datasets for LegalSeller: source fidelity (no invented citations),
- *    legal correctness, rules compliance.
- *
- * Implement together with the first real dataset in src/test/agents/consultas/datasets/.
+ * Receptor classification evals: programmatic tool-call matcher over the
+ * golden set (spec §9). Gate: precision >= THRESHOLD or exit 1 — enabling a
+ * second category REQUIRES this to pass on an extended dataset.
+ * Uses generate() without memory: each item is an isolated first message.
  */
+import "dotenv/config";
 
-console.log("Eval runner not implemented yet. See docs/guia-codificacion-backend.md §9 for the target design.");
-process.exit(1);
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { RequestContext } from "@mastra/core/request-context";
+
+import { recepcionAgent } from "../mastra/dominios/recepcion/index.js";
+
+const THRESHOLD = 0.9;
+
+interface EvalItem {
+  mensaje: string;
+  esperado: { categoria?: string; subcategoria?: string; casoSensible?: boolean; pregunta?: boolean };
+}
+
+interface ToolCallInfo {
+  toolName: string;
+  args: Record<string, unknown>;
+}
+
+/**
+ * Tolerant tool-call extraction (same fallback style as the SSE parser,
+ * frontend/src/utils/sse.ts): the installed @mastra/core returns
+ * `generate()`'s `toolCalls` as `ToolCallChunk[]` — `{ type: "tool-call",
+ * payload: { toolName, args } }` — not the flat `{ toolName, args }` shape.
+ * Accept both so a future @mastra/core bump degrades gracefully instead of
+ * silently reading `undefined`.
+ */
+function extractToolCalls(result: unknown): ToolCallInfo[] {
+  const value = result as { toolCalls?: unknown };
+  const rawCalls = Array.isArray(value.toolCalls) ? value.toolCalls : [];
+  return rawCalls.flatMap((call) => {
+    const record = call as Record<string, unknown>;
+    const nested = (record.payload && typeof record.payload === "object" ? record.payload : {}) as Record<
+      string,
+      unknown
+    >;
+    const toolName = nested.toolName ?? record.toolName;
+    const rawArgs = nested.args ?? record.args ?? nested.input ?? record.input;
+    if (typeof toolName !== "string" || toolName.length === 0) return [];
+    const args = rawArgs && typeof rawArgs === "object" ? (rawArgs as Record<string, unknown>) : {};
+    return [{ toolName, args }];
+  });
+}
+
+/**
+ * `requestContext` on `generate()` is an actual `RequestContext` instance
+ * (not a plain object — that's only accepted at the HTTP layer, which wraps
+ * it server-side). `getReadOnlyFromContext` reads it with `.get("readOnly")`.
+ */
+function buildEvalRequestContext(): RequestContext {
+  return new RequestContext([["readOnly", { userId: "eval" }]]);
+}
+
+async function main(): Promise<number> {
+  const datasetPath = join(dirname(fileURLToPath(import.meta.url)), "agents/recepcion/datasets/clasificacion.json");
+  const items = JSON.parse(readFileSync(datasetPath, "utf8")) as EvalItem[];
+
+  let passed = 0;
+  const failures: string[] = [];
+
+  for (const item of items) {
+    const result = await recepcionAgent.generate(item.mensaje, {
+      requestContext: buildEvalRequestContext(),
+    });
+    const asignacion = extractToolCalls(result).find((c) => c.toolName === "asignar-clasificacion");
+    const args = asignacion?.args;
+
+    let ok = false;
+    if (item.esperado.pregunta) {
+      ok = asignacion === undefined; // must ask, not classify
+    } else if (item.esperado.casoSensible) {
+      ok = args?.casoSensible === true;
+    } else {
+      ok =
+        args?.categoria === item.esperado.categoria &&
+        (item.esperado.subcategoria === undefined || args?.subcategoria === item.esperado.subcategoria);
+    }
+
+    if (ok) passed += 1;
+    else failures.push(`"${item.mensaje}" → esperado ${JSON.stringify(item.esperado)}, obtuvo ${JSON.stringify(args ?? "sin tool-call")}`);
+  }
+
+  const precision = passed / items.length;
+  console.log(
+    `Receptor classification: ${String(passed)}/${String(items.length)} (${(precision * 100).toFixed(0)}%) — threshold ${String(THRESHOLD * 100)}%`,
+  );
+  for (const failure of failures) console.log(`  FAIL: ${failure}`);
+  return precision >= THRESHOLD ? 0 : 1;
+}
+
+main()
+  .then((code) => {
+    process.exitCode = code;
+  })
+  .catch((error: unknown) => {
+    console.error("Eval runner crashed", error);
+    process.exitCode = 1;
+  });

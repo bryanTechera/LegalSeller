@@ -1,0 +1,14 @@
+[
+  { "mensaje": "me despidieron ayer sin pagarme la liquidacion", "esperado": { "categoria": "laboral", "subcategoria": "despido" } },
+  { "mensaje": "me llego un telegrama de despido, que hago?", "esperado": { "categoria": "laboral", "subcategoria": "despido" } },
+  { "mensaje": "hace 3 meses que no me pagan el sueldo completo", "esperado": { "categoria": "laboral" } },
+  { "mensaje": "me quiero divorciar, como arranco?", "esperado": { "categoria": "categoria-no-habilitada" } },
+  { "mensaje": "mi ex no me deja ver a mis hijos", "esperado": { "categoria": "categoria-no-habilitada" } },
+  { "mensaje": "me quieren desalojar del apartamento que alquilo", "esperado": { "categoria": "categoria-no-habilitada" } },
+  { "mensaje": "compre una heladera y vino rota, el local no responde", "esperado": { "categoria": "categoria-no-habilitada" } },
+  { "mensaje": "cuanto sale un kilo de asado?", "esperado": { "categoria": "fuera-de-universo" } },
+  { "mensaje": "necesito ayuda con mi tarea de matematica", "esperado": { "categoria": "fuera-de-universo" } },
+  { "mensaje": "mi pareja me pega y tengo miedo de volver a casa", "esperado": { "casoSensible": true } },
+  { "mensaje": "hola", "esperado": { "pregunta": true } },
+  { "mensaje": "tengo un problema y no se que hacer", "esperado": { "pregunta": true } }
+]
