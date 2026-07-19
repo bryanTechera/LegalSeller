@@ -1764,11 +1764,11 @@ export type DominioHabilitado = z.infer<typeof dominiosSchema>["categorias"][num
 const CACHE_TTL_MS = 60_000;
 let cache: { at: number; value: DominioHabilitado[] } | null = null;
 
-/** Enabled domains from the backend registry (GET /api/dominios), cached in-process. */
+/** Enabled domains from the backend registry (GET /dominios), cached in-process. */
 export async function getDominios(): Promise<DominioHabilitado[]> {
   if (cache && Date.now() - cache.at < CACHE_TTL_MS) return cache.value;
-  const response = await fetch(`${getMastraBaseUrl()}/api/dominios`);
-  if (!response.ok) throw new Error(`GET /api/dominios responded ${response.status}`);
+  const response = await fetch(`${getMastraBaseUrl()}/dominios`);
+  if (!response.ok) throw new Error(`GET /dominios responded ${response.status}`);
   const parsed = dominiosSchema.parse(await response.json());
   cache = { at: Date.now(), value: parsed.categorias };
   return parsed.categorias;
