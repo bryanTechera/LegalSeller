@@ -17,12 +17,12 @@ const { clasificacion, dominios, agentService } = vi.hoisted(() => ({
     registrarDatosCaso: vi.fn(),
     corregirClasificacion: vi.fn(),
   },
-  dominios: { subcategoriaUnica: vi.fn() },
+  dominios: { subcategoriaUnica: vi.fn(), esCategoriaHabilitada: vi.fn() },
   agentService: { streamAgentMessage: vi.fn(), appendThreadMessages: vi.fn() },
 }));
 
 vi.mock("./clasificacion", () => clasificacion);
-vi.mock("./dominios", () => ({ ...dominios, esCategoriaHabilitada: vi.fn().mockResolvedValue(true) }));
+vi.mock("./dominios", () => dominios);
 vi.mock("./agent-service", () => agentService);
 
 import { orchestrateChatTurn } from "./chat-orchestrator";
@@ -51,6 +51,7 @@ describe("orchestrateChatTurn", () => {
     clasificacion.registrarDatosCaso.mockResolvedValue(undefined);
     agentService.appendThreadMessages.mockResolvedValue(undefined);
     dominios.subcategoriaUnica.mockResolvedValue("despido");
+    dominios.esCategoriaHabilitada.mockResolvedValue(true);
   });
 
   it("con categoría asignada rutea directo al agente de categoría", async () => {
@@ -131,6 +132,90 @@ describe("orchestrateChatTurn", () => {
         ],
       }),
     );
+  });
+
+  it("el receptor observa registrar-caso durante un escape y persiste el contacto", async () => {
+    clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: null });
+    clasificacion.asignarClasificacion.mockResolvedValue({ categoria: null, aplicada: false });
+    agentService.streamAgentMessage.mockResolvedValueOnce(
+      sseResponse([
+        { type: "text-delta", payload: { text: "No atendemos ese tema, pero puedo derivarte." } },
+        { type: "tool-call", payload: { toolName: "registrar-caso", args: { contactoNombre: "Bea", contactoTelefono: "098" } } },
+        {
+          type: "tool-call",
+          payload: {
+            toolName: "asignar-clasificacion",
+            args: { categoria: "fuera-de-universo", temaDetectado: "impositivo", confianza: "alta", casoSensible: false, brief: "b" },
+          },
+        },
+      ]),
+    );
+    const response = await orchestrateChatTurn({ sessionId: "s1", message: "tengo un tema impositivo" });
+    await drain(response);
+    expect(clasificacion.registrarDatosCaso).toHaveBeenCalledWith(
+      expect.objectContaining({ sessionId: "s1", contactoNombre: "Bea", contactoTelefono: "098" }),
+    );
+    // still no chain — only the receptor ran:
+    expect(agentService.streamAgentMessage).toHaveBeenCalledTimes(1);
+  });
+
+  it("casoSensible: true corta el camino al agente de categoría aunque esté habilitada", async () => {
+    clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: null });
+    clasificacion.asignarClasificacion.mockResolvedValue({ categoria: "laboral", aplicada: true });
+    agentService.streamAgentMessage.mockResolvedValueOnce(
+      sseResponse([
+        { type: "text-delta", payload: { text: "Entiendo la urgencia. Podés llamar a la línea de ayuda ahora mismo." } },
+        {
+          type: "tool-call",
+          payload: {
+            toolName: "asignar-clasificacion",
+            args: { categoria: "laboral", subcategoria: "despido", confianza: "alta", casoSensible: true, brief: "b" },
+          },
+        },
+      ]),
+    );
+    const response = await orchestrateChatTurn({ sessionId: "s1", message: "me quiero morir por el despido" });
+    const text = await drain(response);
+    expect(agentService.streamAgentMessage).toHaveBeenCalledTimes(1);
+    expect(text).toContain("Entiendo la urgencia. Podés llamar a la línea de ayuda ahora mismo.");
+    expect(clasificacion.asignarClasificacion).toHaveBeenCalledWith(
+      expect.objectContaining({ categoria: "laboral", casoSensible: true }),
+    );
+  });
+
+  it("categoría no habilitada observada se trata como señal, sin encadenar", async () => {
+    clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: null });
+    clasificacion.asignarClasificacion.mockResolvedValue({ categoria: null, aplicada: false });
+    dominios.esCategoriaHabilitada.mockResolvedValueOnce(false);
+    agentService.streamAgentMessage.mockResolvedValueOnce(
+      sseResponse([
+        { type: "text-delta", payload: { text: "Todavía no cubrimos ese tema puntual." } },
+        {
+          type: "tool-call",
+          payload: {
+            toolName: "asignar-clasificacion",
+            args: { categoria: "sucesiones", confianza: "alta", casoSensible: false, brief: "b" },
+          },
+        },
+      ]),
+    );
+    const response = await orchestrateChatTurn({ sessionId: "s1", message: "quiero hacer una sucesión" });
+    const text = await drain(response);
+    expect(agentService.streamAgentMessage).toHaveBeenCalledTimes(1);
+    expect(text).toContain("Todavía no cubrimos ese tema puntual.");
+    expect(clasificacion.asignarClasificacion).toHaveBeenCalledWith(
+      expect.objectContaining({ categoria: "categoria-no-habilitada", temaDetectado: "sucesiones" }),
+    );
+  });
+
+  it("régimen: categoría deshabilitada después de persistida degrada con gracia", async () => {
+    clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral" });
+    dominios.esCategoriaHabilitada.mockResolvedValueOnce(false);
+    const response = await orchestrateChatTurn({ sessionId: "s1", message: "y ahora qué hago?" });
+    const text = await drain(response);
+    expect(agentService.streamAgentMessage).not.toHaveBeenCalled();
+    expect(clasificacion.asignarClasificacion).not.toHaveBeenCalled();
+    expect(text).toContain("Estamos actualizando la cobertura de ese tema");
   });
 
   it("observa registrar-caso en régimen y persiste los datos", async () => {

@@ -16,11 +16,13 @@ import {
   getOrCreateConversation,
   registrarDatosCaso,
 } from "./clasificacion";
-import { subcategoriaUnica } from "./dominios";
+import { esCategoriaHabilitada, subcategoriaUnica } from "./dominios";
 import { threadIdForSession } from "./session";
 
 const ESCAPES = new Set(["fuera-de-universo", "categoria-no-habilitada"]);
 const RECEPCION_AGENT_ID = "recepcion";
+const DEGRADED_CATEGORY_MESSAGE =
+  "Estamos actualizando la cobertura de ese tema; dejanos tu consulta de nuevo en unos minutos.";
 
 interface ReceptorOutcome {
   kind: "clasificada" | "escape" | "pregunta";
@@ -38,6 +40,34 @@ function sseHeaders(): HeadersInit {
 
 function encodeSseText(text: string): Uint8Array {
   return new TextEncoder().encode(`data: ${JSON.stringify({ type: "text-delta", payload: { text } })}\n\n`);
+}
+
+/** A one-shot SSE response carrying a single text delta (or nothing, if empty). */
+function textOnlyResponse(text: string): Response {
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      if (text.length > 0) controller.enqueue(encodeSseText(text));
+      controller.close();
+    },
+  });
+  return new Response(stream, { headers: sseHeaders() });
+}
+
+/**
+ * Persists a classification signal for an outcome that will NOT chain to a
+ * category agent (escape / disabled-category / sensitive-case paths) —
+ * wrapped so a DB failure here never swallows the receptor's already-
+ * buffered farewell text, which still has to reach the client (final review,
+ * bonus hardening).
+ */
+async function persistWithoutChaining(sessionId: string, args: AsignacionArgs): Promise<void> {
+  try {
+    await asignarClasificacion({ sessionId, ...args });
+  } catch (error) {
+    logger.error("asignarClasificacion failed for a no-chain outcome", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
 }
 
 /**
@@ -92,14 +122,35 @@ async function runReceptor(params: { sessionId: string; message: string }): Prom
     onText: (delta) => {
       text += delta;
     },
-    onToolCall: (toolName, args) => {
-      if (toolName !== "asignar-clasificacion") return;
-      const parsed = asignacionArgsSchema.safeParse(args);
-      if (!parsed.success) {
-        logger.warn("tool-call args failed validation", { toolName });
+    onToolCall: async (toolName, args) => {
+      if (toolName === "asignar-clasificacion") {
+        const parsed = asignacionArgsSchema.safeParse(args);
+        if (!parsed.success) {
+          logger.warn("tool-call args failed validation", { toolName });
+          return;
+        }
+        asignacion = parsed.data;
         return;
       }
-      asignacion = parsed.data;
+      if (toolName === "registrar-caso") {
+        // The receptor also has registrar-caso available — for out-of-
+        // coverage lead capture (spec §3/§7/§10) it may run BEFORE any
+        // classification exists. The conversation row already exists (created
+        // by getOrCreateConversation earlier in orchestrateChatTurn), so this
+        // is safe to persist here even though the rest of this turn is
+        // readOnly (final review gap #1 — was silently dropped before).
+        const parsed = registrarCasoArgsSchema.safeParse(args);
+        if (!parsed.success) {
+          logger.warn("tool-call args failed validation", { toolName });
+          return;
+        }
+        try {
+          await registrarDatosCaso({ sessionId: params.sessionId, ...parsed.data });
+        } catch (_error) {
+          // Persistence must never break the user-facing stream.
+          logger.error("tool-call persistence failed", { toolName });
+        }
+      }
     },
     onError: () => {
       logger.warn("receptor stream error event", {});
@@ -203,6 +254,14 @@ export async function orchestrateChatTurn(params: { sessionId: string; message: 
   const conversation = await getOrCreateConversation(params.sessionId);
 
   if (conversation.categoria) {
+    // Guard against a category that was enabled when persisted but has since
+    // been disabled in the registry (final review gap #3, regime path):
+    // degrade gracefully instead of calling an agent the backend may no
+    // longer serve. The persisted classification is left untouched.
+    if (!(await esCategoriaHabilitada(conversation.categoria))) {
+      logger.warn("persisted category no longer enabled", { categoria: conversation.categoria });
+      return textOnlyResponse(DEGRADED_CATEGORY_MESSAGE);
+    }
     return callCategoryAgent({
       sessionId: params.sessionId,
       categoria: conversation.categoria,
@@ -213,25 +272,44 @@ export async function orchestrateChatTurn(params: { sessionId: string; message: 
   const outcome = await runReceptor(params);
 
   if (outcome.kind === "clasificada" && outcome.args) {
-    const asignada = await asignarClasificacion({ sessionId: params.sessionId, ...outcome.args });
-    if (asignada.categoria) {
-      const unica = await subcategoriaUnica(asignada.categoria);
-      if (unica && !outcome.args.subcategoria) {
-        await registrarDatosCaso({ sessionId: params.sessionId, subcategorias: [unica] });
-      } else if (outcome.args.subcategoria) {
-        await registrarDatosCaso({ sessionId: params.sessionId, subcategorias: [outcome.args.subcategoria] });
-      }
-      return callCategoryAgent({
-        sessionId: params.sessionId,
-        categoria: asignada.categoria,
-        message: params.message,
-        casoBrief: outcome.args.brief,
+    if (!(await esCategoriaHabilitada(outcome.args.categoria))) {
+      // The receptor classified into a category that isn't actually enabled
+      // — treat it as an escape instead of the real category: persist a
+      // categoria-no-habilitada signal (temaDetectado carries what it tried
+      // to assign) and never chain (final review gap #3).
+      await persistWithoutChaining(params.sessionId, {
+        categoria: "categoria-no-habilitada",
+        temaDetectado: outcome.args.categoria,
+        brief: outcome.args.brief,
+        casoSensible: outcome.args.casoSensible,
       });
+    } else if (outcome.args.casoSensible) {
+      // Sensitive case: never hand off to the category agent even though the
+      // category is enabled — the receptor's own buffered text already
+      // covers the help-channel short-circuit (spec §3/§7, final review gap
+      // #2). The real classification is still persisted.
+      await persistWithoutChaining(params.sessionId, outcome.args);
+    } else {
+      const asignada = await asignarClasificacion({ sessionId: params.sessionId, ...outcome.args });
+      if (asignada.categoria) {
+        const unica = await subcategoriaUnica(asignada.categoria);
+        if (unica && !outcome.args.subcategoria) {
+          await registrarDatosCaso({ sessionId: params.sessionId, subcategorias: [unica] });
+        } else if (outcome.args.subcategoria) {
+          await registrarDatosCaso({ sessionId: params.sessionId, subcategorias: [outcome.args.subcategoria] });
+        }
+        return callCategoryAgent({
+          sessionId: params.sessionId,
+          categoria: asignada.categoria,
+          message: params.message,
+          casoBrief: outcome.args.brief,
+        });
+      }
     }
   }
 
   if (outcome.kind === "escape" && outcome.args) {
-    await asignarClasificacion({ sessionId: params.sessionId, ...outcome.args });
+    await persistWithoutChaining(params.sessionId, outcome.args);
   }
 
   // Question / escape farewell: emit buffered receptor text and persist the
@@ -252,11 +330,5 @@ export async function orchestrateChatTurn(params: { sessionId: string; message: 
     });
   }
 
-  const stream = new ReadableStream<Uint8Array>({
-    start(controller) {
-      if (outcome.text.length > 0) controller.enqueue(encodeSseText(outcome.text));
-      controller.close();
-    },
-  });
-  return new Response(stream, { headers: sseHeaders() });
+  return textOnlyResponse(outcome.text);
 }
