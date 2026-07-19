@@ -29,7 +29,7 @@ Razones (validadas en producción): separar el ciclo de deploy del agente del de
 
 - Una sola instancia `new Mastra({...})` en `src/mastra/index.ts` registra agentes, workflows, storage, logger, observabilidad y server.
 - **El frontend elige el agente** según el contexto de UI y llama `POST /api/agents/{nombre}/stream`. El backend no deriva identidad ni rutea entre agentes principales.
-- Pocos agentes principales (FE-facing) con identidad clara — para el MVP, por ejemplo: un agente de consultas generales y los especialistas que el dominio pida. Cada agente principal puede delegar en **sub-agentes expertos** vía el patrón Networks (`agents: {...}` en el constructor; Mastra auto-genera la tool de delegación).
+- Pocos agentes principales (FE-facing) con identidad clara. **El mapa de agentes lo define la taxonomía del dominio** (`docs/dominio-consultas.md`): una categoría del derecho = un agente principal; una subcategoría = un sub-agente especialista. Cada agente principal delega en sus **sub-agentes expertos** vía el patrón Networks (`agents: {...}` en el constructor; Mastra auto-genera la tool de delegación). En v1 solo existe Laboral → Despido; el diagrama del dominio prevé un router delante de las categorías, cuya ubicación (clasificador backend vs. selección en la UI) se decide al habilitar la segunda categoría.
 
 ### 2.2 Jerarquía agente → sub-agente
 

@@ -41,6 +41,7 @@ Convención probada en los proyectos anteriores; se mantiene tal cual:
 10. **Cambio mínimo coherente.** Cada cambio revisa su "radio de vecinos" (tests, docs, tipos afectados) pero no reescribe lo que no toca.
 11. **Documentar decisiones.** Toda decisión de arquitectura no trivial deja un documento fechado en `docs/plans/` (specs y planes de implementación). Esto dio trazabilidad total en los proyectos anteriores.
 12. **Sin archivos markdown temporales** sueltos en la raíz; los documentos viven en `docs/`.
+13. **Las dudas de dominio se derivan a los expertos legales.** El equipo técnico cuenta con el apoyo de un equipo de expertos legales. Ante ambigüedad o falta de conocimiento **no técnico** durante la implementación (qué debe responder un agente ante cierto caso, criterios o plazos legales, qué documentos integran el corpus de una subcategoría, tratamiento de casos sensibles), la duda no se resuelve asumiendo ni inventando: se formula concreta y se deriva al equipo de expertos. Mientras tanto se implementa lo no ambiguo y se deja la duda registrada (en el plan correspondiente en `docs/plans/` o como TODO referenciado). Las respuestas de los expertos que fijen criterio se documentan para no volver a preguntar lo mismo.
 
 ## 4. Workflow de Git
 

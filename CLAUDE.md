@@ -1,6 +1,6 @@
 # LegalSeller
 
-MVP: varios agentes de IA conectados a un RAG sobre documentos legales que responden preguntas de usuarios.
+MVP: varios agentes de IA conectados a un RAG sobre documentos legales. El sistema es un **vendedor experto de servicios legales**: evacúa dudas comunes con citas del corpus, genera confianza y capta el caso (contacto + información recabada) para que un equipo humano lo derive a un abogado de la red. Visión completa en `docs/vision-producto.md`.
 
 ## Arquitectura
 
@@ -15,6 +15,7 @@ Detalle completo en `docs/guia-arquitectura.md`.
 
 | Documento | Contenido |
 |---|---|
+| `docs/vision-producto.md` | Qué problema resuelve el sistema: funnel escuchar → evacuar dudas → captar caso → derivar a abogado; métricas e implicaciones técnicas |
 | `docs/lineamientos-generales.md` | Stack, idiomas/naming, principios, git workflow, env vars |
 | `docs/guia-arquitectura.md` | Servicios, RAG, canales de datos, deployment |
 | `docs/dominio-consultas.md` | Taxonomía de categorías de consulta y roadmap — define agentes/sub-agentes y división de responsabilidades. **v1: solo Laboral → Despido** |
@@ -34,6 +35,7 @@ Ante conflicto entre reglas, seguir la más estricta.
 - **SIEMPRE** aislar recursos por identidad en las queries (en v1: `sessionId` de la cookie anónima; con auth futura: `userId`). Verificación siempre server-side.
 - **SIEMPRE** citar la fuente en respuestas de agentes basadas en el corpus legal.
 - **SIEMPRE** imports por subpath de Mastra (`@mastra/core/agent`), nunca el barrel.
+- **SIEMPRE** ante ambigüedad de dominio legal (no técnica) — qué debe responder un agente, criterios/plazos legales, alcance del corpus — no asumir ni inventar: la duda se deriva al **equipo de expertos legales** que asiste al equipo técnico. Formular la pregunta concreta, dejarla registrada (plan en `docs/plans/` o TODO) y seguir con lo no ambiguo (`docs/lineamientos-generales.md` §3.13).
 - Naming: código inglés camelCase; IDs Mastra y archivos kebab-case español; prosa user/agent-facing en español; tags XML de prompts en español.
 - Gotchas de Mastra heredados de producción en `docs/guia-codificacion-backend.md` §3 (`maxSteps` en `defaultOptions`, `temperature: 1` explícito con gateway+Gemini, `keepAlive: true` en el pool, `MASTRA_DISABLE_STORAGE_INIT` en tests). Al descubrir un gotcha nuevo, documentarlo acá o en la guía correspondiente en el momento.
 - Gotchas propios descubiertos en vivo (2026-07-19): `PostgresStore` requiere `id` no vacío desde `@mastra/pg` 1.16; el stream nativo de Mastra (`POST /api/agents/:id/stream`) emite eventos con el texto anidado en `payload.text` (no el formato AI SDK top-level) — el parser en `frontend/src/utils/sse.ts` acepta ambos; `PostgresStore` va con `schemaName: "mastra"` porque si crea sus tablas en `public`, `prisma migrate dev` las detecta como drift y propone resetear la base.
