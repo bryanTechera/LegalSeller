@@ -57,10 +57,13 @@ Leer primero `CLAUDE.md` (reglas críticas) y luego:
 
 ## Estado del MVP
 
+v1 es pública: sin registro ni login, el chat vive directamente en el home. La identidad es una cookie de sesión anónima (ver `docs/plans/2026-07-19-v1-chat-publico-sin-auth.md`).
+
 - [x] Guías y convenciones
 - [x] Estructura backend (agente `consultas`, tool `buscar-documentos`, ingesta con chunking)
 - [x] Estructura frontend (layout, tokens, BFF con proxy SSE, Prisma schema)
-- [ ] Autenticación (Auth.js v5) — el proxy de chat usa un placeholder `DEV_USER_ID`
+- [x] Chat en el home con streaming y sesión anónima
+- [ ] Rate limiting por sesión/IP en `/api/chat/stream` (requerido antes de exponer a tráfico real)
 - [ ] Subida de documentos + pipeline de ingesta end-to-end
-- [ ] UI de chat con streaming
 - [ ] Evals con datasets gated (fidelidad de citas, corrección, compliance)
+- [ ] Auth.js v5 (fase posterior, patrón documentado en la guía frontend §10)

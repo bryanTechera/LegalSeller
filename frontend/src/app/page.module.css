@@ -1,11 +1,18 @@
 .main {
-  min-height: 100dvh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: var(--space-3);
-  padding: var(--space-8);
+  gap: var(--space-4);
+  padding: var(--space-6) var(--space-4);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  text-align: center;
 }
 
 .title {
@@ -14,16 +21,13 @@
 }
 
 .subtitle {
-  font-size: var(--text-lg);
+  font-size: var(--text-base);
   color: var(--ink-700);
-  max-width: 40rem;
-  text-align: center;
 }
 
-.status {
-  font-size: var(--text-sm);
+.disclaimer {
+  font-size: var(--text-xs);
   color: var(--ink-500);
-  background: var(--surface-muted);
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-md);
+  max-width: 48rem;
+  text-align: center;
 }

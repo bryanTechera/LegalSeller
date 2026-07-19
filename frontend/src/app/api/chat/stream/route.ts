@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { streamAgentMessage } from "@/lib/agent-service";
-import { prisma } from "@/lib/prisma";
+import { getOrCreateSessionId, threadIdForSession } from "@/lib/session";
 import { parseRequestBody, sendMessageSchema } from "@/lib/validations";
 import { logger } from "@/utils/logger";
 
@@ -9,36 +9,21 @@ import { logger } from "@/utils/logger";
  * SSE proxy to the consultas agent. The browser never talks to the Mastra
  * backend directly.
  *
- * TODO(auth): replace the placeholder with `await auth()` once Auth.js is
- * wired (see docs/guia-codificacion-frontend.md §10). Until then this route
- * must not be exposed publicly.
+ * v1: public route with anonymous session identity (cookie). The session id
+ * is the Mastra resourceId and derives the thread — that is the isolation
+ * boundary. TODO: rate limit per session/IP before exposing to real traffic.
  */
 export async function POST(request: Request) {
   try {
-    // Placeholder session until Auth.js lands. Kept explicit so the ownership
-    // pattern below is already the real one.
-    const session = { user: { id: process.env.DEV_USER_ID ?? "", name: "Dev" } };
-    if (!session.user.id) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-    }
-
     const validation = await parseRequestBody(request, sendMessageSchema);
     if (!validation.success) return validation.response;
 
-    // Ownership always in the query.
-    const consulta = await prisma.consulta.findFirst({
-      where: { id: validation.data.consultaId, userId: session.user.id },
-      select: { id: true, threadId: true },
-    });
-    if (!consulta) {
-      return NextResponse.json({ error: "Consulta no encontrada" }, { status: 404 });
-    }
+    const sessionId = await getOrCreateSessionId();
 
     const upstream = await streamAgentMessage({
       agentId: "consultas",
-      threadId: consulta.threadId,
-      userId: session.user.id,
-      userName: session.user.name,
+      threadId: threadIdForSession(sessionId),
+      userId: sessionId,
       message: validation.data.message,
       signal: request.signal,
     });

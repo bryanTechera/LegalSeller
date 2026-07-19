@@ -7,7 +7,7 @@ MVP: varios agentes de IA conectados a un RAG sobre documentos legales que respo
 Monorepo con dos servicios + Postgres (pgvector) compartida:
 
 - `backend/` — servicio Mastra (TypeScript, ES Modules): agentes, tools, RAG. Server nativo de Mastra.
-- `frontend/` — Next.js (App Router): UI + BFF (Auth.js, Prisma, proxy SSE al backend de agentes).
+- `frontend/` — Next.js (App Router): UI + BFF (Prisma, proxy SSE al backend de agentes). **v1 sin registro/login**: chat directo en el home, identidad por cookie de sesión anónima (Auth.js queda como evolución).
 
 Detalle completo en `docs/guia-arquitectura.md`.
 
@@ -30,7 +30,7 @@ Ante conflicto entre reglas, seguir la más estricta.
 - **NUNCA** push directo a `main`/`develop`; conventional commits; lint + tests antes de commit.
 - **NUNCA** una tool de agente tira una excepción en `execute` — degradación graceful `{ status: "error", mensaje }`.
 - **NUNCA** el browser habla directo con el backend Mastra o la DB — todo pasa por el BFF.
-- **SIEMPRE** ownership en las queries (`where: { id, userId }`); auth server-side.
+- **SIEMPRE** aislar recursos por identidad en las queries (en v1: `sessionId` de la cookie anónima; con auth futura: `userId`). Verificación siempre server-side.
 - **SIEMPRE** citar la fuente en respuestas de agentes basadas en el corpus legal.
 - **SIEMPRE** imports por subpath de Mastra (`@mastra/core/agent`), nunca el barrel.
 - Naming: código inglés camelCase; IDs Mastra y archivos kebab-case español; prosa user/agent-facing en español; tags XML de prompts en español.

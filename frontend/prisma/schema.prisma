@@ -9,35 +9,22 @@ datasource db {
   extensions = [vector, pgcrypto]
 }
 
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  documents Document[]
-  consultas Consulta[]
-}
-
-/// Legal document uploaded to the corpus. The extracted text is chunked and
-/// embedded by the backend (DocumentChunk); this row is the business-side
-/// record and ownership anchor.
+/// Legal document in the global corpus (v1: no per-user ownership, no auth).
+/// The extracted text is chunked and embedded by the backend (DocumentChunk);
+/// this row is the business-side record. Conversations are NOT modeled here:
+/// they live in Mastra storage as threads keyed by the anonymous session id.
 model Document {
   id        String           @id @default(cuid())
-  userId    String
-  title     String
+  title     String           @unique
   /// Original file location (S3 key or similar), if applicable.
   sourceKey String?
   status    ProcessingStatus @default(PENDING)
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
 
-  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   chunks DocumentChunk[]
 
-  @@unique([userId, title])
-  @@index([userId, updatedAt(sort: Desc)])
+  @@index([updatedAt(sort: Desc)])
 }
 
 /// RAG unit: chunk of a document with its embedding. Written and queried by
@@ -58,21 +45,6 @@ model DocumentChunk {
 
   @@unique([documentId, position])
   @@index([documentId])
-}
-
-/// A user conversation with the agents (maps to a Mastra thread).
-model Consulta {
-  id        String   @id @default(cuid())
-  userId    String
-  /// Mastra thread id backing this conversation.
-  threadId  String   @unique
-  title     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, updatedAt(sort: Desc)])
 }
 
 enum ProcessingStatus {

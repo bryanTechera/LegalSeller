@@ -120,7 +120,9 @@ export async function POST(request: Request) {
 - Mensaje al usuario siempre distinto del detalle técnico.
 - Boundaries: `error.tsx`, `global-error.tsx`, `not-found.tsx`, `loading.tsx` a nivel raíz y por segmento; `Suspense` con skeleton donde haya `useSearchParams`.
 
-## 10. Auth (Auth.js v5)
+## 10. Auth (Auth.js v5) — fase posterior
+
+**En v1 no hay auth**: identidad por cookie de sesión anónima (`lib/session.ts`, ver guía de arquitectura §3.4). Este patrón queda documentado para cuando se introduzca login:
 
 - Estrategia JWT (30 días, refresh diario), adapter Prisma. Callback `jwt` throttlea consultas a DB (~1 cada 5 min salvo triggers) y tolera caídas transitorias de conexión (preserva sesión con backoff); invalida token si el usuario fue borrado.
 - Rate limit en login por email/IP (Redis si está disponible).

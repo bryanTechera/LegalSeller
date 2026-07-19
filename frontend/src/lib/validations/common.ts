@@ -6,6 +6,7 @@ export type ParseResult<T> = { success: true; data: T } | { success: false; resp
 /** Maps technical field paths to user-friendly Spanish names for error messages. */
 const FIELD_NAMES: Record<string, string> = {
   query: "la consulta",
+  message: "el mensaje",
   title: "el título",
   email: "el email",
   name: "el nombre",

@@ -84,21 +84,23 @@ Instrucciones dinámicas ensambladas por stages en orden **cache-friendly**: con
 
 - Un único módulo (`lib/agent-service.ts`) conoce `MASTRA_BASE_URL`. Nada más importa esa env.
 - Chat por streaming: route handler del FE actúa de **proxy SSE** hacia `POST /api/agents/{agente}/stream`, agregando auth y `requestContext` (threadId, resourceId=userId, contexto de la consulta). Cliente con `@mastra/client-js` o hook propio sobre el proxy.
-- Threads con creación lazy, scoped al recurso de negocio que corresponda (en el MVP: por usuario o por conversación).
+- Threads con creación lazy, scoped al recurso de negocio que corresponda (en v1: un thread por sesión anónima).
 
 ### 3.3 Estado y datos en el cliente
 
 - **SWR** para todo data fetching cliente (nunca hooks de fetch custom): config global con retry consciente de status (respeta 429/Retry-After, backoff en 5xx, sin retry en 401/403/404).
 - **Zustand** para estado cliente: un store por dominio, selectores atómicos, `persist` parcial en sessionStorage. Separar estado persistente de intención UX transitoria (esta última en `useState` local).
 
-### 3.4 Auth
+### 3.4 Identidad
 
-Auth.js v5 (next-auth beta) con estrategia JWT, adapter Prisma. `proxy.ts` (middleware de Next 16) solo verifica logged-in/out y redirige; la autorización fina se repite en server components y route handlers (defensa en profundidad).
+**v1 (actual): sin registro ni login.** El chat vive directamente en la home. La identidad es una cookie de sesión anónima HttpOnly (`ls_session`, UUID) que el BFF crea en el primer mensaje; ese id es el `resourceId` de Mastra y la clave de aislamiento de la conversación (`threadId = "chat-" + sessionId`, una conversación por sesión). Decisión registrada en `docs/plans/2026-07-19-v1-chat-publico-sin-auth.md`. Antes de exponer a tráfico real: rate limiting por sesión/IP en la ruta de chat.
+
+**Evolución:** Auth.js v5 (next-auth beta) con estrategia JWT y adapter Prisma; `proxy.ts` (middleware de Next 16) solo verificando logged-in/out, con la autorización fina repetida en server components y route handlers (defensa en profundidad). El patrón completo está en la guía de codificación frontend §10.
 
 ## 4. Modelo de datos
 
 - Prisma como dueño del schema y las migraciones. Convenciones: PKs `String @default(cuid())`, `createdAt`/`updatedAt` en todo modelo, relaciones con `onDelete: Cascade`, índices compuestos orientados a las queries reales, `@@unique` para invariantes de negocio.
-- Ownership en el modelo: todo recurso de usuario lleva `userId` y **toda query lo incluye en el `where`**.
+- Ownership en el modelo: todo recurso perteneciente a una identidad (usuario o sesión anónima) lleva su identificador y **toda query lo incluye en el `where`**. En v1 el corpus de documentos es global (sin ownership) y las conversaciones se aíslan por `sessionId`.
 - Columnas vectoriales como `Unsupported("vector(N)")` en Prisma; las lee/escribe el backend por SQL directo. La dimensión N depende del modelo de embeddings elegido — fijarla en un solo lugar.
 - Validación de IDs en APIs: `z.string().min(1)` + query con ownership (no asumir formato cuid/uuid).
 
