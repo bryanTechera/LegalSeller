@@ -6,7 +6,6 @@
   height: 100%;
   min-height: 0;
   overflow-y: auto; /* en estado vacío el hero puede exceder pantallas cortas */
-  overflow-x: hidden; /* la balanza fantasma sangra a los costados a propósito */
 }
 
 /* --- Estado vacío: saludo + composer centrado + preguntas por categoría --- */
@@ -21,22 +20,6 @@
   text-align: center;
   gap: var(--space-3);
   padding: var(--space-6) 0;
-}
-
-/* Balanza fantasma tras el hero (tipografía fantasma de bufete, ambient de SaaS). */
-.heroGhost {
-  position: absolute;
-  top: 24%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: var(--accent);
-  opacity: 0.06;
-  pointer-events: none;
-  user-select: none;
-}
-
-.hero > :not(.heroGhost) {
-  position: relative;
 }
 
 .heroMark {
@@ -300,28 +283,27 @@
 /* --- Movimiento (solo si el usuario no pidió reducirlo) --- */
 
 @media (prefers-reduced-motion: no-preference) {
-  /* El fantasma (primer hijo) no participa de la entrada escalonada. */
-  .hero > :not(.heroGhost) {
+  .hero > * {
     animation: rise 0.45s ease both;
   }
 
-  .hero > *:nth-child(3) {
+  .hero > *:nth-child(2) {
     animation-delay: 0.05s;
   }
 
-  .hero > *:nth-child(4) {
+  .hero > *:nth-child(3) {
     animation-delay: 0.1s;
   }
 
-  .hero > *:nth-child(5) {
+  .hero > *:nth-child(4) {
     animation-delay: 0.15s;
   }
 
-  .hero > *:nth-child(6) {
+  .hero > *:nth-child(5) {
     animation-delay: 0.2s;
   }
 
-  .hero > *:nth-child(7) {
+  .hero > *:nth-child(6) {
     animation-delay: 0.25s;
   }
 

@@ -32,11 +32,11 @@
   display: flex;
   justify-content: center;
   padding: 0 var(--space-4);
-  /* Glow radial celeste tras el hero (ice-blue de bufete, aire de SaaS). */
-  background: radial-gradient(
-    56rem 34rem at 50% 22%,
-    color-mix(in srgb, var(--accent) 9%, transparent),
-    transparent 70%
+  /* Lavado celeste vertical bajo el header, se desvanece hacia el papel. */
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent) 8%, transparent),
+    transparent 60%
   );
 }
 
@@ -44,12 +44,12 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-  padding: var(--space-4);
+  padding: var(--space-3) var(--space-4);
   text-align: center;
-  background: var(--navy);
+  border-top: 1px solid var(--ink-100);
 }
 
 .footer p {
   font-size: var(--text-xs);
-  color: var(--on-navy-muted);
+  color: var(--ink-500);
 }

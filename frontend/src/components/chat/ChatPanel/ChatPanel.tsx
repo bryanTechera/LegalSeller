@@ -87,9 +87,6 @@ export function ChatPanel() {
     return (
       <section className={styles.panel} aria-label="Chat de consultas legales">
         <div className={styles.hero}>
-          <span className={styles.heroGhost} aria-hidden="true">
-            <BrandMark size={430} />
-          </span>
           <span className={styles.heroMark}>
             <BrandMark size={44} />
           </span>
