@@ -62,31 +62,34 @@ enum ProcessingStatus {
 /// history itself lives in Mastra storage (thread) — this row only pins the
 /// conversation to a category (spec §6).
 model Conversation {
-  id            String    @id @default(cuid())
-  sessionId     String    @unique
-  threadId      String    @unique
-  categoria     String?
-  clasificadaEn DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                 String    @id @default(cuid())
+  sessionId          String    @unique
+  threadId           String    @unique
+  categoria          String?
+  clasificadaEn      DateTime?
+  /// Atomic guard for `corregirClasificacion`: flips false→true exactly once,
+  /// enforced via a guarded `updateMany` (spec §6, at most ONE correction).
+  correccionAplicada Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   caso Caso?
 }
 
 /// The lead — THE deliverable of the system (vision §5). Built incrementally.
 model Caso {
-  id               String      @id @default(cuid())
-  conversationId   String      @unique
+  id               String     @id @default(cuid())
+  conversationId   String     @unique
   categoria        String?
-  subcategorias    String[]    @default([])
+  subcategorias    String[]   @default([])
   resumen          Json?
   contactoNombre   String?
   contactoTelefono String?
   contactoEmail    String?
-  estado           CasoEstado  @default(EN_CONVERSACION)
-  origen           CasoOrigen  @default(DOMINIO)
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
+  estado           CasoEstado @default(EN_CONVERSACION)
+  origen           CasoOrigen @default(DOMINIO)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
 
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   eventos      CasoEvento[]
