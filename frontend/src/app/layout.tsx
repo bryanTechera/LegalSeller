@@ -1,16 +1,16 @@
 import "./globals.css";
 
 import type { Metadata } from "next";
-import { Archivo, Bitter } from "next/font/google";
+import { Open_Sans, Poppins } from "next/font/google";
 import type { ReactNode } from "react";
 
 /*
- * Identidad tipográfica rioplatense: Bitter (Huerta Tipográfica) para
- * display y Archivo (Omnibus-Type) para UI — ambas fundiciones argentinas.
+ * Identidad tipográfica según la referencia visual del producto (estudio
+ * jurídico: Poppins para títulos/CTAs, Open Sans para cuerpo).
  * next/font las sirve self-hosted, compatible con `font-src 'self'`.
  */
-const archivo = Archivo({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
-const bitter = Bitter({ subsets: ["latin"], variable: "--font-display", display: "swap" });
+const openSans = Open_Sans({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
+const poppins = Poppins({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-display", display: "swap" });
 
 export const metadata: Metadata = {
   title: {
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="es" className={`${archivo.variable} ${bitter.variable}`}>
+    <html lang="es" className={`${openSans.variable} ${poppins.variable}`}>
       <body>{children}</body>
     </html>
   );

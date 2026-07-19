@@ -1,56 +1,60 @@
 /*
- * Design tokens — LegalSeller.
- * Identidad sobria para dominio legal: alta legibilidad, contraste AA,
- * paleta contenida (azul tribunal sobre papel cálido). Todos los
- * componentes consumen estos tokens; no se hardcodean colores ni
- * tamaños en los CSS Modules.
+ * Design tokens — Jurco.
+ * Identidad inspirada en el estudio jurídico de referencia: navy profundo
+ * + azul acero sobre blancos fríos, títulos en mayúsculas con tracking,
+ * ángulos casi rectos. Todos los componentes consumen estos tokens; no se
+ * hardcodean colores ni tamaños en los CSS Modules.
  */
 :root {
-  /* Tipografía (Bitter display / Archivo UI, cargadas en layout.tsx) */
+  /* Tipografía (Poppins display / Open Sans cuerpo, cargadas en layout.tsx) */
   --font-family-base: var(--font-sans, system-ui, -apple-system, "Segoe UI", sans-serif);
-  --font-family-display: var(--font-display, Georgia, "Times New Roman", serif);
+  --font-family-display: var(--font-display, "Segoe UI", system-ui, sans-serif);
   --text-xs: 0.8125rem; /* 13px — mínimo permitido */
   --text-sm: 0.875rem;
   --text-base: 1rem;
   --text-lg: 1.125rem;
   --text-xl: 1.375rem;
   --text-2xl: 1.75rem;
-  --text-3xl: clamp(1.85rem, 1.1rem + 2.4vw, 2.5rem);
+  --text-3xl: clamp(1.7rem, 1rem + 2.4vw, 2.4rem);
+  --tracking-display: 0.05em;
 
-  /* Tinta (escala de grises cálida, nunca negro puro) sobre papel */
-  --ink-900: #1f2328;
-  --ink-700: #3a4048;
-  --ink-500: #5c646e;
-  --ink-300: #9aa3ad;
-  --ink-100: #e6e9ec;
-  --paper: #f7f5f2;
+  /* Tinta (escala fría, navy como tinta principal) sobre blanco frío */
+  --navy: #132a3b;
+  --ink-900: #132a3b;
+  --ink-700: #3c4f60;
+  --ink-500: #64778a;
+  --ink-300: #9fb0bf;
+  --ink-100: #e2e8ee;
+  --paper: #f4f7fa;
   --surface: #ffffff;
-  --surface-muted: #f6f7f8;
+  --surface-muted: #eef2f6;
+  --on-navy: #ffffff;
+  --on-navy-muted: #b9c7d4;
 
-  /* Acento (sobrio, dominio legal) */
-  --accent: #1f4e79;
-  --accent-strong: #163a5a;
-  --accent-soft: #e8eff6;
+  /* Acento (azul acero de la referencia) */
+  --accent: #3185c9;
+  --accent-strong: #266ba6;
+  --accent-soft: #e3eef7;
 
   /* Estados */
   --state-success: #2e6b46;
   --state-warning: #8a6116;
   --state-error: #a13333;
 
-  /* Espaciado, radios y sombras */
+  /* Espaciado, radios (casi rectos) y sombras */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
   --space-4: 1rem;
   --space-6: 1.5rem;
   --space-8: 2rem;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --shadow-soft: 0 1px 2px rgb(31 35 40 / 5%);
-  --shadow-raised: 0 10px 30px -12px rgb(22 58 90 / 20%);
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  --shadow-soft: 0 1px 2px rgb(19 42 59 / 6%);
+  --shadow-raised: 0 10px 30px -12px rgb(19 42 59 / 22%);
 
-  --line-height-base: 1.5;
+  --line-height-base: 1.6;
 }
 
 * {
