@@ -87,11 +87,10 @@ subset por agente preserva ese orden).
 
 ```
 backend/src/mastra/dominios/
-├─ comunes/rules/            identidad-jurco, citas-corpus, alcance-informativo,
-│                            correccion-clasificacion, captacion-caso
+├─ comunes/rules/            identidad-jurco, captacion-caso
 ├─ recepcion/rules/          caso-sensible, mision-clasificacion, conduccion-triage
 ├─ recepcion/static-skills/  universo-categorias
-├─ laboral/rules/            rol-especialista-laboral
+├─ laboral/rules/            rol-especialista-laboral, conducta-laboral
 ├─ laboral/static-skills/    subcategorias-laboral
 └─ laboral/tool-skills/      proceso-derivacion (seed)
 ```
@@ -132,22 +131,20 @@ va después del conocimiento.
 | `<reglas>` de recepcion | rule `conduccion-triage` | recepcion | un solo bloque, como hoy |
 | `<categorias_habilitadas>` + `<temas_aun_no_cubiertos>` | static skill `universo-categorias` | recepcion | fn computa desde `registry.ts` (dinámico, como hoy) |
 | `<rol>` de laboral | rule `rol-especialista-laboral` | laboral | |
-| `<reglas>` laboral, bullets 1–4 | rule `citas-corpus` (crítica) | laboral | buscar antes de responder, citar fuente, no inventar, honestidad sin fuentes |
-| `<reglas>` laboral, bullets 5–6 | rule `alcance-informativo` (crítica) | laboral | no asesoramiento definitivo; subcategoría sin corpus → honesto + captación |
-| `<reglas>` laboral, bullet 7 | rule `correccion-clasificacion` | laboral | |
+| `<reglas>` de laboral (bullets 1–7) | rule `conducta-laboral` (crítica) | laboral | un solo bloque: citas del corpus, alcance informativo y corrección de clasificación |
 | `<subcategorias>` | static skill `subcategorias-laboral` | laboral | fn computa desde `subcategoriasHabilitadas("laboral")` |
 | `VENTA_STAGE` (`<captacion>`) | rule `captacion-caso`, `posicion: "final"` | laboral | recepcion NO la tiene (igual que hoy) |
 | Bloques `casoBrief` / `userName` | quedan en `instructions.ts` (volátil) | ambos | sin cambios |
 
-Nota: al partir `<reglas>` de laboral en tres rules, los bullets conservan texto y
-orden, y el tag se reparte así: `citas-corpus` abre `<reglas>` en su primera línea y
-`correccion-clasificacion` la cierra en su última — el ensamblado queda byte-idéntico.
-Es un artefacto deliberado de la migración (un tag por rule rompería la byte-igualdad);
-cuando el primer documento reescriba contenido de estas rules, los tags se normalizan
-a uno por rule y el gate pasa a ser el golden set, no la byte-igualdad.
+Nota (decisión de plan): el bloque `<reglas>` de laboral NO se parte en esta migración.
+Sus bullets van separados por `\n` simple dentro de un solo tag; cualquier split en
+rules unidas con `\n\n` rompe la byte-igualdad (§4.5), que es el gate principal. El
+split fino (citas-corpus / alcance-informativo / correccion-clasificacion) llega con la
+primera reescritura de contenido — ahí los tags se normalizan a uno por rule y el gate
+pasa a ser el golden set, no la byte-igualdad.
 
-Rules críticas del proyecto (`CRITICAL_RULE_IDS`): `identidad-jurco`, `caso-sensible`,
-`citas-corpus`, `alcance-informativo`.
+Rules críticas del proyecto (`CRITICAL_RULE_IDS`, derivadas de los items marcados
+`critical` en la registración): `identidad-jurco`, `caso-sensible`, `conducta-laboral`.
 
 ### 4.5 Gate de byte-igualdad
 
