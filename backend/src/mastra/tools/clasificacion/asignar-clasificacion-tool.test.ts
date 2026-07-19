@@ -1,3 +1,4 @@
+import { isValidationError } from "@mastra/core/tools";
 import { describe, expect, it } from "vitest";
 
 import { asignarClasificacionTool } from "./asignar-clasificacion-tool.js";
@@ -8,7 +9,10 @@ describe("asignar-clasificacion", () => {
   });
 
   it("acepta una asignación fast-path completa", async () => {
-    const result = await asignarClasificacionTool.execute(
+    const { execute } = asignarClasificacionTool;
+    if (!execute) throw new Error("execute is not defined");
+
+    const result = await execute(
       {
         categoria: "laboral",
         subcategoria: "despido",
@@ -18,16 +22,23 @@ describe("asignar-clasificacion", () => {
       },
       {} as never,
     );
+    if (!result || isValidationError(result)) throw new Error("execute devolvió un resultado inesperado");
+
     expect(result.status).toBe("ok");
   });
 
   it("rechaza una categoría deshabilitada por schema", () => {
-    const parsed = asignarClasificacionTool.inputSchema.safeParse({
+    const { inputSchema } = asignarClasificacionTool;
+    if (!inputSchema) throw new Error("inputSchema is not defined");
+
+    const parsed = inputSchema["~standard"].validate({
       categoria: "familia",
       confianza: "alta",
       casoSensible: false,
       brief: "x",
     });
-    expect(parsed.success).toBe(false);
+    if (parsed instanceof Promise) throw new Error("la validación no debería ser asíncrona");
+
+    expect(parsed.issues).toBeTruthy();
   });
 });
