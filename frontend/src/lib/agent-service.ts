@@ -12,7 +12,8 @@ export function getMastraBaseUrl(): string {
 }
 
 export interface StreamAgentParams {
-  agentId: "consultas";
+  /** Interim: receptor global fijo hasta el orquestador con ruteo (plan Tasks 12-13). */
+  agentId: "recepcion";
   threadId: string;
   /** Business user id — used as Mastra resourceId. */
   userId: string;

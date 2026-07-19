@@ -6,7 +6,7 @@ import { parseRequestBody, sendMessageSchema } from "@/lib/validations";
 import { logger } from "@/utils/logger";
 
 /**
- * SSE proxy to the consultas agent. The browser never talks to the Mastra
+ * SSE proxy to the global receptor agent. The browser never talks to the Mastra
  * backend directly.
  *
  * v1: public route with anonymous session identity (cookie). The session id
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     const sessionId = await getOrCreateSessionId();
 
     const upstream = await streamAgentMessage({
-      agentId: "consultas",
+      agentId: "recepcion",
       threadId: threadIdForSession(sessionId),
       userId: sessionId,
       message: validation.data.message,
