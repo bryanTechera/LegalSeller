@@ -38,11 +38,11 @@ Ante conflicto entre reglas, seguir la más estricta.
 - **SIEMPRE** ante ambigüedad de dominio legal (no técnica) — qué debe responder un agente, criterios/plazos legales, alcance del corpus — no asumir ni inventar: la duda se deriva al **equipo de expertos legales** que asiste al equipo técnico. Formular la pregunta concreta, dejarla registrada (plan en `docs/plans/` o TODO) y seguir con lo no ambiguo (`docs/lineamientos-generales.md` §3.13).
 - Naming: código inglés camelCase; IDs Mastra y archivos kebab-case español; prosa user/agent-facing en español; tags XML de prompts en español.
 - Gotchas de Mastra heredados de producción en `docs/guia-codificacion-backend.md` §3 (`maxSteps` en `defaultOptions`, `temperature: 1` explícito con gateway+Gemini, `keepAlive: true` en el pool, `MASTRA_DISABLE_STORAGE_INIT` en tests). Al descubrir un gotcha nuevo, documentarlo acá o en la guía correspondiente en el momento.
-- Gotchas propios descubiertos en vivo (2026-07-19): `PostgresStore` requiere `id` no vacío desde `@mastra/pg` 1.16; el stream nativo de Mastra (`POST /api/agents/:id/stream`) emite eventos con el texto anidado en `payload.text` (no el formato AI SDK top-level) — el parser en `frontend/src/utils/sse.ts` acepta ambos; `PostgresStore` va con `schemaName: "mastra"` porque si crea sus tablas en `public`, `prisma migrate dev` las detecta como drift y propone resetear la base.
+- Gotchas propios descubiertos en vivo (2026-07-19): `PostgresStore` requiere `id` no vacío desde `@mastra/pg` 1.16; el stream nativo de Mastra (`POST /api/agents/:id/stream`) emite eventos con el texto anidado en `payload.text` (no el formato AI SDK top-level) — el parser en `frontend/src/utils/sse.ts` acepta ambos; `PostgresStore` va con `schemaName: "mastra"` porque si crea sus tablas en `public`, `prisma migrate dev` las detecta como drift y propone resetear la base; `backend/vitest.config.ts` necesita también `GOOGLE_GENERATIVE_AI_API_KEY` no-op en `env` de test (`config/embedding.ts` tira excepción al importarse sin la key, no solo al usarla); `@typescript-eslint/restrict-template-expressions` rechaza `number` en template literals — placeholders SQL dinámicos (`$${n}`) van con `String(n)`.
 
 ## Comandos
 
 Por definir al inicializar cada servicio. Convención objetivo:
 
-- Backend: `pnpm dev` (mastra dev) · `pnpm test` · `pnpm lint` · `pnpm evals` · `pnpm ingest <archivo> --title "<título>"`
+- Backend: `pnpm dev` (mastra dev) · `pnpm test` · `pnpm lint` · `pnpm evals` · `pnpm ingest <archivo> --title "<título>" [--categoria laboral --subcategoria despido]`
 - Frontend: `pnpm dev` · `pnpm typecheck` · `pnpm lint` · `pnpm test:unit` · `pnpm test` (e2e)

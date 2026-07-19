@@ -14,17 +14,21 @@ datasource db {
 /// this row is the business-side record. Conversations are NOT modeled here:
 /// they live in Mastra storage as threads keyed by the anonymous session id.
 model Document {
-  id        String           @id @default(cuid())
-  title     String           @unique
+  id           String           @id @default(cuid())
+  title        String           @unique
   /// Original file location (S3 key or similar), if applicable.
-  sourceKey String?
-  status    ProcessingStatus @default(PENDING)
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
+  sourceKey    String?
+  /// Corpus partition (registry ids). Null = legacy/untagged document.
+  categoria    String?
+  subcategoria String?
+  status       ProcessingStatus @default(PENDING)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 
   chunks DocumentChunk[]
 
   @@index([updatedAt(sort: Desc)])
+  @@index([categoria, subcategoria])
 }
 
 /// RAG unit: chunk of a document with its embedding. Written and queried by
@@ -32,14 +36,14 @@ model Document {
 /// The vector dimension must match EMBEDDING_DIMENSION in
 /// backend/src/mastra/config/embedding.ts.
 model DocumentChunk {
-  id         String   @id @default(uuid())
+  id         String                       @id @default(uuid())
   documentId String
   /// Section or article label within the document, when known (citations).
   section    String?
   position   Int
   content    String
   embedding  Unsupported("vector(3072)")?
-  createdAt  DateTime @default(now())
+  createdAt  DateTime                     @default(now())
 
   document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 

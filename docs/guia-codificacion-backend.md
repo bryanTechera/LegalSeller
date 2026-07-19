@@ -13,7 +13,8 @@ Patrones concretos para `backend/`. Provienen de un backend Mastra en producció
   - `no-restricted-imports` prohibiendo el barrel `@mastra/core` → **siempre subpaths**: `@mastra/core/agent`, `@mastra/core/tools`, `@mastra/core/workflows`.
   - `import-x/order` (builtin → external → internal → parent → sibling → index, línea en blanco entre grupos, alfabético).
   - `no-unused-vars` con patrón `^_` ignorado.
-- `vitest.config.ts`: `environment: "node"`, `include: ["src/**/*.test.ts"]`, y en `env` de test: `DATABASE_URL` no-op + `MASTRA_DISABLE_STORAGE_INIT: "true"` (evita `ECONNREFUSED` como unhandled rejection en tests).
+  - `@typescript-eslint/restrict-template-expressions` rechaza `number` en template literals (ej. placeholders SQL `$${params.length}`) — envolver en `String(...)`.
+- `vitest.config.ts`: `environment: "node"`, `include: ["src/**/*.test.ts"]`, y en `env` de test: `DATABASE_URL` no-op + `MASTRA_DISABLE_STORAGE_INIT: "true"` (evita `ECONNREFUSED` como unhandled rejection en tests) + `GOOGLE_GENERATIVE_AI_API_KEY` no-op (`config/embedding.ts` tira una excepción al importarse si la key no está seteada — cualquier test que importe, aunque sea transitivamente, un módulo que importe `embedding.ts` crashea al levantar el archivo, no al correr el test).
 - Pre-commit: husky + lint-staged (`eslint --fix` sobre `src/**/*.ts`).
 
 ## 2. Estructura de carpetas
