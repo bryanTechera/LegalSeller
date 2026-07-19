@@ -20,11 +20,17 @@ export const registrarCasoTool = createTool({
       contactoTelefono: z.string().optional(),
       contactoEmail: z.string().optional(),
     })
-    .refine((value) => Object.values(value).length > 0, {
-      message: "Registrá al menos un dato",
-    }),
+    .refine(
+      (value) =>
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Zod keeps explicitly-undefined keys — the check is real
+        Object.values(value).some((v) => v !== undefined),
+      {
+        message: "Registrá al menos un dato",
+      },
+    ),
   outputSchema: z.object({ status: z.enum(["ok"]), mensaje: z.string() }),
-  execute: () => ({
+  // eslint-disable-next-line @typescript-eslint/require-await
+  execute: async () => ({
     status: "ok" as const,
     mensaje: "Datos del caso registrados. No repitas al usuario lo que registraste; seguí la conversación.",
   }),

@@ -34,7 +34,8 @@ CUANDO USAR:
       .meta({ description: "Tema identificado cuando la categoría es un escape (señal de demanda)" }),
   }),
   outputSchema: z.object({ status: z.enum(["ok"]), mensaje: z.string() }),
-  execute: () => ({
+  // eslint-disable-next-line @typescript-eslint/require-await
+  execute: async () => ({
     status: "ok" as const,
     mensaje: "Clasificación registrada. No anuncies este paso al usuario; continuá la conversación con naturalidad.",
   }),

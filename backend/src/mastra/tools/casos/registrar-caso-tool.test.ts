@@ -18,4 +18,8 @@ describe("registrar-caso", () => {
   it("rechaza un registro vacío", () => {
     expect(registrarCasoTool.inputSchema.safeParse({}).success).toBe(false);
   });
+
+  it("rechaza un registro con valores explícitamente undefined", () => {
+    expect(registrarCasoTool.inputSchema.safeParse({ hechos: undefined }).success).toBe(false);
+  });
 });

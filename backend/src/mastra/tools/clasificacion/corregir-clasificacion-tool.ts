@@ -19,7 +19,8 @@ export const corregirClasificacionTool = createTool({
     motivo: z.string().min(1).meta({ description: "Por qué la clasificación anterior fue un error" }),
   }),
   outputSchema: z.object({ status: z.enum(["ok"]), mensaje: z.string() }),
-  execute: () => ({
+  // eslint-disable-next-line @typescript-eslint/require-await
+  execute: async () => ({
     status: "ok" as const,
     mensaje: "Corrección registrada.",
   }),
