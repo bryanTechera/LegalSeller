@@ -1,18 +1,25 @@
+import { BrandMark } from "@/components/brand/BrandMark";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 
 import styles from "./page.module.css";
 
 export default function HomePage() {
   return (
-    <main className={styles.main}>
+    <div className={styles.shell}>
       <header className={styles.header}>
-        <h1 className={styles.title}>LegalSeller</h1>
-        <p className={styles.subtitle}>Consultas sobre documentos legales, con fuentes citadas.</p>
+        <h1 className={styles.wordmark}>
+          <BrandMark size={22} />
+          LegalSeller
+        </h1>
+        <span className={styles.badge}>Gratis y sin registro</span>
       </header>
-      <ChatPanel />
-      <p className={styles.disclaimer}>
-        Las respuestas son informativas y se basan en los documentos del corpus; no constituyen asesoramiento legal.
-      </p>
-    </main>
+      <main className={styles.main}>
+        <ChatPanel />
+      </main>
+      <footer className={styles.footer}>
+        <p>LegalSeller puede cometer errores y no sustituye el asesoramiento de un abogado.</p>
+        <p>Tus conversaciones no se usan para entrenar modelos de IA.</p>
+      </footer>
+    </div>
   );
 }
