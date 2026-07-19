@@ -14,8 +14,8 @@ const bitter = Bitter({ subsets: ["latin"], variable: "--font-display", display:
 
 export const metadata: Metadata = {
   title: {
-    default: "LegalSeller",
-    template: "%s · LegalSeller",
+    default: "Jurco",
+    template: "%s · Jurco",
   },
   description: "Consultas sobre documentos legales asistidas por IA, con fuentes citadas.",
 };

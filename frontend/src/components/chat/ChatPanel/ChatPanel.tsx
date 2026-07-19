@@ -93,7 +93,7 @@ export function ChatPanel() {
           <h2 className={styles.heroTitle}>¿Qué necesitás resolver hoy?</h2>
           <p className={styles.heroSubtitle}>Orientación legal en segundos, siempre con la fuente citada.</p>
           {composer}
-          <p className={styles.suggestionsLabel}>Empezamos por despidos; más temas en camino.</p>
+          <p className={styles.suggestionsLabel}>Resolvé tus dudas sobre despidos:</p>
           <ul className={styles.suggestions}>
             {SUGGESTED_QUESTIONS.map(({ topic, question }) => (
               <li key={topic}>

@@ -3,7 +3,7 @@ interface BrandMarkProps {
   size?: number;
 }
 
-/** Balanza de LegalSeller (misma geometría que el favicon), en trazo. */
+/** Balanza de Jurco (misma geometría que el favicon), en trazo. */
 export function BrandMark({ size = 24 }: BrandMarkProps) {
   return (
     <svg

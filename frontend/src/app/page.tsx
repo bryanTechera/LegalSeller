@@ -9,15 +9,14 @@ export default function HomePage() {
       <header className={styles.header}>
         <h1 className={styles.wordmark}>
           <BrandMark size={22} />
-          LegalSeller
+          Jurco
         </h1>
-        <span className={styles.badge}>Gratis y sin registro</span>
       </header>
       <main className={styles.main}>
         <ChatPanel />
       </main>
       <footer className={styles.footer}>
-        <p>LegalSeller puede cometer errores y no sustituye el asesoramiento de un abogado.</p>
+        <p>Jurco puede cometer errores y no sustituye el asesoramiento de un abogado.</p>
         <p>Tus conversaciones no se usan para entrenar modelos de IA.</p>
       </footer>
     </div>
