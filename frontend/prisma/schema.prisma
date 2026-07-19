@@ -14,17 +14,21 @@ datasource db {
 /// this row is the business-side record. Conversations are NOT modeled here:
 /// they live in Mastra storage as threads keyed by the anonymous session id.
 model Document {
-  id        String           @id @default(cuid())
-  title     String           @unique
+  id           String           @id @default(cuid())
+  title        String           @unique
   /// Original file location (S3 key or similar), if applicable.
-  sourceKey String?
-  status    ProcessingStatus @default(PENDING)
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
+  sourceKey    String?
+  /// Corpus partition (registry ids). Null = legacy/untagged document.
+  categoria    String?
+  subcategoria String?
+  status       ProcessingStatus @default(PENDING)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 
   chunks DocumentChunk[]
 
   @@index([updatedAt(sort: Desc)])
+  @@index([categoria, subcategoria])
 }
 
 /// RAG unit: chunk of a document with its embedding. Written and queried by
@@ -32,14 +36,14 @@ model Document {
 /// The vector dimension must match EMBEDDING_DIMENSION in
 /// backend/src/mastra/config/embedding.ts.
 model DocumentChunk {
-  id         String   @id @default(uuid())
+  id         String                       @id @default(uuid())
   documentId String
   /// Section or article label within the document, when known (citations).
   section    String?
   position   Int
   content    String
   embedding  Unsupported("vector(3072)")?
-  createdAt  DateTime @default(now())
+  createdAt  DateTime                     @default(now())
 
   document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
@@ -52,4 +56,74 @@ enum ProcessingStatus {
   PROCESSING
   READY
   FAILED
+}
+
+/// Business-side conversation record: routing state for the BFF. The message
+/// history itself lives in Mastra storage (thread) — this row only pins the
+/// conversation to a category (spec §6).
+model Conversation {
+  id                 String    @id @default(cuid())
+  sessionId          String    @unique
+  threadId           String    @unique
+  categoria          String?
+  clasificadaEn      DateTime?
+  /// Atomic guard for `corregirClasificacion`: flips false→true exactly once,
+  /// enforced via a guarded `updateMany` (spec §6, at most ONE correction).
+  correccionAplicada Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  caso Caso?
+}
+
+/// The lead — THE deliverable of the system (vision §5). Built incrementally.
+model Caso {
+  id               String     @id @default(cuid())
+  conversationId   String     @unique
+  categoria        String?
+  subcategorias    String[]   @default([])
+  resumen          Json?
+  contactoNombre   String?
+  contactoTelefono String?
+  contactoEmail    String?
+  estado           CasoEstado @default(EN_CONVERSACION)
+  origen           CasoOrigen @default(DOMINIO)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  eventos      CasoEvento[]
+
+  @@index([estado, updatedAt(sort: Desc)])
+}
+
+/// Append-only audit trail for the human team that classifies and derives.
+model CasoEvento {
+  id        String         @id @default(cuid())
+  casoId    String
+  tipo      CasoEventoTipo
+  payload   Json
+  createdAt DateTime       @default(now())
+
+  caso Caso @relation(fields: [casoId], references: [id], onDelete: Cascade)
+
+  @@index([casoId, createdAt])
+}
+
+enum CasoEstado {
+  EN_CONVERSACION
+  CAPTADO
+  FUERA_DE_COBERTURA
+}
+
+enum CasoOrigen {
+  DOMINIO
+  FUERA_DE_COBERTURA
+}
+
+enum CasoEventoTipo {
+  CLASIFICACION
+  CORRECCION
+  REGISTRO_DATO
+  CONTACTO
 }

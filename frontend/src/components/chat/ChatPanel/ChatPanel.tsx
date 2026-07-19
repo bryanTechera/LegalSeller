@@ -124,12 +124,20 @@ export function ChatPanel() {
             aria-label={message.role === "user" ? "Tu mensaje" : "Respuesta del asistente"}
           >
             {message.role === "assistant" ? (
-              <div className={styles.markdown}>
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
-                {isStreaming && message.content.length === 0 ? (
-                  <span className={styles.thinking}>Buscando en el corpus…</span>
-                ) : null}
-              </div>
+              <>
+                <span className={styles.assistantHeader} aria-hidden="true">
+                  <span className={styles.assistantAvatar}>
+                    <BrandMark size={14} />
+                  </span>
+                  <span className={styles.assistantName}>Jurco</span>
+                </span>
+                <div className={styles.markdown}>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+                  {isStreaming && message.content.length === 0 ? (
+                    <span className={styles.thinking}>Buscando en el corpus…</span>
+                  ) : null}
+                </div>
+              </>
             ) : (
               <p>{message.content}</p>
             )}

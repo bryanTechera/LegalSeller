@@ -13,7 +13,8 @@ Patrones concretos para `backend/`. Provienen de un backend Mastra en producció
   - `no-restricted-imports` prohibiendo el barrel `@mastra/core` → **siempre subpaths**: `@mastra/core/agent`, `@mastra/core/tools`, `@mastra/core/workflows`.
   - `import-x/order` (builtin → external → internal → parent → sibling → index, línea en blanco entre grupos, alfabético).
   - `no-unused-vars` con patrón `^_` ignorado.
-- `vitest.config.ts`: `environment: "node"`, `include: ["src/**/*.test.ts"]`, y en `env` de test: `DATABASE_URL` no-op + `MASTRA_DISABLE_STORAGE_INIT: "true"` (evita `ECONNREFUSED` como unhandled rejection en tests).
+  - `@typescript-eslint/restrict-template-expressions` rechaza `number` en template literals (ej. placeholders SQL `$${params.length}`) — envolver en `String(...)`.
+- `vitest.config.ts`: `environment: "node"`, `include: ["src/**/*.test.ts"]`, y en `env` de test: `DATABASE_URL` no-op + `MASTRA_DISABLE_STORAGE_INIT: "true"` (evita `ECONNREFUSED` como unhandled rejection en tests) + `GOOGLE_GENERATIVE_AI_API_KEY` no-op (`config/embedding.ts` tira una excepción al importarse si la key no está seteada — cualquier test que importe, aunque sea transitivamente, un módulo que importe `embedding.ts` crashea al levantar el archivo, no al correr el test).
 - Pre-commit: husky + lint-staged (`eslint --fix` sobre `src/**/*.ts`).
 
 ## 2. Estructura de carpetas
@@ -65,6 +66,7 @@ Gotchas de producción (aprendidos, no negociables):
 - Razonamiento: Gemini 3 usa `thinkingLevel`; Gemini 2.5 usa `thinkingBudget`. Con tools, Gemini 2.5 ignora `thinkingBudget: 0`.
 - Agentes principales pinean `gateway.order: ["google", "vertex"]` para que funcione el implicit caching de Gemini.
 - `.network()` está deprecado — usar `.stream()` con `maxSteps`.
+- **`server.apiRoutes` (custom routes vía `registerApiRoute`) no pueden empezar con el `apiPrefix` built-in (default `/api`)** — Mastra lo valida al boot y tira `Error: Custom API route "..." must not start with "/api"` (comportamiento intencional desde ~1.29, no un bug). Las rutas custom van sin el prefijo (ej. `/dominios`, no `/api/dominios`); solo se puede recuperar el prefijo `/api` para rutas custom si se reconfigura `server.apiPrefix` a otro valor, pero eso mueve también las rutas built-in (`/api/agents`, etc.) — no vale la pena para un solo endpoint.
 
 Model stack de referencia (calibrar con evals): agentes principales → modelo mid-tier rápido (`gemini-3-flash`); sub-agentes expertos y generadores → tier lite; jueces de evals → el lite más barato; retrieval web (si se necesita) → `perplexity/sonar` con `tools: {}` obligatorio.
 

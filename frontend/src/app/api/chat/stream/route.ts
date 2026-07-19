@@ -1,17 +1,15 @@
 import { NextResponse } from "next/server";
 
-import { streamAgentMessage } from "@/lib/agent-service";
-import { getOrCreateSessionId, threadIdForSession } from "@/lib/session";
+import { orchestrateChatTurn } from "@/lib/chat-orchestrator";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { getOrCreateSessionId } from "@/lib/session";
 import { parseRequestBody, sendMessageSchema } from "@/lib/validations";
 import { logger } from "@/utils/logger";
 
 /**
- * SSE proxy to the consultas agent. The browser never talks to the Mastra
- * backend directly.
- *
- * v1: public route with anonymous session identity (cookie). The session id
- * is the Mastra resourceId and derives the thread — that is the isolation
- * boundary. TODO: rate limit per session/IP before exposing to real traffic.
+ * SSE proxy: routes each message by the conversation's persisted
+ * classification (lib/chat-orchestrator). The browser never talks to the
+ * Mastra backend directly.
  */
 export async function POST(request: Request) {
   try {
@@ -20,26 +18,21 @@ export async function POST(request: Request) {
 
     const sessionId = await getOrCreateSessionId();
 
-    const upstream = await streamAgentMessage({
-      agentId: "consultas",
-      threadId: threadIdForSession(sessionId),
-      userId: sessionId,
-      message: validation.data.message,
-      signal: request.signal,
-    });
+    // Two independent buckets: per-session (tight) and per-IP (looser, since
+    // several legit users can share an IP). Clearing the session cookie only
+    // resets the session bucket — the IP bucket still catches the abuser.
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    const sessionRate = checkRateLimit(`sess:${sessionId}`);
+    const ipRate = checkRateLimit(`ip:${ip}`, { limit: 30 });
 
-    if (!upstream.ok || !upstream.body) {
-      logger.error("Agent stream failed", { status: upstream.status });
-      return NextResponse.json({ error: "El asistente no está disponible en este momento" }, { status: 502 });
+    if (!sessionRate.allowed || !ipRate.allowed) {
+      const retryAfterSeconds = Math.max(sessionRate.retryAfterSeconds ?? 0, ipRate.retryAfterSeconds ?? 0);
+      return NextResponse.json(
+        { error: "Demasiados mensajes seguidos. Esperá un momento e intentá de nuevo." },
+        { status: 429, headers: { "Retry-After": String(retryAfterSeconds || 60) } },
+      );
     }
-
-    return new Response(upstream.body, {
-      headers: {
-        "Content-Type": upstream.headers.get("Content-Type") ?? "text/event-stream",
-        "Cache-Control": "no-cache, no-transform",
-        Connection: "keep-alive",
-      },
-    });
+    return await orchestrateChatTurn({ sessionId, message: validation.data.message });
   } catch (error) {
     logger.error("chat/stream failed", { error: error instanceof Error ? error.message : String(error) });
     return NextResponse.json({ error: "Ocurrió un error" }, { status: 500 });

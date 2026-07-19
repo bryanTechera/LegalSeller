@@ -2,7 +2,11 @@ type LogLevel = "debug" | "info" | "warn" | "error" | "fatal";
 
 const LEVEL_ORDER: Record<LogLevel, number> = { debug: 10, info: 20, warn: 30, error: 40, fatal: 50 };
 
-const REDACTED_KEYS = ["password", "token", "secret", "authorization", "cookie", "apikey", "api_key"];
+const REDACTED_KEYS = [
+  "password", "token", "secret", "authorization", "cookie", "apikey", "api_key",
+  // Case PII (spec §8): contact data captured by registrar-caso.
+  "contacto", "telefono", "email", "brief", "hechos",
+];
 
 function resolveMinLevel(): number {
   const raw = (process.env.LOG_LEVEL ?? "info").toLowerCase();

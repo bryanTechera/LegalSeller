@@ -26,6 +26,42 @@ interface ChunkRow {
   similarity: number;
 }
 
+export interface SearchQueryParams {
+  vector: string;
+  minSimilarity: number;
+  limit: number;
+  categoria?: string;
+  subcategorias?: string[];
+}
+
+/** Exported for tests: builds the pgvector search query with optional partition filter. */
+export function buildSearchQuery({ vector, minSimilarity, limit, categoria, subcategorias }: SearchQueryParams): {
+  sql: string;
+  params: unknown[];
+} {
+  const params: unknown[] = [vector, minSimilarity, limit];
+  const conditions: string[] = [`1 - (c."embedding" <=> $1::vector) > $2`];
+  if (categoria) {
+    params.push(categoria);
+    conditions.push(`d."categoria" = $${String(params.length)}`);
+  }
+  if (subcategorias && subcategorias.length > 0) {
+    params.push(subcategorias);
+    conditions.push(`d."subcategoria" = ANY($${String(params.length)})`);
+  }
+  const sql = `SELECT c."documentId"  AS document_id,
+                d."title"       AS document_title,
+                c."section"     AS section,
+                c."content"     AS content,
+                1 - (c."embedding" <=> $1::vector) AS similarity
+           FROM "DocumentChunk" c
+           JOIN "Document" d ON d."id" = c."documentId"
+          WHERE ${conditions.join(" AND ")}
+          ORDER BY c."embedding" <=> $1::vector
+          LIMIT $3`;
+  return { sql, params };
+}
+
 export const searchDocumentsTool = createTool({
   id: "buscar-documentos",
   description: `Busca fragmentos relevantes en el corpus de documentos legales mediante búsqueda semántica.
@@ -40,6 +76,11 @@ CUANDO USAR:
       .min(1)
       .meta({ description: "Consulta en lenguaje natural sobre la que buscar fragmentos relevantes" }),
     limit: z.number().int().min(1).max(10).default(5).meta({ description: "Cantidad máxima de fragmentos" }),
+    categoria: z.string().optional().meta({ description: "Limitar la búsqueda a una categoría del corpus (ej. laboral)" }),
+    subcategorias: z
+      .array(z.string())
+      .optional()
+      .meta({ description: "Limitar a subcategorías específicas (ej. despido)" }),
   }),
   outputSchema: z.object({
     status: z.enum(["ok", "empty", "error"]),
@@ -52,19 +93,14 @@ CUANDO USAR:
     try {
       const queryEmbedding = await generateEmbedding(input.query);
       const pool = getPool();
-      const result = await pool.query<ChunkRow>(
-        `SELECT c."documentId"  AS document_id,
-                d."title"       AS document_title,
-                c."section"     AS section,
-                c."content"     AS content,
-                1 - (c."embedding" <=> $1::vector) AS similarity
-           FROM "DocumentChunk" c
-           JOIN "Document" d ON d."id" = c."documentId"
-          WHERE 1 - (c."embedding" <=> $1::vector) > $2
-          ORDER BY c."embedding" <=> $1::vector
-          LIMIT $3`,
-        [toVectorLiteral(queryEmbedding), MIN_SIMILARITY, input.limit],
-      );
+      const { sql, params } = buildSearchQuery({
+        vector: toVectorLiteral(queryEmbedding),
+        minSimilarity: MIN_SIMILARITY,
+        limit: input.limit,
+        categoria: input.categoria,
+        subcategorias: input.subcategorias,
+      });
+      const result = await pool.query<ChunkRow>(sql, params);
 
       const chunks: ChunkResult[] = result.rows.map((row) => ({
         documentId: row.document_id,

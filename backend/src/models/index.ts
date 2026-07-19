@@ -4,10 +4,12 @@
  * `mastra/common/middleware`. It never lives in working memory.
  */
 export interface ReadOnlyState {
-  /** Authenticated user id (also used as Mastra resourceId). */
+  /** Anonymous session id in v1 (also the Mastra resourceId). */
   userId: string;
   /** Display name used to address the user in responses. */
   userName?: string;
+  /** Case brief produced by the receptor's classification (never re-ask its contents). */
+  casoBrief?: string;
 }
 
-export type AgentId = "consultas";
+export type AgentId = "recepcion" | "laboral";

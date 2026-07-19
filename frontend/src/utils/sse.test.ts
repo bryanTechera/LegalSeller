@@ -28,6 +28,30 @@ describe("parseSseData", () => {
   });
 });
 
+describe("parseSseData tool-call", () => {
+  it("extrae toolName y args del shape nativo de Mastra", () => {
+    const event = parseSseData(
+      JSON.stringify({ type: "tool-call", payload: { toolName: "asignar-clasificacion", args: { categoria: "laboral" } } }),
+    );
+    expect(event).toEqual({
+      kind: "tool-call",
+      toolName: "asignar-clasificacion",
+      args: { categoria: "laboral" },
+    });
+  });
+
+  it("tolera el shape AI SDK top-level", () => {
+    const event = parseSseData(
+      JSON.stringify({ type: "tool-call", toolName: "registrar-caso", input: { hechos: "x" } }),
+    );
+    expect(event).toEqual({ kind: "tool-call", toolName: "registrar-caso", args: { hechos: "x" } });
+  });
+
+  it("ignora tool-calls sin nombre", () => {
+    expect(parseSseData(JSON.stringify({ type: "tool-call", payload: {} }))).toBeNull();
+  });
+});
+
 describe("createSseLineSplitter", () => {
   it("splits complete data lines and buffers partial ones", () => {
     const feed = createSseLineSplitter();

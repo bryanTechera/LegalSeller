@@ -30,10 +30,11 @@
 - Queries/tablero de métricas (spec §8): los DATOS quedan capturados (`Conversation`, `Caso`, `CasoEvento` con timestamps); las consultas de drop-off/conversión se escriben cuando haya tráfico que medir.
 - Job de limpieza TTL de casos abandonados: bloqueado por la definición de negocio (pregunta abierta 2).
 
-**Referencia de mecánica Mastra verificada en `node_modules` (2026-07-19):**
-- `AgentExecutionOptions.memory?: AgentMemoryOption = { thread, resource?, options?: MemoryConfig }` y `MemoryConfig.readOnly?: boolean` ("agent can read memory but won't save new messages") — `@mastra/core/dist/agent/types.d.ts:822`, `memory/types.d.ts:801`.
-- El server expone `POST /api/memory/threads/:threadId/messages` (bundle `mastra/dist/index.js`).
-- La Task 8 verifica en vivo el shape exacto de ambos antes de que el BFF los use.
+**Referencia de mecánica Mastra verificada en vivo — Task 8 (2026-07-19), contra `mastra@1.19.0`/`@mastra/server@1.51.0`/`@mastra/core@1.51.0`:**
+- **readOnly confirmado tal cual se asumía:** body de `POST /api/agents/:agentId/stream` con `memory: { thread, resource, options: { readOnly: true } }` (top-level, sin alternativas) — se acepta (200), el agente emite el stream completo igual, y NO persiste mensajes (`GET /api/memory/threads/:id/messages?agentId=...` da `messages: []`). Gotcha: sí crea la fila del thread vacía como side-effect (mismo `GET` sin `?agentId` en el thread devuelve el thread con `title: ""` y sin mensajes) — cualquier limpieza futura de threads abandonados debe barrer también estas filas vacías, no solo `Caso`.
+- **Tool-call del observador (fast-path `asignar-clasificacion`):** el evento SSE relevante es `type: "tool-call"` (top-level), con `payload.toolName` y `payload.args` ya parseado como objeto completo en un solo evento — no hace falta acumular deltas. Existen eventos previos por `toolCallId` (`tool-call-input-streaming-start` → `tool-call-delta` con `payload.argsTextDelta` como string → `tool-call-input-streaming-end`) pero el observador del BFF solo necesita reaccionar a `type === "tool-call"`.
+- **Append a memoria — el shape asumido NO existe en la versión instalada.** `POST /api/memory/threads/:threadId/messages` es GET-only (list); el endpoint real de append es `POST /api/memory/save-messages?agentId=<id>` con body `{ messages: [{ threadId, resourceId, role, content }] }` (content acepta string plano, se normaliza server-side). El thread NO se crea implícitamente: hay que `POST /api/memory/threads?agentId=<id>` con `{ threadId, resourceId }` antes, o `save-messages` tira 500 `"Thread ... not found"`.
+- Detalle completo, samples SSE crudos y comandos exactos: `.superpowers/sdd/task-8-report.md`.
 
 ---
 
@@ -1764,11 +1765,11 @@ export type DominioHabilitado = z.infer<typeof dominiosSchema>["categorias"][num
 const CACHE_TTL_MS = 60_000;
 let cache: { at: number; value: DominioHabilitado[] } | null = null;
 
-/** Enabled domains from the backend registry (GET /api/dominios), cached in-process. */
+/** Enabled domains from the backend registry (GET /dominios), cached in-process. */
 export async function getDominios(): Promise<DominioHabilitado[]> {
   if (cache && Date.now() - cache.at < CACHE_TTL_MS) return cache.value;
-  const response = await fetch(`${getMastraBaseUrl()}/api/dominios`);
-  if (!response.ok) throw new Error(`GET /api/dominios responded ${response.status}`);
+  const response = await fetch(`${getMastraBaseUrl()}/dominios`);
+  if (!response.ok) throw new Error(`GET /dominios responded ${response.status}`);
   const parsed = dominiosSchema.parse(await response.json());
   cache = { at: Date.now(), value: parsed.categorias };
   return parsed.categorias;
@@ -1933,8 +1934,8 @@ describe("agent-service", () => {
     expect((fetchMock.mock.calls[0][0] as string)).toContain("/api/agents/recepcion/stream");
   });
 
-  it("appendThreadMessages pega a la ruta de memoria con agentId", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({})));
+  it("appendThreadMessages pega a /api/memory/save-messages con threadId/resourceId por mensaje", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ messages: [] })));
     vi.stubGlobal("fetch", fetchMock);
     await appendThreadMessages({
       threadId: "chat-s1",
@@ -1942,10 +1943,19 @@ describe("agent-service", () => {
       resourceId: "s1",
       messages: [{ role: "user", content: "hola" }],
     });
-    expect(fetchMock.mock.calls[0][0]).toContain("/api/memory/threads/chat-s1/messages?agentId=recepcion");
+    expect(fetchMock.mock.calls[0][0]).toContain("/api/memory/save-messages?agentId=recepcion");
+    const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string) as {
+      messages: Array<Record<string, unknown>>;
+    };
+    expect(body.messages[0]).toEqual({ threadId: "chat-s1", resourceId: "s1", role: "user", content: "hola" });
   });
 });
 ```
+
+Nota (Task 8, 2026-07-19): NO existe `POST /api/memory/threads/:threadId/messages` en la
+versión instalada (ese path es GET-only). El endpoint real es
+`POST /api/memory/save-messages?agentId=...` con `threadId`/`resourceId` **por mensaje**
+dentro del array, no como campo hermano top-level. Ver detalle en `task-8-report.md`.
 
 Run: `cd frontend && pnpm vitest run src/lib/agent-service.test.ts` — Expected: FAIL.
 
@@ -2006,26 +2016,45 @@ export async function streamAgentMessage(params: StreamAgentParams): Promise<Res
   });
 }
 
-/** Slow-path persistence: append the receptor's question exchange to the shared thread. */
+/**
+ * Slow-path persistence: append the receptor's question exchange to the shared
+ * thread. Uses `POST /api/memory/save-messages` (Task 8, 2026-07-19: the
+ * originally-assumed `POST /api/memory/threads/:threadId/messages` does not exist
+ * in the installed version — that path is GET-only). `threadId`/`resourceId` go on
+ * each message, not as a sibling top-level field.
+ *
+ * The endpoint requires the thread to already exist (500 `"Thread ... not found"`
+ * otherwise) — no implicit creation. In the BFF's actual flow this is expected to
+ * be a no-op in practice: the immediately-preceding readOnly stream call to
+ * `recepcion` on this same threadId already creates the thread row as a side
+ * effect (Task 8 finding). Still, callers must not assume this holds for every
+ * path into `appendThreadMessages` — if a caller ever hits it without a prior
+ * readOnly turn on that thread, `POST /api/memory/threads` must run first.
+ */
 export async function appendThreadMessages(params: {
   threadId: string;
   agentId: string;
   resourceId: string;
   messages: Array<{ role: "user" | "assistant"; content: string }>;
 }): Promise<void> {
-  const url = `${getMastraBaseUrl()}/api/memory/threads/${params.threadId}/messages?agentId=${params.agentId}`;
+  const url = `${getMastraBaseUrl()}/api/memory/save-messages?agentId=${params.agentId}`;
   const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ messages: params.messages, resourceId: params.resourceId }),
+    body: JSON.stringify({
+      messages: params.messages.map((message) => ({
+        threadId: params.threadId,
+        resourceId: params.resourceId,
+        role: message.role,
+        content: message.content,
+      })),
+    }),
   });
   if (!response.ok) {
     throw new Error(`appendThreadMessages responded ${response.status}`);
   }
 }
 ```
-
-Ajustar shapes exactos según lo anotado en Task 8 si difieren.
 
 - [ ] **Step 3: Verificar + gates**
 
