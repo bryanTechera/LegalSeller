@@ -35,6 +35,7 @@ Ante conflicto entre reglas, seguir la más estricta.
 - **SIEMPRE** imports por subpath de Mastra (`@mastra/core/agent`), nunca el barrel.
 - Naming: código inglés camelCase; IDs Mastra y archivos kebab-case español; prosa user/agent-facing en español; tags XML de prompts en español.
 - Gotchas de Mastra heredados de producción en `docs/guia-codificacion-backend.md` §3 (`maxSteps` en `defaultOptions`, `temperature: 1` explícito con gateway+Gemini, `keepAlive: true` en el pool, `MASTRA_DISABLE_STORAGE_INIT` en tests). Al descubrir un gotcha nuevo, documentarlo acá o en la guía correspondiente en el momento.
+- Gotchas propios descubiertos en vivo (2026-07-19): `PostgresStore` requiere `id` no vacío desde `@mastra/pg` 1.16; el stream nativo de Mastra (`POST /api/agents/:id/stream`) emite eventos con el texto anidado en `payload.text` (no el formato AI SDK top-level) — el parser en `frontend/src/utils/sse.ts` acepta ambos.
 
 ## Comandos
 
