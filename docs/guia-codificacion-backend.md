@@ -66,6 +66,7 @@ Gotchas de producción (aprendidos, no negociables):
 - Razonamiento: Gemini 3 usa `thinkingLevel`; Gemini 2.5 usa `thinkingBudget`. Con tools, Gemini 2.5 ignora `thinkingBudget: 0`.
 - Agentes principales pinean `gateway.order: ["google", "vertex"]` para que funcione el implicit caching de Gemini.
 - `.network()` está deprecado — usar `.stream()` con `maxSteps`.
+- **`server.apiRoutes` (custom routes vía `registerApiRoute`) no pueden empezar con el `apiPrefix` built-in (default `/api`)** — Mastra lo valida al boot y tira `Error: Custom API route "..." must not start with "/api"` (comportamiento intencional desde ~1.29, no un bug). Las rutas custom van sin el prefijo (ej. `/dominios`, no `/api/dominios`); solo se puede recuperar el prefijo `/api` para rutas custom si se reconfigura `server.apiPrefix` a otro valor, pero eso mueve también las rutas built-in (`/api/agents`, etc.) — no vale la pena para un solo endpoint.
 
 Model stack de referencia (calibrar con evals): agentes principales → modelo mid-tier rápido (`gemini-3-flash`); sub-agentes expertos y generadores → tier lite; jueces de evals → el lite más barato; retrieval web (si se necesita) → `perplexity/sonar` con `tools: {}` obligatorio.
 
