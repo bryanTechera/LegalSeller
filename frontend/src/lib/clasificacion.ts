@@ -5,6 +5,17 @@ import { threadIdForSession } from "./session";
 
 const ESCAPES = new Set(["fuera-de-universo", "categoria-no-habilitada"]);
 
+/**
+ * Duck-typed check for Prisma's unique-constraint violation (P2002). Deliberately
+ * NOT `error instanceof Prisma.PrismaClientKnownRequestError` — that class can't
+ * be constructed (or cheaply mocked) in unit tests, whereas a plain
+ * `{ code: "P2002" }` shape is both what Prisma's real error exposes and what a
+ * test double can produce directly.
+ */
+function esErrorDeUnicidad(error: unknown): error is { code: string } {
+  return typeof error === "object" && error !== null && "code" in error && (error as { code: unknown }).code === "P2002";
+}
+
 export async function getOrCreateConversation(sessionId: string): Promise<{ id: string; categoria: string | null }> {
   const conversation = await prisma.conversation.upsert({
     where: { sessionId },
@@ -39,50 +50,74 @@ export async function asignarClasificacion(params: {
     if (conversation.categoria) return { categoria: conversation.categoria, aplicada: false };
 
     const esEscape = ESCAPES.has(params.categoria);
-    const casoExistente = await tx.caso.findUnique({
+    let casoExistente = await tx.caso.findUnique({
       where: { conversationId: conversation.id },
       select: { id: true, subcategorias: true, resumen: true },
     });
 
-    let caso: { id: string };
+    let caso: { id: string } | undefined;
     if (!casoExistente) {
-      caso = await tx.caso.create({
-        data: {
-          conversationId: conversation.id,
-          categoria: esEscape ? null : params.categoria,
-          subcategorias: params.subcategoria ? [params.subcategoria] : [],
-          resumen: params.brief ? { brief: params.brief } : undefined,
-          estado: esEscape ? "FUERA_DE_COBERTURA" : "EN_CONVERSACION",
-          origen: esEscape ? "FUERA_DE_COBERTURA" : "DOMINIO",
-        },
-        select: { id: true },
-      });
-    } else if (esEscape) {
-      // Escapes never mutate an existing caso — demand signal only.
-      caso = casoExistente;
-    } else {
-      // Promote (Critical fix): the caso may have been created earlier by an
-      // escape (categoria: null, estado/origen FUERA_DE_COBERTURA) — a real
-      // classification must lift it out of that frozen state. Dedup
-      // subcategorias (Set union, like registrarDatosCaso) and merge brief
-      // into resumen without clobbering other keys already there.
-      const subcategoriasExistentes = casoExistente.subcategorias;
-      const subcategorias =
-        params.subcategoria && !subcategoriasExistentes.includes(params.subcategoria)
-          ? [...subcategoriasExistentes, params.subcategoria]
-          : undefined;
-      const resumenExistente = (casoExistente.resumen as Record<string, unknown> | null) ?? {};
-      caso = await tx.caso.update({
-        where: { id: casoExistente.id },
-        data: {
-          categoria: params.categoria,
-          estado: "EN_CONVERSACION",
-          origen: "DOMINIO",
-          ...(subcategorias ? { subcategorias } : {}),
-          ...(params.brief ? { resumen: { ...resumenExistente, brief: params.brief } } : {}),
-        },
-        select: { id: true },
-      });
+      try {
+        caso = await tx.caso.create({
+          data: {
+            conversationId: conversation.id,
+            categoria: esEscape ? null : params.categoria,
+            subcategorias: params.subcategoria ? [params.subcategoria] : [],
+            resumen: params.brief ? { brief: params.brief } : undefined,
+            estado: esEscape ? "FUERA_DE_COBERTURA" : "EN_CONVERSACION",
+            origen: esEscape ? "FUERA_DE_COBERTURA" : "DOMINIO",
+          },
+          select: { id: true },
+        });
+      } catch (error) {
+        if (!esErrorDeUnicidad(error)) throw error;
+        // Concurrent inaugural creation: another transaction won the race on
+        // conversationId (@unique) and this insert hit P2002. Recover the
+        // winner's caso and fall through to the normal existing-caso flow
+        // below (escape no-op / real-classification promote) instead of
+        // letting the transaction blow up.
+        casoExistente = await tx.caso.findUnique({
+          where: { conversationId: conversation.id },
+          select: { id: true, subcategorias: true, resumen: true },
+        });
+        if (!casoExistente) throw error;
+      }
+    }
+
+    if (!caso) {
+      if (!casoExistente) {
+        // Unreachable: caso is only still undefined here if the create above
+        // threw something other than P2002 (already rethrown) or the P2002
+        // recovery re-read found nothing (already rethrown too).
+        throw new Error("clasificacion: no se pudo resolver el caso");
+      }
+      if (esEscape) {
+        // Escapes never mutate an existing caso — demand signal only.
+        caso = casoExistente;
+      } else {
+        // Promote (Critical fix): the caso may have been created earlier by an
+        // escape (categoria: null, estado/origen FUERA_DE_COBERTURA) — a real
+        // classification must lift it out of that frozen state. Dedup
+        // subcategorias (Set union, like registrarDatosCaso) and merge brief
+        // into resumen without clobbering other keys already there.
+        const subcategoriasExistentes = casoExistente.subcategorias;
+        const subcategorias =
+          params.subcategoria && !subcategoriasExistentes.includes(params.subcategoria)
+            ? [...subcategoriasExistentes, params.subcategoria]
+            : undefined;
+        const resumenExistente = (casoExistente.resumen as Record<string, unknown> | null) ?? {};
+        caso = await tx.caso.update({
+          where: { id: casoExistente.id },
+          data: {
+            categoria: params.categoria,
+            estado: "EN_CONVERSACION",
+            origen: "DOMINIO",
+            ...(subcategorias ? { subcategorias } : {}),
+            ...(params.brief ? { resumen: { ...resumenExistente, brief: params.brief } } : {}),
+          },
+          select: { id: true },
+        });
+      }
     }
 
     await tx.casoEvento.create({

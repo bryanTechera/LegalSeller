@@ -120,6 +120,35 @@ describe("asignarClasificacion", () => {
     expect(data.subcategorias).toBeUndefined(); // ya estaba, no se reenvía
     expect(data.resumen).toEqual({ brief: "nuevo" }); // se actualiza sin perder otras claves (no había otras)
   });
+
+  it("tolera P2002 en la creación inaugural del caso (dos requests concurrentes)", async () => {
+    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: null });
+    tx.caso.findUnique
+      .mockResolvedValueOnce(null) // esta transacción todavía no ve el caso
+      .mockResolvedValueOnce({ id: "k1", subcategorias: [], resumen: null }); // recuperación: caso del ganador
+    tx.caso.create.mockRejectedValue(Object.assign(new Error("Unique constraint failed"), { code: "P2002" }));
+    tx.caso.update.mockResolvedValue({ id: "k1" });
+    tx.conversation.updateMany.mockResolvedValue({ count: 1 });
+
+    const result = await asignarClasificacion({ sessionId: "s1", categoria: "laboral" });
+
+    expect(result).toEqual({ categoria: "laboral", aplicada: true });
+    expect(tx.caso.findUnique).toHaveBeenCalledTimes(2);
+    expect(tx.caso.update).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: "k1" }, data: expect.objectContaining({ categoria: "laboral" }) }),
+    );
+    expect(tx.casoEvento.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ tipo: "CLASIFICACION" }) }),
+    );
+  });
+
+  it("relanza errores de caso.create que no son P2002", async () => {
+    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: null });
+    tx.caso.findUnique.mockResolvedValue(null);
+    tx.caso.create.mockRejectedValue(new Error("db down"));
+
+    await expect(asignarClasificacion({ sessionId: "s1", categoria: "laboral" })).rejects.toThrow("db down");
+  });
 });
 
 describe("registrarDatosCaso", () => {
