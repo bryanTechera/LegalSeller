@@ -18,7 +18,8 @@ const pool = new pg.Pool({
   keepAlive: true,
 });
 
-export const postgresStore = new PostgresStore({ pool });
+// @mastra/pg >= 1.16 requires a non-empty store id (older docs omit it).
+export const postgresStore = new PostgresStore({ id: "legalseller-storage", pool });
 
 /** Exposes the shared pool to tools and services (pgvector queries). */
 export function getPool(): pg.Pool {

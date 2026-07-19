@@ -31,13 +31,17 @@ export function parseSseData(data: string): SseEvent {
 
   const event = payload as Record<string, unknown>;
   const type = typeof event.type === "string" ? event.type : "";
+  const nested = (event.payload && typeof event.payload === "object" ? event.payload : {}) as Record<string, unknown>;
 
   if (type === "text-delta") {
-    const delta = event.delta ?? event.textDelta ?? event.text;
+    // Mastra native stream nests the text in payload.text; AI SDK formats
+    // put it at the top level (delta/textDelta/text). Accept both.
+    const delta = nested.text ?? nested.delta ?? event.delta ?? event.textDelta ?? event.text;
     return typeof delta === "string" && delta.length > 0 ? { kind: "text", text: delta } : null;
   }
   if (type === "error") {
-    const message = typeof event.errorText === "string" ? event.errorText : "El asistente devolvió un error";
+    const raw = nested.error ?? nested.message ?? event.errorText ?? event.error;
+    const message = typeof raw === "string" && raw.length > 0 ? raw : "El asistente devolvió un error";
     return { kind: "error", message };
   }
   return null;

@@ -3,16 +3,20 @@ import { describe, expect, it } from "vitest";
 import { createSseLineSplitter, parseSseData } from "./sse";
 
 describe("parseSseData", () => {
-  it("extracts text-delta events", () => {
-    expect(parseSseData('{"type":"text-delta","id":"1","delta":"Hola"}')).toEqual({ kind: "text", text: "Hola" });
+  it("extracts Mastra native text-delta events (payload.text)", () => {
+    expect(
+      parseSseData('{"type":"text-delta","runId":"r1","from":"AGENT","payload":{"id":"t1","text":"¡Hola!"}}'),
+    ).toEqual({ kind: "text", text: "¡Hola!" });
   });
 
-  it("supports alternative delta field names", () => {
+  it("extracts AI SDK style text-delta events (top-level delta)", () => {
+    expect(parseSseData('{"type":"text-delta","id":"1","delta":"Hola"}')).toEqual({ kind: "text", text: "Hola" });
     expect(parseSseData('{"type":"text-delta","textDelta":"mundo"}')).toEqual({ kind: "text", text: "mundo" });
   });
 
-  it("maps error events", () => {
+  it("maps error events from both shapes", () => {
     expect(parseSseData('{"type":"error","errorText":"boom"}')).toEqual({ kind: "error", message: "boom" });
+    expect(parseSseData('{"type":"error","payload":{"error":"falló"}}')).toEqual({ kind: "error", message: "falló" });
   });
 
   it("ignores non-text events, [DONE] and malformed JSON", () => {
