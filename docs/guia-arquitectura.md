@@ -25,17 +25,21 @@ Razones (validadas en producción): separar el ciclo de deploy del agente del de
 
 ## 2. Backend de agentes (Mastra)
 
-### 2.1 Una instancia, agentes de identidad fija
+### 2.1 Una instancia, ruteo por clasificación persistida
 
 - Una sola instancia `new Mastra({...})` en `src/mastra/index.ts` registra agentes, workflows, storage, logger, observabilidad y server.
-- **El frontend elige el agente** según el contexto de UI y llama `POST /api/agents/{nombre}/stream`. El backend no deriva identidad ni rutea entre agentes principales.
-- Pocos agentes principales (FE-facing) con identidad clara. **El mapa de agentes lo define la taxonomía del dominio** (`docs/dominio-consultas.md`): una categoría del derecho = un agente principal; una subcategoría = un sub-agente especialista. Cada agente principal delega en sus **sub-agentes expertos** vía el patrón Networks (`agents: {...}` en el constructor; Mastra auto-genera la tool de delegación). En v1 solo existe Laboral → Despido; el diagrama del dominio prevé un router delante de las categorías, cuya ubicación (clasificador backend vs. selección en la UI) se decide al habilitar la segunda categoría.
+- **El ruteo entre agentes principales vive en el BFF, no en el frontend ni en un supervisor Mastra**: lee `Conversation.categoria` (Prisma) y, si ya está asignada, llama directo `POST /api/agents/{categoria}/stream`. Sin categoría todavía, corre el **agente receptor global** (`recepcion`, memoria `readOnly` — no persiste nada) que clasifica con la tool `asignar-clasificacion` y, con confianza alta, encadena en el mismo turno HTTP al agente de categoría (fast-path, ver §3.2). Modelo completo en el spec `docs/plans/2026-07-19-arquitectura-agentes-clasificacion.md`.
+- **El mapa de agentes lo define `backend/src/mastra/dominios/registry.ts`** (fuente única de la taxonomía del dominio, ver `docs/dominio-consultas.md`): una categoría habilitada = un agente principal FE-invisible, dueño de la conversación y del funnel de venta completo; más el receptor global, único y compartido por todas las categorías. Habilitar una categoría o subcategoría es agregar su carpeta bajo `dominios/` + su entrada en el registry, sin tocar los agentes existentes.
+- El registry se expone al BFF vía ruta custom **`GET /dominios`** (`server.apiRoutes`) — no `/api/dominios`: Mastra reserva el prefijo `/api` para sus rutas built-in y rechaza cualquier `apiRoutes` que empiece así (`Error: ... must not start with "/api"` al boot). El BFF la consume server-side desde `frontend/src/lib/dominios.ts`, con cache en memoria TTL 60s — nunca el browser.
+- En v1 solo Laboral está habilitada (una categoría, una subcategoría: Despido): el registry cortocircuita el nivel con una sola opción habilitada (aquí, la subcategoría) y el BFF la auto-asigna sin correr agente clasificatorio (spec §5, §10) — ningún usuario on-topic ve una pregunta de clasificación.
 
-### 2.2 Jerarquía agente → sub-agente
+### 2.2 Agente de categoría: retrieval directo, jerarquía Networks como evolución opcional
 
-- Los sub-agentes son **especialistas de recuperación/generación** (ej.: experto en un corpus normativo específico). Devuelven datos estructurados en bloques XML (`<documentos_data>`, `<citas_data>`) dentro de un contrato de salida fijo; el supervisor extrae citas literales y compone la respuesta con su propia voz. Nunca relaya verbatim.
-- Sub-agentes: sin working memory, `lastMessages` bajo, modelo más barato, `maxRetries` menor que el agente principal (patrón main=3 / sub=2).
-- Las tools con efectos (mutaciones, aprobaciones) viven **solo en agentes principales** — los sub-agentes no pueden pausar streams.
+- v1 **no tiene jerarquía agente → sub-agente**: el agente de categoría (ej. `laboral`) llama directo la tool `buscar-documentos`, filtrada por `categoria`/`subcategorias` (WHERE sobre pgvector, ver §2.3 y `backend/src/mastra/tools/documentos/buscar-documentos-tool.ts`), y compone la respuesta con citas él mismo. No hay delegación Networks (`agents: {...}`) ni contrato de salida XML intermedio.
+- **Sub-agentes Networks quedan como evolución opcional**, no como paso obligado de escalado: se promueven solo cuando las evals muestren que el prompt del agente de categoría degrada al discriminar entre subcategorías de su área (spec §4, §9 — golden set + threshold de precisión). Mientras el agente único discrimine bien, un sub-agente es complejidad sin beneficio medido.
+- **Subcategoría es dato acumulativo del caso** (`Caso.subcategorias`, array — nunca estado de ruteo): el agente de categoría la determina conversando, o la recibe ya asignada del receptor en el fast-path, y la persiste vía `registrar-caso`. Parametriza el filtro de retrieval; nunca bloquea ni deriva a otro agente.
+- Los agentes (categoría y receptor) se crean con la factory `crearAgente` (`backend/src/mastra/common/crear-agente.ts`), que hornea una sola vez los gotchas de Mastra v1: `maxSteps` en `defaultOptions`, `temperature: 1` explícito, `providerOptions.gateway.order` fijo, y el null-guard asimétrico de `instructions` dinámicas (sin request context al boot/listing → instructions vacías; con request real, un prompt roto debe re-lanzar, nunca correr en silencio).
+- Las tools con efectos (`registrar-caso`, `corregir-clasificacion`) viven en el agente de categoría; el receptor global solo tiene `asignar-clasificacion` y `registrar-caso` (para captar contacto en el camino fuera-de-cobertura, que en v1 es su trabajo real — spec §10).
 
 ### 2.3 RAG
 
@@ -83,8 +87,15 @@ Instrucciones dinámicas ensambladas por stages en orden **cache-friendly**: con
 ### 3.2 Integración con el backend de agentes
 
 - Un único módulo (`lib/agent-service.ts`) conoce `MASTRA_BASE_URL`. Nada más importa esa env.
-- Chat por streaming: route handler del FE actúa de **proxy SSE** hacia `POST /api/agents/{agente}/stream`, agregando auth y `requestContext` (threadId, resourceId=userId, contexto de la consulta). Cliente con `@mastra/client-js` o hook propio sobre el proxy.
-- Threads con creación lazy, scoped al recurso de negocio que corresponda (en v1: un thread por sesión anónima).
+- Chat por streaming: el route handler (`app/api/chat/stream/route.ts`) no hace un pipe literal — delega en `lib/chat-orchestrator.ts`, que decide a qué agente llamar (ruteo por clasificación persistida, §2.1) y observa el stream mientras lo reenvía al browser:
+  - Un `ReadableStream` propio intercepta cada evento SSE upstream: lo reenvía tal cual al cliente y en paralelo lo parsea con `frontend/src/utils/sse.ts` (parser tolerante a variantes de formato — gotchas en CLAUDE.md) para detectar tool-calls de interés (`asignar-clasificacion`, `registrar-caso`, `corregir-clasificacion`).
+  - Cada tool-call observado se valida con su schema Zod (`lib/chat-orchestrator-schemas.ts`) antes de persistir; un payload que no matchea se loguea y se descarta — nunca rompe el stream que ve el usuario.
+  - **Encadenamiento same-turn (fast-path)**: si el receptor clasifica con confianza (tool-call sin turno de pregunta), el BFF persiste la clasificación y llama al agente de categoría dentro de la **misma respuesta HTTP**, empalmando el segundo stream sobre el mismo `ReadableStream` de salida. El usuario ve un solo turno visible: pregunta → respuesta con citas.
+  - **Slow-path**: si el receptor solo pregunta, su turno corrió con memoria `readOnly` (no persistió nada) y el BFF re-persiste el intercambio a mano con `POST /api/memory/save-messages?agentId=recepcion` (`threadId`/`resourceId` van por mensaje dentro del array, no como campo hermano) — no existe un `POST /api/memory/threads/:id/messages` para appendear. El thread ya existe porque la llamada `readOnly` al receptor lo crea como side-effect (aunque quede vacía de mensajes).
+  - **Consumo desacoplado del abort del cliente**: el stream upstream se drena siempre hasta el final, incluso si el browser se desconecta — así una tool-call ya ejecutada por el agente se observa y persiste igual (spec §7, endurecimiento #1). Si el `enqueue` al cliente falla porque se fue, se ignora y se sigue drenando para no perder la persistencia.
+  - **Sin reconciliación adicional** (spec §7, endurecimiento #2 quedó innecesario por diseño): como el receptor corre siempre `readOnly` y no persiste nada, no existe la clase de divergencia que ese endurecimiento buscaba resolver. Si el BFF muere antes de persistir una clasificación observada, el próximo mensaje del usuario vuelve a correr el receptor — que es idempotente — sin dejar estado a medio persistir que reconciliar.
+- El body de cada llamada a `/api/agents/{agente}/stream` lleva **siempre** `memory: { thread, resource }` explícito (con `options.readOnly` solo cuando corresponde) — el endpoint moderno resuelve la persistencia solo desde ahí; los campos `threadId`/`resourceId` de nivel superior se ignoran para ese fin (gotcha detallado en CLAUDE.md).
+- Threads con creación lazy, scoped al recurso de negocio que corresponda (en v1: un thread por sesión anónima, compartido entre el receptor y el agente de categoría).
 
 ### 3.3 Estado y datos en el cliente
 
@@ -93,7 +104,9 @@ Instrucciones dinámicas ensambladas por stages en orden **cache-friendly**: con
 
 ### 3.4 Identidad
 
-**v1 (actual): sin registro ni login.** El chat vive directamente en la home. La identidad es una cookie de sesión anónima HttpOnly (`ls_session`, UUID) que el BFF crea en el primer mensaje; ese id es el `resourceId` de Mastra y la clave de aislamiento de la conversación (`threadId = "chat-" + sessionId`, una conversación por sesión). Decisión registrada en `docs/plans/2026-07-19-v1-chat-publico-sin-auth.md`. Antes de exponer a tráfico real: rate limiting por sesión/IP en la ruta de chat.
+**v1 (actual): sin registro ni login.** El chat vive directamente en la home. La identidad es una cookie de sesión anónima HttpOnly (`ls_session`, UUID) que el BFF crea en el primer mensaje; ese id es el `resourceId` de Mastra y la clave de aislamiento de la conversación (`threadId = "chat-" + sessionId`, una conversación por sesión). Decisión registrada en `docs/plans/2026-07-19-v1-chat-publico-sin-auth.md`.
+
+**Rate limiting (implementado)**: `frontend/src/lib/rate-limit.ts` mantiene dos ventanas deslizantes en memoria de proceso (v1: una sola instancia de FE) — por **sesión** (10 mensajes/min) y por **IP** (30 mensajes/min, más laxa porque varios usuarios legítimos pueden compartir una IP) — ambas chequeadas en `app/api/chat/stream/route.ts` antes de rutear el turno. Al superar cualquiera de las dos, `429` con header `Retry-After`. El mapa de contadores es acotado: por encima de un umbral (`SWEEP_THRESHOLD`) de claves activas dispara un barrido de entradas expiradas, para que un atacante rotando sesión/IP no lo haga crecer sin límite. Limpiar la cookie de sesión solo resetea el bucket de sesión — el de IP sigue conteniendo al abusador.
 
 **Evolución:** Auth.js v5 (next-auth beta) con estrategia JWT y adapter Prisma; `proxy.ts` (middleware de Next 16) solo verificando logged-in/out, con la autorización fina repetida en server components y route handlers (defensa en profundidad). El patrón completo está en la guía de codificación frontend §10.
 

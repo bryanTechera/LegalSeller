@@ -75,36 +75,43 @@ consulta del usuario y la dirige a la categoría correspondiente.
 
 ## 3. Implicaciones arquitectónicas
 
-Mapeo taxonomía → arquitectura de agentes (patrones de `docs/guia-arquitectura.md` §2):
+Mapeo taxonomía → arquitectura de agentes (patrones de `docs/guia-arquitectura.md` §2;
+decisión formalizada en `docs/plans/2026-07-19-arquitectura-agentes-clasificacion.md`):
 
-- **Router**: es el punto de entrada de toda consulta. Su única responsabilidad es
-  clasificar la consulta en una categoría habilitada (o rechazarla con gracia si no
-  está cubierta). En v1, con una sola subcategoría habilitada, el router puede ser
-  trivial; su implementación concreta (agente clasificador vs. selección desde el FE)
-  se decide al habilitar la segunda categoría — ver nota abajo.
-- **Categoría = agente principal (FE-facing)**: cada área del derecho (Laboral,
-  Familia, Arrendamiento y Desalojo, Relaciones de Consumo) se corresponde con un
-  agente principal con identidad fija, prompt e instrucciones propias del área.
-- **Subcategoría = sub-agente especialista** (patrón Networks): cada tipo de consulta
-  (Despido, Sucesiones, Desalojo ley 14219, …) es un sub-agente experto en su corpus
-  normativo específico, que devuelve datos estructurados y citas al agente principal.
-  El corpus documental se etiqueta/particiona por subcategoría para que cada
-  sub-agente recupere solo de su ámbito.
-- **División de responsabilidades**: router clasifica; agente principal de categoría
-  conduce la conversación, delega y compone la respuesta con citas; sub-agente de
-  subcategoría recupera y estructura evidencia de su corpus. Ninguna capa invade la
+- **Router**: no es un agente separado ni una selección hecha por el frontend — el
+  ruteo vive en el **BFF**, que lee `Conversation.categoria` (persistida en Prisma) y,
+  si ya está asignada, llama directo al agente de esa categoría. Sin clasificación
+  todavía, corre el **receptor global conversacional** (`recepcion`, memoria
+  `readOnly`), único clasificador de todo el universo — no uno por categoría.
+  Mecanismo completo en `guia-arquitectura.md` §2.1/§3.2 y en el spec §2-§3.
+- **Categoría = agente principal (FE-invisible)**: cada área del derecho habilitada
+  (Laboral, Familia, Arrendamiento y Desalojo, Relaciones de Consumo) se corresponde
+  con un agente principal con identidad fija, dueño de la conversación completa y del
+  funnel de venta (spec §4, §6) — nunca los sub-agentes.
+- **Subcategoría = dato acumulativo del caso, no estado de ruteo**: se registra en
+  `Caso.subcategorias` y parametriza el filtro de retrieval (`buscar-documentos` con
+  WHERE por categoría/subcategoría sobre el corpus particionado), pero nunca dispara
+  un salto a otro agente. El **sub-agente especialista por subcategoría** (patrón
+  Networks) descrito originalmente acá queda como **evolución opcional**: se promueve
+  solo cuando las evals muestren que el prompt del agente de categoría degrada al
+  discriminar entre las subcategorías de su área (spec §4, §9) — no como paso
+  obligado de escalado.
+- **División de responsabilidades**: el receptor clasifica (nivel 1, categoría) y
+  capta contacto en el camino fuera-de-cobertura; el agente de categoría conduce la
+  conversación completa, resuelve el nivel 2 (subcategoría) colapsado dentro de sí
+  mismo, recupera evidencia con cita y capta el caso. Ninguna capa invade la
   responsabilidad de otra.
-- **Escalar = agregar, no modificar**: habilitar una subcategoría nueva debe consistir
-  en agregar un sub-agente + su corpus (y, si es la primera de su área, el agente
-  principal de la categoría), sin tocar los agentes existentes. Ese es el criterio de
-  éxito del diseño.
+- **Escalar = agregar, no modificar**: habilitar una categoría o subcategoría nueva es
+  agregar su carpeta bajo `backend/src/mastra/dominios/` + su entrada en el registry
+  (`registry.ts`), sin tocar los agentes existentes. Ese es el criterio de éxito del
+  diseño (spec §5).
 
-> **Nota — tensión a resolver**: `guia-arquitectura.md` §2.1 dice hoy "el frontend
-> elige el agente y el backend no rutea entre agentes principales". El diagrama del
-> dominio pone un ROUTER delante de las categorías. En v1 no hay conflicto (una sola
-> categoría). Antes de habilitar la segunda categoría hay que decidir dónde vive el
-> ruteo (clasificador en backend vs. selección explícita en la UI) y actualizar la
-> guía de arquitectura en consecuencia.
+La tensión que existía entre "el frontend elige el agente" y el diagrama de un router
+delante de las categorías queda **cerrada**: el ruteo es responsabilidad exclusiva del
+BFF, con la categoría persistida como fuente de verdad y el receptor global como único
+punto de clasificación conversacional — nunca un router por categoría ni una selección
+hecha en la UI. Decisión registrada en
+`docs/plans/2026-07-19-arquitectura-agentes-clasificacion.md`.
 
 ## 4. Casos con tratamiento especial
 
