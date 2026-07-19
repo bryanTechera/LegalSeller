@@ -57,3 +57,70 @@ enum ProcessingStatus {
   READY
   FAILED
 }
+
+/// Business-side conversation record: routing state for the BFF. The message
+/// history itself lives in Mastra storage (thread) — this row only pins the
+/// conversation to a category (spec §6).
+model Conversation {
+  id            String    @id @default(cuid())
+  sessionId     String    @unique
+  threadId      String    @unique
+  categoria     String?
+  clasificadaEn DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  caso Caso?
+}
+
+/// The lead — THE deliverable of the system (vision §5). Built incrementally.
+model Caso {
+  id               String      @id @default(cuid())
+  conversationId   String      @unique
+  categoria        String?
+  subcategorias    String[]    @default([])
+  resumen          Json?
+  contactoNombre   String?
+  contactoTelefono String?
+  contactoEmail    String?
+  estado           CasoEstado  @default(EN_CONVERSACION)
+  origen           CasoOrigen  @default(DOMINIO)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  eventos      CasoEvento[]
+
+  @@index([estado, updatedAt(sort: Desc)])
+}
+
+/// Append-only audit trail for the human team that classifies and derives.
+model CasoEvento {
+  id        String         @id @default(cuid())
+  casoId    String
+  tipo      CasoEventoTipo
+  payload   Json
+  createdAt DateTime       @default(now())
+
+  caso Caso @relation(fields: [casoId], references: [id], onDelete: Cascade)
+
+  @@index([casoId, createdAt])
+}
+
+enum CasoEstado {
+  EN_CONVERSACION
+  CAPTADO
+  FUERA_DE_COBERTURA
+}
+
+enum CasoOrigen {
+  DOMINIO
+  FUERA_DE_COBERTURA
+}
+
+enum CasoEventoTipo {
+  CLASIFICACION
+  CORRECCION
+  REGISTRO_DATO
+  CONTACTO
+}
