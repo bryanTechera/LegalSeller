@@ -43,13 +43,18 @@
   margin-top: var(--space-4);
 }
 
+.suggestionsLabel {
+  font-size: var(--text-sm);
+  color: var(--ink-500);
+  margin-top: var(--space-2);
+}
+
 .suggestions {
   list-style: none;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-3);
   width: 100%;
-  margin-top: var(--space-3);
 }
 
 @media (max-width: 540px) {
@@ -262,6 +267,10 @@
 
   .hero > *:nth-child(5) {
     animation-delay: 0.2s;
+  }
+
+  .hero > *:nth-child(6) {
+    animation-delay: 0.25s;
   }
 
   .thinking {

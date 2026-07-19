@@ -12,14 +12,15 @@ import styles from "./ChatPanel.module.css";
 const MAX_MESSAGE_LENGTH = 4000;
 
 /**
- * Preguntas de ejemplo por categoría, en orden de volumen esperado de
- * consultas (ver docs/plans/2026-07-19-analisis-referencia-alex-ai.md §3).
+ * Preguntas de ejemplo dentro del alcance habilitado de v1 (solo
+ * Laboral → Despido, ver docs/dominio-consultas.md §2). El eyebrow es el
+ * subtema del despido; al habilitar más categorías vuelve a ser la categoría.
  */
 const SUGGESTED_QUESTIONS = [
-  { category: "Laboral", question: "¿Me pueden despedir estando con certificado médico?" },
-  { category: "Alquileres", question: "¿Qué pasa si este mes no llego a pagar el alquiler?" },
-  { category: "Consumo", question: "¿Cómo reclamo por un producto fallado?" },
-  { category: "Familia", question: "¿Cómo se pide la tenencia compartida de los hijos?" },
+  { topic: "Indemnización", question: "¿Cuánto me corresponde si me despiden sin causa?" },
+  { topic: "Certificación médica", question: "¿Me pueden despedir estando certificado?" },
+  { topic: "Embarazo", question: "¿Pueden despedirme estando embarazada?" },
+  { topic: "Plazos", question: "¿Cuánto tiempo tengo para reclamar un despido?" },
 ];
 
 export function ChatPanel() {
@@ -92,11 +93,12 @@ export function ChatPanel() {
           <h2 className={styles.heroTitle}>¿Qué necesitás resolver hoy?</h2>
           <p className={styles.heroSubtitle}>Orientación legal en segundos, siempre con la fuente citada.</p>
           {composer}
+          <p className={styles.suggestionsLabel}>Empezamos por despidos; más temas en camino.</p>
           <ul className={styles.suggestions}>
-            {SUGGESTED_QUESTIONS.map(({ category, question }) => (
-              <li key={category}>
+            {SUGGESTED_QUESTIONS.map(({ topic, question }) => (
+              <li key={topic}>
                 <button type="button" className={styles.suggestion} onClick={() => void sendMessage(question)}>
-                  <span className={styles.suggestionCategory}>{category}</span>
+                  <span className={styles.suggestionCategory}>{topic}</span>
                   <span className={styles.suggestionText}>{question}</span>
                 </button>
               </li>
