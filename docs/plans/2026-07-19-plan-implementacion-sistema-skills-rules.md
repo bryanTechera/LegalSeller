@@ -38,6 +38,8 @@ backend/src/mastra/
 │     ├─ types.ts                     (CREATE — SkillToolDefinition)
 │     ├─ index.ts                     (CREATE — TOOL_SKILLS + crearSkillTools)
 │     └─ index.test.ts                (CREATE)
+├─ rules/index.test.ts                (CREATE)
+├─ skills/index.test.ts               (CREATE)
 ├─ dominios/
 │  ├─ comunes/rules/identidad-jurco.ts        (CREATE)
 │  ├─ comunes/rules/captacion-caso.ts         (CREATE)
@@ -52,9 +54,11 @@ backend/src/mastra/
 │  ├─ laboral/tool-skills/proceso-derivacion.ts (CREATE)
 │  ├─ laboral/instructions.ts                 (MODIFY — compositor)
 │  └─ laboral/index.ts                        (MODIFY — buildTools + skill tools)
-└─ src/test/
-   ├─ fixtures/instructions-pre-migracion.ts  (CREATE — builders congelados)
-   └─ instructions-migracion.test.ts          (CREATE — gate byte-igualdad)
+└─ (nada más cambia bajo mastra/)
+
+backend/src/test/
+├─ fixtures/instructions-pre-migracion.ts     (CREATE — builders congelados)
+└─ instructions-migracion.test.ts             (CREATE — gate byte-igualdad)
 
 .claude/rules/{rules-and-skills-taxonomy,prompt-assembly,agent-prompting,eval-design}.md (CREATE)
 .claude/skills/procesar-documento-legal/SKILL.md (CREATE)
@@ -85,8 +89,8 @@ Congela los builders actuales ANTES de tocar nada. El test compara fixture vs bu
 `backend/src/test/fixtures/instructions-pre-migracion.ts` — los strings se copian byte a byte de `backend/src/mastra/common/prompt-stages.ts`, `backend/src/mastra/dominios/recepcion/instructions.ts` y `backend/src/mastra/dominios/laboral/instructions.ts` tal como están HOY en la rama:
 
 ```typescript
-import type { ReadOnlyState } from "../../models/index.js";
 import { CATEGORIAS, categoriasHabilitadas, subcategoriasHabilitadas } from "../../mastra/dominios/registry.js";
+import type { ReadOnlyState } from "../../models/index.js";
 
 /**
  * Frozen byte-exact copies of the pre-migration prompt builders (spec §4.5).
@@ -260,9 +264,10 @@ git commit -m "test: congelar prompts pre-migración como gate de byte-igualdad"
 `backend/src/mastra/common/activation-registry.test.ts`:
 
 ```typescript
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { ActivationRegistry, type RegistryItem } from "./activation-registry.js";
+import { fallbackLogger } from "./logger.js";
 
 const contenido = (texto: string): RegistryItem["fn"] => () => texto;
 const soloPara = (agente: string, texto: string): RegistryItem["fn"] =>
@@ -299,18 +304,29 @@ describe("ActivationRegistry", () => {
     const registry = new ActivationRegistry("test", [
       { id: "rota", critical: true, fn: () => { throw new Error("boom"); } },
     ]);
-    expect(() => registry.execute(null, "laboral")).toThrowError(/rota/);
+    // toThrow, no toThrowError: el alias está deprecado en vitest 4 y
+    // @typescript-eslint/no-deprecated (strictTypeChecked) lo rechaza.
+    expect(() => registry.execute(null, "laboral")).toThrow(/rota/);
   });
 
-  it("un item no crítico que tira se omite y queda observable en failedIds", () => {
-    const registry = new ActivationRegistry("test", [
-      { id: "fragil", fn: () => { throw new Error("boom"); } },
-      { id: "sana", fn: contenido("<sana/>") },
-    ]);
-    const result = registry.execute(null, "laboral");
-    expect(result.inicio).toBe("<sana/>");
-    expect(result.failedIds).toEqual(["fragil"]);
-    expect(result.activatedIds).toEqual(["sana"]);
+  it("un item no crítico que tira se omite, queda en failedIds y se loggea", () => {
+    const warnSpy = vi.spyOn(fallbackLogger, "warn").mockImplementation(() => undefined);
+    try {
+      const registry = new ActivationRegistry("test", [
+        { id: "fragil", fn: () => { throw new Error("boom"); } },
+        { id: "sana", fn: contenido("<sana/>") },
+      ]);
+      const result = registry.execute(null, "laboral");
+      expect(result.inicio).toBe("<sana/>");
+      expect(result.failedIds).toEqual(["fragil"]);
+      expect(result.activatedIds).toEqual(["sana"]);
+      expect(warnSpy).toHaveBeenCalledWith(
+        "Item de registry falló; se omite del prompt",
+        expect.objectContaining({ registry: "test", itemId: "fragil" }),
+      );
+    } finally {
+      warnSpy.mockRestore();
+    }
   });
 
   it("items que devuelven null no aparecen en activatedIds ni failedIds", () => {
@@ -380,10 +396,14 @@ export class ActivationRegistry {
           throw new Error(`Item crítico "${item.id}" del registry "${this.nombre}" falló al construir el prompt: ${detalle}`);
         }
         failedIds.push(item.id);
-        fallbackLogger.warn(
-          { registry: this.nombre, itemId: item.id, agentId, error: error instanceof Error ? error.message : String(error) },
-          "Item de registry falló; se omite del prompt",
-        );
+        // PinoLogger de @mastra/loggers tipa warn(message, args) — mensaje PRIMERO
+        // (a diferencia de pino nativo; ver logger.test.ts:100 para el idioma del repo).
+        fallbackLogger.warn("Item de registry falló; se omite del prompt", {
+          registry: this.nombre,
+          itemId: item.id,
+          agentId,
+          error: error instanceof Error ? error.message : String(error),
+        });
         continue;
       }
       if (content === null) continue;
@@ -818,7 +838,7 @@ export function buildLaboralInstructions(readOnly: ReadOnlyState | null): string
 rm backend/src/mastra/common/prompt-stages.ts
 ```
 
-Verificar que nadie más lo importa: `grep -rn "prompt-stages" backend/src --include="*.ts"` → sin resultados.
+Verificar que nadie más lo importa: `grep -rn 'common/prompt-stages' backend/src --include="*.ts"` → sin resultados. (El patrón incluye la ruta a propósito: el docstring del fixture de Task 1 menciona "prompt-stages.ts" en un comentario y no debe contar como match.)
 
 - [ ] **Step 4: Correr el gate y los tests de instructions existentes**
 
@@ -951,10 +971,17 @@ import type { SkillToolDefinition } from "./types.js";
 
 const TOOL_SKILLS: readonly SkillToolDefinition[] = [procesoDerivacionSkillDef];
 
-const outputSchema = z.object({
-  status: z.enum(["ok"]),
-  contenido: z.string(),
-});
+/**
+ * Contract per spec §4.6 / repo rule: a tool never throws in execute — it
+ * degrades to { status: "error", mensaje }. With the current seeds the error
+ * branch is unreachable by construction (content is a pre-resolved constant),
+ * but the schema keeps the contract explicit for the first tool skill that
+ * resolves dynamic content.
+ */
+const outputSchema = z.union([
+  z.object({ status: z.literal("ok"), contenido: z.string() }),
+  z.object({ status: z.literal("error"), mensaje: z.string() }),
+]);
 
 /**
  * Materializes the active tool-skill definitions for an agent as Mastra tools
@@ -1082,8 +1109,9 @@ cambia la ley y esquiva la regla "SIEMPRE citar fuente".
 ```
 
 4. **Rule File Template** — el patrón real del proyecto (CONTENT map + función `*Rule`, con el ejemplo de `identidad-jurco.ts`), registración en `src/mastra/rules/index.ts`, flag `critical`, `posicion: "final"`.
-5. **Shared Content Quality Guidelines** — portar de colar (mismos títulos de sección) adaptando ejemplos a legal: CRITICAL avoid the word "skill" (tabla igual); No emojis (tabla igual); Language: Rioplatense Spanish (igual, sin la terminología ANEP/MCN — reemplazar por "terminología legal uruguaya"); Content Voice (tabla adaptada: el contenido es conocimiento PARA el agente vendedor, no guiones literales para el consultante); Goldilocks Principle (ejemplo legal: rígido "Paso 1: preguntá la fecha del despido. Paso 2: ..." / vago "Tené en cuenta el contexto del caso" / heurística "Relevá los datos que un abogado necesita para evaluar un despido — antigüedad, salario, forma — a medida que la conversación los toque, sin interrogar"); Motivate Instructions (ejemplo: "NUNCA prometas plazos de contacto — no están definidos y una promesa incumplida destruye la confianza que sostiene la conversión"); Minimal but Sufficient + One idea = one time (igual); Example Quality (2-3 concretos); **Avoid Time-Sensitive Information adaptada**: lo que vence (leyes, montos, plazos normativos) vive en el RAG re-ingestable, nunca en skills — una skill solo puede referir el concepto.
-6. **Checklist for All Injected Content** — la de colar, con el item nuevo: "[ ] Sin citas normativas embebidas (eso va al RAG)".
+5. **Convención de tags XML** — cada rule/skill lleva su propio tag XML en español dentro del CONTENT, sin wrapper de capa (spec §4.3); lista de tags canónicos del proyecto (`<personalidad>`, `<rol>`, `<reglas>`, `<mision>`, `<caso_sensible>`, `<captacion>`, `<subcategorias>`, `<categorias_habilitadas>`, `<temas_aun_no_cubiertos>`, `<caso_recabado>`, `<contexto_usuario>`, `<proceso_derivacion>`) y regla anti-colisión con IDs de tools; detalle extendido en `agent-prompting.md` § XML Tags.
+6. **Shared Content Quality Guidelines** — portar de colar (mismos títulos de sección) adaptando ejemplos a legal: CRITICAL avoid the word "skill" (tabla igual); No emojis (tabla igual); Language: Rioplatense Spanish (igual, sin la terminología ANEP/MCN — reemplazar por "terminología legal uruguaya"); Content Voice (tabla adaptada: el contenido es conocimiento PARA el agente vendedor, no guiones literales para el consultante); Goldilocks Principle (ejemplo legal: rígido "Paso 1: preguntá la fecha del despido. Paso 2: ..." / vago "Tené en cuenta el contexto del caso" / heurística "Relevá los datos que un abogado necesita para evaluar un despido — antigüedad, salario, forma — a medida que la conversación los toque, sin interrogar"); Motivate Instructions (ejemplo: "NUNCA prometas plazos de contacto — no están definidos y una promesa incumplida destruye la confianza que sostiene la conversión"); Minimal but Sufficient + One idea = one time (igual); Example Quality (2-3 concretos); **Avoid Time-Sensitive Information adaptada**: lo que vence (leyes, montos, plazos normativos) vive en el RAG re-ingestable, nunca en skills — una skill solo puede referir el concepto.
+7. **Checklist for All Injected Content** — la de colar, con el item nuevo: "[ ] Sin citas normativas embebidas (eso va al RAG)".
 
 - [ ] **Step 2: Escribir `.claude/rules/prompt-assembly.md`**
 
@@ -1302,7 +1330,7 @@ Nunca conservar dos versiones del mismo conocimiento.
   --subcategoria <subcat>`.
 - Rules/skills: patrón y registración según `.claude/rules/prompt-assembly.md`;
   calidad según la taxonomía. Orden de preferencia:
-  ELIMINAR > REESCRIBIR > CONDENSAR > REORGANIZAR > AGREGAR
+  ELIMINAR > REESCRIBIR > CONDENSAR > AGREGAR
   (la densidad sube; el tamaño total no crece).
 - Contenido inyectado nuevo o modificado: auditar contradicciones contra el prompt
   ENSAMBLADO del agente (correr buildXInstructions y leerlo), no contra la rule
@@ -1356,8 +1384,8 @@ Si la guía tiene afirmaciones que la migración volvió obsoletas (p. ej. refer
 
 - [ ] **Step 4: Verificación final del repo**
 
-Run: `cd backend && pnpm test && pnpm lint && cd .. && grep -rn "prompt-stages" --include="*.ts" backend/src | wc -l`
-Expected: tests y lint verdes; `0` referencias a prompt-stages.
+Run: `cd backend && pnpm test && pnpm lint && cd .. && grep -rn 'common/prompt-stages' --include="*.ts" backend/src | wc -l`
+Expected: tests y lint verdes; `0` imports de prompt-stages (el docstring del fixture menciona el nombre en un comentario — por eso el patrón incluye la ruta).
 
 - [ ] **Step 5: Commit**
 
