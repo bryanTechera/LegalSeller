@@ -138,13 +138,19 @@ Reglas:
 
 ## 7. Prompting
 
-- Instrucciones ensambladas por un `PromptAssembler` por stages, en orden cache-friendly: contexto estable → rules → skills → contexto volátil → directiva de estado. Solo lo volátil al final (preserva el prefijo cacheado).
+- Instrucciones ensambladas por `ActivationRegistry` sobre los registries de rules y static skills (no un `PromptAssembler` monolítico ni el `prompt-stages.ts` original, eliminado en la migración al sistema de rules/skills): orden cache-friendly rules.inicio → static skills → rules.final (recencia, ej. captación de caso) → bloques volátiles (brief del caso, nombre de usuario). Solo lo volátil al final (preserva el prefijo cacheado).
 - **Tags XML en español**: `<rol>`, `<reglas>`, `<restricciones>`, `<contexto>`, `<ejemplos>`, `<herramientas>`, `<instrucciones>`, `<verificacion>`, `<errores_comunes>`. No usar tags que colisionen con IDs de tools.
 - **Rules vs skills**: rules = restricciones de comportamiento ("NUNCA respondas sin citar la fuente"); skills = conocimiento del dominio (criterios jurídicos, heurísticas de interpretación). Rules ordenadas por prioridad de atención (primacy/recency — lo crítico al principio o al final, nunca en el medio).
 - Contrato sub-agente → supervisor: el sub-agente emite solo bloques de datos XML (`<documentos_data>`, `<citas_data>`) dentro de `<formato_salida_para_supervisor>`, sin prosa afuera; el supervisor compone con su propia voz y cita literalmente.
 - Estilo: framing positivo, incluir la motivación de cada regla, español (rioplatense si el producto lo usa), sin emojis.
 - El prompt-builder es asimétrico ante errores: con `readOnly === null` (startup/listing de Mastra) devuelve string vacío sin tirar; con `readOnly` presente re-lanza (un bug real no debe correr un agente sin system prompt).
 - Lint mecánico de prompts en pre-commit (script que detecta tags en inglés, emojis, filler) — portar el `prompting-check` del proyecto anterior.
+
+> El sistema de rules/skills (taxonomía RAG/skill/rule, registries, calidad de
+> contenido inyectado) está definido en `.claude/rules/rules-and-skills-taxonomy.md`
+> y `.claude/rules/prompt-assembly.md`. El contenido de los prompts vive en
+> `src/mastra/dominios/*/rules|static-skills|tool-skills` — no editar instructions
+> monolíticas.
 
 ## 8. Logging
 
