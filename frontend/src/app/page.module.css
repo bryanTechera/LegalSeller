@@ -11,6 +11,7 @@
   padding: var(--space-4) var(--space-6);
   background: var(--navy);
   color: var(--on-navy);
+  border-bottom: 1px solid color-mix(in srgb, var(--on-navy) 10%, transparent);
 }
 
 .wordmark {
@@ -31,6 +32,12 @@
   display: flex;
   justify-content: center;
   padding: 0 var(--space-4);
+  /* Glow radial celeste tras el hero (ice-blue de bufete, aire de SaaS). */
+  background: radial-gradient(
+    56rem 34rem at 50% 22%,
+    color-mix(in srgb, var(--accent) 9%, transparent),
+    transparent 70%
+  );
 }
 
 .footer {

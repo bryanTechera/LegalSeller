@@ -87,13 +87,16 @@ export function ChatPanel() {
     return (
       <section className={styles.panel} aria-label="Chat de consultas legales">
         <div className={styles.hero}>
+          <span className={styles.heroGhost} aria-hidden="true">
+            <BrandMark size={430} />
+          </span>
           <span className={styles.heroMark}>
             <BrandMark size={44} />
           </span>
           <h2 className={styles.heroTitle}>¿Qué necesitás resolver hoy?</h2>
           <p className={styles.heroSubtitle}>Orientación legal en segundos, siempre con la fuente citada.</p>
           {composer}
-          <p className={styles.suggestionsLabel}>Resolvé tus dudas sobre despidos:</p>
+          <p className={styles.suggestionsLabel}>Resolvé tus dudas sobre despidos</p>
           <ul className={styles.suggestions}>
             {SUGGESTED_QUESTIONS.map(({ topic, question }) => (
               <li key={topic}>

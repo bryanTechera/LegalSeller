@@ -9,13 +9,14 @@
   /* Tipografía (Poppins display / Open Sans cuerpo, cargadas en layout.tsx) */
   --font-family-base: var(--font-sans, system-ui, -apple-system, "Segoe UI", sans-serif);
   --font-family-display: var(--font-display, "Segoe UI", system-ui, sans-serif);
+  --font-family-serif: var(--font-serif, Georgia, "Times New Roman", serif);
   --text-xs: 0.8125rem; /* 13px — mínimo permitido */
   --text-sm: 0.875rem;
   --text-base: 1rem;
   --text-lg: 1.125rem;
   --text-xl: 1.375rem;
   --text-2xl: 1.75rem;
-  --text-3xl: clamp(1.7rem, 1rem + 2.4vw, 2.4rem);
+  --text-3xl: clamp(2rem, 1.2rem + 2.8vw, 2.9rem);
   --tracking-display: 0.05em;
 
   /* Tinta (escala fría, navy como tinta principal) sobre blanco frío */
@@ -48,10 +49,10 @@
   --space-4: 1rem;
   --space-6: 1.5rem;
   --space-8: 2rem;
-  --radius-sm: 2px;
-  --radius-md: 4px;
-  --radius-lg: 8px;
-  --shadow-soft: 0 1px 2px rgb(19 42 59 / 6%);
+  --radius-sm: 4px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --shadow-soft: 0 1px 2px rgb(19 42 59 / 5%), 0 4px 16px -8px rgb(19 42 59 / 8%);
   --shadow-raised: 0 10px 30px -12px rgb(19 42 59 / 22%);
 
   --line-height-base: 1.6;
