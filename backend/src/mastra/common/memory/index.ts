@@ -2,11 +2,13 @@ import { Memory } from "@mastra/memory";
 
 import { postgresStore } from "../../config/storage.js";
 
-const WORKING_MEMORY_TEMPLATE = `# Contexto del usuario
+const WORKING_MEMORY_TEMPLATE = `# Caso del usuario
 
+- Hechos y fechas relatados:
+- Subcategorías detectadas:
+- Intereses adicionales (otros temas mencionados):
+- Datos de contacto ya aportados:
 - Preferencias de respuesta:
-- Temas consultados con frecuencia:
-- Decisiones o aclaraciones previas relevantes:
 `;
 
 /**
