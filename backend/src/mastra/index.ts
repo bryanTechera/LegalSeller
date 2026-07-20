@@ -1,5 +1,6 @@
 import { Mastra } from "@mastra/core/mastra";
 import { registerApiRoute } from "@mastra/core/server";
+import { Observability, MastraStorageExporter } from "@mastra/observability";
 
 import { makeLogger } from "./common/logger.js";
 import { postgresStore } from "./config/storage.js";
@@ -13,6 +14,14 @@ export const mastra = new Mastra({
     laboralAgent,
   },
   storage: postgresStore,
+  observability: new Observability({
+    configs: {
+      default: {
+        serviceName: "legalseller-backend",
+        exporters: [new MastraStorageExporter()],
+      },
+    },
+  }),
   bundler: {
     sourcemap: true,
   },

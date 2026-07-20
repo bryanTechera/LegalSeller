@@ -9,6 +9,7 @@ interface EnvCheck {
 const ENV_CHECKS: EnvCheck[] = [
   { name: "DATABASE_URL", required: true, hint: "Postgres connection string (shared with backend)" },
   { name: "MASTRA_BASE_URL", required: false, hint: "Agents backend URL (defaults to http://localhost:4112)" },
+  { name: "REVISION_CLAVE", required: false, hint: "Clave compartida del modo revisión /revision (sin ella la feature queda apagada)" },
 ];
 
 /**
