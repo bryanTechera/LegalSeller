@@ -1,0 +1,9 @@
+# Rubros laborales — Incidencia de las horas extras en licencia, salario vacacional, aguinaldo e indemnización
+
+## Incidencia de las horas extras en otros rubros
+
+- **Aguinaldo.** De acuerdo a la ley 12.840, se deberán considerar para la base de cálculo del aguinaldo todas las horas extras abonadas en el período que comprende la liquidación.
+
+- **Licencia y salario vacacional.** El primer paso consiste en identificar todas las horas extras realizadas entre el 1.º de enero y el 31 de diciembre correspondientes al año en que se generó el derecho a la licencia. En caso de que haya trabajado una fracción de año, se considerarán las horas extras trabajadas en esta fracción. En segundo lugar, El tercer paso consiste en realizar los promedios de horas extras diarias realizadas por el trabajador. Para ello, es necesario dividir las horas extras en días hábiles entre el número de días efectivamente trabajados en el año civil o fracción en que se trabajaron las horas extras. El cuarto paso es multiplicar el número de horas extras promedio diario en cada una de las situaciones (hábiles e inhábiles), por el precio respectivo de las horas extras vigente al momento de pagar el jornal de licencia o salario vacacional.
+
+- **Indemnización por despido.** En la medida que el número de horas extras es variable, es necesario realizar los promedios diarios de horas extras. A estos efectos deberán sumarse por separado las horas extras en días hábiles y no hábiles realizadas por el trabajador, dentro del año inmediato anterior a la fecha de la terminación de la relación laboral. La cantidad resultante de ambos promedios debe multiplicarse por los precios respectivos de las horas extras a la fecha del cese de la relación laboral.

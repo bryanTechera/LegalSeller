@@ -13,12 +13,15 @@ export interface ChatMessage {
 interface ChatStreamState {
   messages: ChatMessage[];
   isStreaming: boolean;
+  isResetting: boolean;
   error: string | null;
   sendMessage: (text: string) => Promise<void>;
+  startNewChat: () => Promise<void>;
   stop: () => void;
 }
 
 const GENERIC_ERROR = "No pudimos obtener una respuesta. Intentá de nuevo en unos instantes.";
+const RESET_ERROR = "No pudimos empezar un chat nuevo. Intentá de nuevo.";
 
 /**
  * Chat state + SSE streaming against the BFF proxy (/api/chat/stream).
@@ -28,6 +31,7 @@ const GENERIC_ERROR = "No pudimos obtener una respuesta. Intentá de nuevo en un
 export function useChatStream(): ChatStreamState {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -35,6 +39,25 @@ export function useChatStream(): ChatStreamState {
     abortRef.current?.abort();
     abortRef.current = null;
     setIsStreaming(false);
+  }, []);
+
+  const startNewChat = useCallback(async () => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setIsStreaming(false);
+    setIsResetting(true);
+    try {
+      const response = await fetch("/api/chat/reset", { method: "POST" });
+      if (!response.ok) throw new Error(RESET_ERROR);
+      // Only clear after the server rotated the session: clearing on failure
+      // would show a "new" chat that silently continues the old thread.
+      setMessages([]);
+      setError(null);
+    } catch {
+      setError(RESET_ERROR);
+    } finally {
+      setIsResetting(false);
+    }
   }, []);
 
   const sendMessage = useCallback(async (text: string) => {
@@ -100,5 +123,5 @@ export function useChatStream(): ChatStreamState {
     }
   }, []);
 
-  return { messages, isStreaming, error, sendMessage, stop };
+  return { messages, isStreaming, isResetting, error, sendMessage, startNewChat, stop };
 }

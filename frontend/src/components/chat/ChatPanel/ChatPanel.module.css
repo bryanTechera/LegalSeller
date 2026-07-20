@@ -129,6 +129,43 @@
 
 /* --- Conversación --- */
 
+.panelHeader {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--space-3) var(--space-1) 0;
+}
+
+.newChatButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-family: var(--font-family-display);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ink-500);
+  background: transparent;
+  border: 1px solid var(--ink-100);
+  border-radius: 999px;
+  padding: 0.375rem 0.875rem;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.newChatButton:hover:not(:disabled) {
+  color: var(--navy);
+  border-color: var(--accent);
+  background: var(--surface);
+}
+
+.newChatButton:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 .messages {
   flex: 1;
   min-height: 0;

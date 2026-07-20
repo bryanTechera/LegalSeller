@@ -24,7 +24,7 @@ const SUGGESTED_QUESTIONS = [
 ];
 
 export function ChatPanel() {
-  const { messages, isStreaming, error, sendMessage, stop } = useChatStream();
+  const { messages, isStreaming, isResetting, error, sendMessage, startNewChat, stop } = useChatStream();
   const [draft, setDraft] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -41,7 +41,7 @@ export function ChatPanel() {
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    if (isStreaming || !draft.trim()) return;
+    if (isStreaming || isResetting || !draft.trim()) return;
     void sendMessage(draft);
     setDraft("");
   };
@@ -116,6 +116,28 @@ export function ChatPanel() {
 
   return (
     <section className={styles.panel} aria-label="Chat de consultas legales">
+      <header className={styles.panelHeader}>
+        <button
+          type="button"
+          className={styles.newChatButton}
+          onClick={() => void startNewChat()}
+          disabled={isResetting}
+        >
+          <svg
+            viewBox="0 0 16 16"
+            width="13"
+            height="13"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
+            <path d="M8 3v10M3 8h10" />
+          </svg>
+          Nuevo chat
+        </button>
+      </header>
       <div ref={scrollRef} className={styles.messages} aria-live="polite">
         {messages.map((message) => (
           <article
