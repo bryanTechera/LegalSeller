@@ -50,6 +50,15 @@ describe("formatearSesionMarkdown", () => {
     expect(md).toContain("En general muy robótico");
   });
 
+  it("una nota anclada a un messageId ausente de la timeline no se pierde", () => {
+    const huerfana: NotaConRespuestas[] = [
+      { id: "n9", messageId: "m-inexistente", citaTexto: null, autor: "Dra. García", texto: "Nota huérfana", estado: "ABIERTA", createdAt: "2026-07-20T11:10:00.000Z", respuestas: [] },
+    ];
+    const md = formatearSesionMarkdown({ sesion, timeline, notas: huerfana });
+    expect(md).toContain("## Notas ancladas a mensajes no reconstruidos");
+    expect(md).toContain("Nota huérfana");
+  });
+
   it("trunca payloads de tools gigantes con un marcador explícito", () => {
     const gigante = { chunks: "x".repeat(10_000) };
     const conGigante = formatearSesionMarkdown({

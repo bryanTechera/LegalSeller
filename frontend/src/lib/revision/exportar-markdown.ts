@@ -47,12 +47,15 @@ export function formatearSesionMarkdown(params: {
     "## Timeline",
   ];
 
+  const notasAncladasRenderizadas = new Set<string>();
+
   for (const item of timeline) {
     if (item.tipo === "mensaje") {
       const rol = item.rol === "user" ? "CONSULTANTE (experto probando)" : "ASISTENTE";
       secciones.push(`### [${rol}] ${item.fecha} — messageId: ${item.id}`, "", item.texto, "");
       for (const nota of notasPorMensaje.get(item.id) ?? []) {
         secciones.push(formatearNota(nota), "");
+        notasAncladasRenderizadas.add(nota.id);
       }
     } else if (item.tipo === "turno-agente") {
       secciones.push(`_agente en turno: ${item.agente}_`, "");
@@ -69,6 +72,12 @@ export function formatearSesionMarkdown(params: {
     } else {
       secciones.push(`_generación: ${item.modelo ?? "?"} · ${String(item.tokensEntrada)} in / ${String(item.tokensSalida)} out_`, "");
     }
+  }
+
+  const huerfanas = notas.filter((nota) => nota.messageId && !notasAncladasRenderizadas.has(nota.id));
+  if (huerfanas.length > 0) {
+    secciones.push("## Notas ancladas a mensajes no reconstruidos");
+    for (const nota of huerfanas) secciones.push(formatearNota(nota), "");
   }
 
   secciones.push("## Notas generales");
