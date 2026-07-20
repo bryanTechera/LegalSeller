@@ -18,7 +18,7 @@ Detalle completo en `docs/guia-arquitectura.md`.
 | `docs/vision-producto.md` | Qué problema resuelve el sistema: funnel escuchar → evacuar dudas → captar caso → derivar a abogado; métricas e implicaciones técnicas |
 | `docs/lineamientos-generales.md` | Stack, idiomas/naming, principios, git workflow, env vars |
 | `docs/guia-arquitectura.md` | Servicios, RAG, canales de datos, deployment |
-| `docs/dominio-consultas.md` | Taxonomía de categorías de consulta y roadmap — define agentes/sub-agentes y división de responsabilidades. **v1: solo Laboral → Despido** |
+| `docs/dominio-consultas.md` | Taxonomía de categorías de consulta y roadmap — define agentes/sub-agentes y división de responsabilidades. **Habilitado: Laboral → Despido + Rubros laborales** |
 | `docs/guia-codificacion-backend.md` | Patrones Mastra: agentes, tools, prompting, evals, gotchas |
 | `docs/guia-codificacion-frontend.md` | Patrones Next.js: RSC, route handlers, SWR/Zustand, testing |
 | `docs/plans/` | Specs y planes de implementación fechados (registro de decisiones) |

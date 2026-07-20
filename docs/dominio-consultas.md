@@ -31,7 +31,7 @@ consulta del usuario y la dirige a la categoría correspondiente.
 | Subcategoría | Estado |
 |---|---|
 | **Despido** | ✅ **v1 — punto de partida** |
-| Rubros laborales | Pendiente |
+| **Rubros laborales** | ✅ **habilitada 2026-07-19** (material del equipo legal: jornada/horas extras, descansos/licencia/salario vacacional/aguinaldo, salario, trabajo nocturno) |
 | Licencias especiales | Pendiente |
 | Accidentes laborales | Pendiente |
 
