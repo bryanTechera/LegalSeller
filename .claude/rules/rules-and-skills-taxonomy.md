@@ -39,7 +39,7 @@ Usá estos ejemplos para clasificar contenido:
 
 ## Rule File Template
 
-Cada rule es un archivo `.ts` con un `CONTENT: Partial<Record<AgentId, string>>` y una función exportada `<id>Rule(readOnly, agentId) => CONTENT[agentId] ?? null`. Ejemplo real (`src/mastra/dominios/comunes/rules/identidad-jurco.ts`):
+Cada rule es un archivo `.ts` con un `CONTENT: Partial<Record<AgentId, string>>` y una función exportada `<id>Rule(readOnly, agentId) => CONTENT[agentId] ?? null`. Ejemplo real (`src/mastra/dominios/comunes/rules/identidad-jurco.ts`; contenido reformateado a varias líneas para legibilidad — el archivo real tiene el string de `<personalidad>` en una sola línea):
 
 ```typescript
 import type { AgentId, ReadOnlyState } from "../../../../models/index.js";
@@ -136,7 +136,7 @@ Tags canónicos del proyecto:
 | `<proceso_derivacion>` | Qué pasa después de captar el caso | tool skill `proceso-derivacion` |
 | `<caso_recabado>` · `<contexto_usuario>` | Bloques volátiles (brief / nombre del usuario) | `instructions.ts` (no vienen de una rule) |
 
-**Anti-colisión con IDs de tools**: un tag XML NUNCA debe coincidir con el ID de una tool (`buscar-documentos`, `registrar-caso`, `corregir-clasificacion`, `guia-<id>`). El LLM puede leer un tag que se llama igual que una tool como una referencia a esa tool e intentar invocarla — la misma familia de bug que la regla "avoid the word skill" (abajo).
+**Anti-colisión con IDs de tools**: un tag XML NUNCA debe coincidir con el ID de una tool (`buscar-documentos`, `registrar-caso`, `asignar-clasificacion`, `corregir-clasificacion`, `guia-<id>`). El LLM puede leer un tag que se llama igual que una tool como una referencia a esa tool e intentar invocarla — la misma familia de bug que la regla "avoid the word skill" (abajo).
 
 Detalle extendido de framing y uso de tags en `agent-prompting.md` § XML Tags.
 

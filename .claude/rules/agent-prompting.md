@@ -387,7 +387,7 @@ Al presentar opciones, dá 2-3 máximo con un default recomendado. Evitá la par
 
 ## Terminology Consistency
 
-Usá términos consistentes en todas las rules y skills. La terminología inconsistente confunde tanto al modelo como al usuario. (Ver también el glosario de práctica en `rules-and-skills-taxonomy.md`.)
+Usá términos consistentes en todas las rules y skills. La terminología inconsistente confunde tanto al modelo como al usuario. El glosario de práctica es la tabla de abajo.
 
 | Concepto | Usar siempre | Nunca |
 |---|---|---|

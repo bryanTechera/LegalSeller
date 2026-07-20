@@ -48,4 +48,8 @@
 - **Byte-igualdad como técnica**: para refactors de estructura de prompt sin cambio
   de contenido, congelar el prompt actual en un fixture y asertar igualdad exacta
   (ver src/test/instructions-migracion.test.ts). Para cambios de contenido, el gate
-  es `pnpm evals`.
+  es `pnpm evals`. El gate de la era de migración (`instructions-migracion.test.ts`
+  + su fixture) es transitorio: se elimina —no se "arregla"— en el primer cambio
+  deliberado de contenido (ej. la skill `procesar-documento-legal` reescribiendo
+  una rule o skill); de ahí en más, todo cambio de contenido se valida con
+  `pnpm evals`.

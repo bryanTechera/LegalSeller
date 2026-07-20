@@ -5,8 +5,10 @@ import { staticSkillsRegistry } from "../../skills/index.js";
 /**
  * Global receptor: single conversational classifier (spec §3). Thin composer
  * over the registries (spec 2026-07-19-sistema-skills-rules §4.4): rules
- * inicio → static skills → rules final → volatile blocks. Byte-identical to
- * the pre-migration prompt (gate: src/test/instructions-migracion.test.ts).
+ * inicio → static skills inicio → static skills final → rules final →
+ * volatile blocks. Knowledge-final precedes rules-final so behavioral
+ * directives keep recency. Byte-identical to the pre-migration prompt
+ * (gate: src/test/instructions-migracion.test.ts).
  */
 export function buildRecepcionInstructions(readOnly: ReadOnlyState | null): string {
   const rules = rulesRegistry.execute(readOnly, "recepcion");
@@ -16,6 +18,6 @@ export function buildRecepcionInstructions(readOnly: ReadOnlyState | null): stri
     ? `\n\n<contexto_usuario>\nEl usuario se llama ${readOnly.userName}. Tratalo de vos.\n</contexto_usuario>`
     : "";
 
-  const bloques = [rules.inicio, skills.inicio, rules.final].filter((b) => b !== "");
+  const bloques = [rules.inicio, skills.inicio, skills.final, rules.final].filter((b) => b !== "");
   return `${bloques.join("\n\n")}${userBlock}`;
 }
