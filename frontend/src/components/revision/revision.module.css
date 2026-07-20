@@ -1,0 +1,23 @@
+.shell { max-width: 960px; margin: 0 auto; padding: 24px 16px 48px; }
+.encabezado { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+.titulo { font-size: 1.25rem; font-weight: 600; }
+.subtitulo { color: var(--ink-500, #667); font-size: 0.9rem; }
+
+.formAcceso { display: grid; gap: 12px; max-width: 380px; margin: 48px auto; }
+.campo { display: grid; gap: 4px; }
+.campo label { font-size: 0.85rem; font-weight: 500; }
+.campo input { padding: 10px 12px; border: 1px solid var(--ink-100, #d5d5dd); border-radius: 8px; font: inherit; }
+.botonPrimario { padding: 10px 16px; border: none; border-radius: 8px; background: var(--accent, #1f2937); color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+.botonPrimario:disabled { opacity: 0.5; cursor: default; }
+.botonSecundario { padding: 8px 12px; border: 1px solid var(--ink-100, #d5d5dd); border-radius: 8px; background: transparent; font: inherit; cursor: pointer; }
+.error { color: #b91c1c; font-size: 0.9rem; }
+
+.listado { display: grid; gap: 10px; }
+.tarjetaSesion { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px; border: 1px solid var(--ink-100, #d5d5dd); border-radius: 10px; background: transparent; font: inherit; text-align: left; cursor: pointer; width: 100%; }
+.tarjetaSesion:hover { border-color: var(--accent, #1f2937); }
+.tarjetaMeta { color: var(--ink-500, #667); font-size: 0.8rem; }
+.badges { display: flex; gap: 6px; flex-shrink: 0; }
+.badgeAbierta { background: #fef3c7; color: #92400e; border-radius: 999px; padding: 2px 10px; font-size: 0.75rem; }
+.badgeRespondida { background: #dbeafe; color: #1e40af; border-radius: 999px; padding: 2px 10px; font-size: 0.75rem; }
+.filaNueva { display: flex; gap: 8px; margin-bottom: 18px; }
+.filaNueva input { flex: 1; padding: 10px 12px; border: 1px solid var(--ink-100, #d5d5dd); border-radius: 8px; font: inherit; }
