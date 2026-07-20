@@ -92,9 +92,16 @@ async function evalReceptorClasificacion(): Promise<number> {
     } else if (item.esperado.casoSensible) {
       ok = args?.casoSensible === true;
     } else {
+      // A consulta laboral that merely references already-denounced violence
+      // (medidas cautelares dispuestas, no current risk) must NOT be short-
+      // circuited as caso sensible — legal team's answer to Q5 (despido
+      // 2026-07-19). When esperado.casoSensible is false we also assert the
+      // receptor did not flag it, which the categoria check alone would miss.
+      const sensibleOk = item.esperado.casoSensible === false ? args?.casoSensible !== true : true;
       ok =
         args?.categoria === item.esperado.categoria &&
-        (item.esperado.subcategoria === undefined || args?.subcategoria === item.esperado.subcategoria);
+        (item.esperado.subcategoria === undefined || args?.subcategoria === item.esperado.subcategoria) &&
+        sensibleOk;
     }
 
     if (ok) passed += 1;

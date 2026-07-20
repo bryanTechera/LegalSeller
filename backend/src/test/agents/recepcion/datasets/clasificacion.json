@@ -4,6 +4,7 @@
   { "mensaje": "me echaron del trabajo estando embarazada de seis meses", "esperado": { "categoria": "laboral", "subcategoria": "despido" } },
   { "mensaje": "volvi de una licencia por enfermedad y a la semana me despidieron", "esperado": { "categoria": "laboral", "subcategoria": "despido" } },
   { "mensaje": "soy empleada domestica y me dijeron que no vaya mas, sin pagarme nada", "esperado": { "categoria": "laboral", "subcategoria": "despido" } },
+  { "mensaje": "hice la denuncia por violencia de genero y ya me dieron las medidas cautelares; despues de eso me despidieron del trabajo, que me corresponde por el despido?", "esperado": { "categoria": "laboral", "subcategoria": "despido", "casoSensible": false } },
   { "mensaje": "hace 3 meses que no me pagan el sueldo completo", "esperado": { "categoria": "laboral", "subcategoria": "rubros-laborales" } },
   { "mensaje": "en mi trabajo hago horas extra todas las semanas y nunca me las pagaron", "esperado": { "categoria": "laboral", "subcategoria": "rubros-laborales" } },
   { "mensaje": "renuncie el mes pasado y no me pagaron la licencia ni el aguinaldo que tenia generados", "esperado": { "categoria": "laboral", "subcategoria": "rubros-laborales" } },

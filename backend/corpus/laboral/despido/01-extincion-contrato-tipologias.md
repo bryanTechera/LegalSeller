@@ -8,7 +8,7 @@ Plá Rodríguez recuerda que el contrato de trabajo puede prever de antemano el 
 
 ## 2) Contrato de duración determinada
 
-El contrato puede también tener un momento de extinción acordado entre las partes al momento de suscribirlo, y en estos casos ya no estaremos en presencia de un contrato por tiempo indefinido, sino ante un contrato de duración determinada. La característica de los contratos temporales es que su extinción es pactada de antemano (esa extinción puede estar indicada por una fecha cierta o condicionada por el cumplimiento de una tarea o una obra) y la consecuencia principal es que el contrato pierde las garantías de una mayor o menor estabilidad. La extinción natural del contrato temporal se produce por vencimiento del plazo pactado por las partes o por cumplimiento de la obra acordada. Es criterio firme que al no existir propiamente un despido.
+El contrato puede también tener un momento de extinción acordado entre las partes al momento de suscribirlo, y en estos casos ya no estaremos en presencia de un contrato por tiempo indefinido, sino ante un contrato de duración determinada. La característica de los contratos temporales es que su extinción es pactada de antemano (esa extinción puede estar indicada por una fecha cierta o condicionada por el cumplimiento de una tarea o una obra) y la consecuencia principal es que el contrato pierde las garantías de una mayor o menor estabilidad. La extinción natural del contrato temporal se produce por vencimiento del plazo pactado por las partes o por cumplimiento de la obra acordada. Es criterio firme que al no existir propiamente un despido, no existe obligación legal de indemnizar.
 
 Cuando en cambio una de las partes pone fin ante tempus al contrato temporal, surge la cuestión de determinar las responsabilidades por no haber cumplido con el pacto pactado. El caso plantea una ulterior dificultad cuando estamos ante un contrato de obra con fecha de terminación incierta, situación muy común en la industria de la construcción. Como ha expresado Plá Rodríguez, en este caso —en que la extinción del contrato se produce por avance de obra— debe entenderse por terminación «no la totalidad objetiva proyectada por el empleador sino la parte que subjetivamente corresponda al respectivo trabajador dentro de aquella».
 
@@ -26,7 +26,7 @@ b. La destrucción de la empresa, el caso fortuito y la fuerza mayor. Larrañaga
 
 ## 4) Incapacidad prolongada o permanente del trabajador por accidente, enfermedad común o profesional
 
-Plá Rodríguez recuerda que en general la incapacidad permanente o prolongada se equipara a la muerte del trabajador, en cuanto imposibilita que el mismo continúe desarrollando sus tareas. Sin embargo, no debe perderse de vista.
+Plá Rodríguez recuerda que en general la incapacidad permanente o prolongada se equipara a la muerte del trabajador, en cuanto imposibilita que el mismo continúe desarrollando sus tareas.
 
 ## 5) El concurso de la empresa
 
