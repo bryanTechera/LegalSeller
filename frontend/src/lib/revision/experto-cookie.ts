@@ -3,9 +3,12 @@ import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 import { cookies } from "next/headers";
+import { z } from "zod";
 
 export const EXPERTO_COOKIE = "ls_experto";
 const THIRTY_DAYS_SECONDS = 60 * 60 * 24 * 30;
+
+const payloadCookieSchema = z.object({ nombre: z.string() });
 
 /** Clave compartida del modo revisión. null = feature apagada. */
 export function getRevisionClave(): string | null {
@@ -39,15 +42,8 @@ export function verificarValorCookieExperto(
   const recibida = Buffer.from(firma);
   if (recibida.length !== esperada.length || !timingSafeEqual(recibida, esperada)) return null;
   try {
-    const parsed: unknown = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
-    if (
-      typeof parsed === "object" &&
-      parsed !== null &&
-      "nombre" in parsed &&
-      typeof (parsed as { nombre: unknown }).nombre === "string"
-    ) {
-      return { nombre: (parsed as { nombre: string }).nombre };
-    }
+    const parsed = payloadCookieSchema.safeParse(JSON.parse(Buffer.from(payload, "base64url").toString("utf8")));
+    if (parsed.success) return { nombre: parsed.data.nombre };
   } catch {
     // payload no-JSON → cae al null final
   }
