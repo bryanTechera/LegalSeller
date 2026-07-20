@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { NotaConRespuestas } from "@/lib/revision/notas";
 import type { ItemTimeline } from "@/lib/revision/timeline";
@@ -27,14 +27,20 @@ export function useRevisionChat(sesionId: string) {
   const [textoStreaming, setTextoStreaming] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   const refetch = useCallback(async () => {
-    const response = await fetch(`/api/revision/sesiones/${sesionId}`);
-    if (!response.ok) {
+    try {
+      const response = await fetch(`/api/revision/sesiones/${sesionId}`);
+      if (!response.ok) {
+        setError("No pudimos cargar la sesión. Recargá la página.");
+        return;
+      }
+      setDetalle((await response.json()) as DetalleSesion);
+      setError(null);
+    } catch {
       setError("No pudimos cargar la sesión. Recargá la página.");
-      return;
     }
-    setDetalle((await response.json()) as DetalleSesion);
   }, [sesionId]);
 
   useEffect(() => {
@@ -47,10 +53,17 @@ export function useRevisionChat(sesionId: string) {
     })();
   }, [refetch]);
 
+  // Al desmontar (ej. "Volver al listado" a mitad de turno) se corta el
+  // stream en vuelo — sin esto queda una conexión SSE colgada.
+  useEffect(() => () => abortRef.current?.abort(), []);
+
   const sendMessage = useCallback(
     async (texto: string) => {
       const trimmed = texto.trim();
       if (!trimmed || isStreaming) return;
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
       setPendienteUsuario(trimmed);
       setTextoStreaming("");
       setIsStreaming(true);
@@ -60,6 +73,7 @@ export function useRevisionChat(sesionId: string) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message: trimmed }),
+          signal: controller.signal,
         });
         if (!response.ok || !response.body) {
           const payload = (await response.json().catch(() => null)) as { error?: string } | null;
@@ -80,11 +94,15 @@ export function useRevisionChat(sesionId: string) {
         }
         await refetch();
       } catch (caught) {
+        if (controller.signal.aborted) return;
         setError(caught instanceof Error && caught.message ? caught.message : GENERIC_ERROR);
       } finally {
-        setPendienteUsuario(null);
-        setTextoStreaming(null);
-        setIsStreaming(false);
+        if (abortRef.current === controller) {
+          abortRef.current = null;
+          setPendienteUsuario(null);
+          setTextoStreaming(null);
+          setIsStreaming(false);
+        }
       }
     },
     [sesionId, isStreaming, refetch],
