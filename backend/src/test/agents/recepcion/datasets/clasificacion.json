@@ -1,6 +1,9 @@
 [
   { "mensaje": "me despidieron ayer sin pagarme la liquidacion", "esperado": { "categoria": "laboral", "subcategoria": "despido" } },
   { "mensaje": "me llego un telegrama de despido, que hago?", "esperado": { "categoria": "laboral", "subcategoria": "despido" } },
+  { "mensaje": "me echaron del trabajo estando embarazada de seis meses", "esperado": { "categoria": "laboral", "subcategoria": "despido" } },
+  { "mensaje": "volvi de una licencia por enfermedad y a la semana me despidieron", "esperado": { "categoria": "laboral", "subcategoria": "despido" } },
+  { "mensaje": "soy empleada domestica y me dijeron que no vaya mas, sin pagarme nada", "esperado": { "categoria": "laboral", "subcategoria": "despido" } },
   { "mensaje": "hace 3 meses que no me pagan el sueldo completo", "esperado": { "categoria": "laboral" } },
   { "mensaje": "me quiero divorciar, como arranco?", "esperado": { "categoria": "categoria-no-habilitada" } },
   { "mensaje": "mi ex no me deja ver a mis hijos", "esperado": { "categoria": "categoria-no-habilitada" } },
