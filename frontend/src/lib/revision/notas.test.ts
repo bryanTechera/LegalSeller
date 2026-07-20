@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const tx = vi.hoisted(() => ({
-  notaRevision: { create: vi.fn(), findUnique: vi.fn(), findMany: vi.fn(), update: vi.fn() },
+  notaRevision: { create: vi.fn(), findUnique: vi.fn(), findMany: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
   respuestaNota: { create: vi.fn() },
 }));
 vi.mock("../prisma", () => ({
@@ -38,8 +38,8 @@ describe("responderNota", () => {
     const result = await responderNota({ notaId: "n1", origen: "DEV", autor: "equipo-dev", texto: "Corregido, probá de nuevo" });
     expect(result.ok).toBe(true);
     expect(tx.respuestaNota.create).toHaveBeenCalled();
-    expect(tx.notaRevision.update).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: "n1" }, data: { estado: "RESPONDIDA" } }),
+    expect(tx.notaRevision.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: "n1", estado: "ABIERTA" }, data: { estado: "RESPONDIDA" } }),
     );
   });
 
@@ -47,8 +47,8 @@ describe("responderNota", () => {
     tx.notaRevision.findUnique.mockResolvedValue({ id: "n1", estado: "RESPONDIDA" });
     const result = await responderNota({ notaId: "n1", origen: "EXPERTO", autor: "Dra. García", texto: "Sigue mal" });
     expect(result.ok).toBe(true);
-    expect(tx.notaRevision.update).toHaveBeenCalledWith(
-      expect.objectContaining({ data: { estado: "ABIERTA" } }),
+    expect(tx.notaRevision.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: "n1", estado: "RESPONDIDA" }, data: { estado: "ABIERTA" } }),
     );
   });
 
@@ -57,7 +57,7 @@ describe("responderNota", () => {
     const result = await responderNota({ notaId: "n1", origen: "EXPERTO", autor: "Dra. García", texto: "Agrego contexto" });
     expect(result.ok).toBe(true);
     expect(tx.respuestaNota.create).toHaveBeenCalled();
-    expect(tx.notaRevision.update).not.toHaveBeenCalled();
+    expect(tx.notaRevision.updateMany).not.toHaveBeenCalled();
   });
 
   it("nota RESUELTA o inexistente → rechaza sin escribir", async () => {

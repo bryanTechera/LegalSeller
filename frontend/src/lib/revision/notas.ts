@@ -100,7 +100,14 @@ export async function responderNota(params: {
           ? "ABIERTA"
           : null;
     if (siguiente) {
-      await tx.notaRevision.update({ where: { id: nota.id }, data: { estado: siguiente } });
+      // Guarded write (patrón del proyecto, cf. asignarClasificacion): la
+      // transición solo aplica si el estado leído sigue vigente — un perdedor
+      // de carrera no pisa la transición del ganador; el hilo converge con la
+      // próxima respuesta del otro lado.
+      await tx.notaRevision.updateMany({
+        where: { id: nota.id, estado: nota.estado },
+        data: { estado: siguiente },
+      });
     }
     return { ok: true };
   });
