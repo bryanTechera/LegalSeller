@@ -133,7 +133,7 @@ El proyecto **no** envuelve rules/skills en un wrapper de capa: cada bloque llev
 | `<categorias_habilitadas>` · `<temas_aun_no_cubiertos>` | Universo de categorías |
 | `<subcategorias>` | Subcategorías de la categoría |
 | `<proceso_derivacion>` | Qué pasa después de captar el caso |
-| `<caso_recabado>` · `<contexto_usuario>` | Bloques volátiles (brief / nombre del usuario) |
+| `<caso_recabado>` · `<contexto_usuario>` · `<contexto_temporal>` | Bloques volátiles (brief / nombre del usuario / fecha actual) |
 
 **Reglas de tags:** en español; self-documenting (que alguien no técnico intuya su significado); no colisionan con IDs de tools; el tag no lleva el nombre del agente (`<rol>`, no `<rol_laboral>`). Si un bloque tiene una única sección sin sub-estructura, alcanza con el tag canónico; si necesitás sub-secciones que el modelo deba distinguir, anidá tags en español snake_case dentro del canónico.
 

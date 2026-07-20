@@ -1,4 +1,5 @@
 import type { ReadOnlyState } from "../../../models/index.js";
+import { bloqueContextoTemporal } from "../../common/contexto-temporal.js";
 import { rulesRegistry } from "../../rules/index.js";
 import { staticSkillsRegistry } from "../../skills/index.js";
 
@@ -23,5 +24,5 @@ export function buildLaboralInstructions(readOnly: ReadOnlyState | null): string
     : "";
 
   const bloques = [rules.inicio, skills.inicio, skills.final, rules.final].filter((b) => b !== "");
-  return `${bloques.join("\n\n")}${briefBlock}${userBlock}`;
+  return `${bloques.join("\n\n")}${briefBlock}${userBlock}${bloqueContextoTemporal()}`;
 }
