@@ -21,3 +21,23 @@
 .badgeRespondida { background: #dbeafe; color: #1e40af; border-radius: 999px; padding: 2px 10px; font-size: 0.75rem; }
 .filaNueva { display: flex; gap: 8px; margin-bottom: 18px; }
 .filaNueva input { flex: 1; padding: 10px 12px; border: 1px solid var(--ink-100, #d5d5dd); border-radius: 8px; font: inherit; }
+
+.sesionLayout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; }
+@media (max-width: 860px) { .sesionLayout { grid-template-columns: 1fr; } }
+.chatColumna { display: grid; gap: 10px; }
+.mensajeUsuario { justify-self: end; max-width: 85%; background: var(--accent, #1f2937); color: #fff; padding: 10px 14px; border-radius: 14px 14px 4px 14px; }
+.mensajeAsistente { max-width: 92%; padding: 10px 14px; border: 1px solid var(--ink-100, #d5d5dd); border-radius: 14px 14px 14px 4px; }
+.accionesMensaje { margin-top: 6px; }
+.botonNota { font-size: 0.75rem; padding: 2px 8px; border: 1px dashed var(--ink-100, #aab); border-radius: 999px; background: transparent; cursor: pointer; }
+.marcadorNota { font-size: 0.75rem; color: #92400e; }
+.composer { display: flex; gap: 8px; margin-top: 12px; }
+.composer textarea { flex: 1; padding: 10px 12px; border: 1px solid var(--ink-100, #d5d5dd); border-radius: 8px; font: inherit; resize: vertical; min-height: 44px; }
+.panelNotas { display: grid; gap: 12px; border: 1px solid var(--ink-100, #d5d5dd); border-radius: 10px; padding: 14px; }
+.nota { border-top: 1px solid var(--ink-100, #e2e2ea); padding-top: 10px; display: grid; gap: 6px; }
+.notaMeta { font-size: 0.75rem; color: var(--ink-500, #667); }
+.notaCita { font-size: 0.8rem; color: var(--ink-500, #667); border-left: 3px solid var(--ink-100, #d5d5dd); padding-left: 8px; font-style: italic; }
+.respuestaDev { background: #eef2ff; border-radius: 8px; padding: 8px 10px; font-size: 0.9rem; }
+.respuestaExperto { background: #f8fafc; border-radius: 8px; padding: 8px 10px; font-size: 0.9rem; }
+.formNota { display: grid; gap: 6px; }
+.formNota textarea { padding: 8px 10px; border: 1px solid var(--ink-100, #d5d5dd); border-radius: 8px; font: inherit; min-height: 60px; }
+.filaBotones { display: flex; gap: 8px; justify-content: flex-end; }

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { AccesoForm } from "@/components/revision/AccesoForm";
 import { ListadoSesiones, type SesionResumen } from "@/components/revision/ListadoSesiones";
+import { SesionView } from "@/components/revision/SesionView";
 import styles from "@/components/revision/revision.module.css";
 
 type Vista = { tipo: "cargando" } | { tipo: "acceso" } | { tipo: "listado" } | { tipo: "sesion"; id: string };
@@ -80,8 +81,7 @@ export default function RevisionPage() {
           <ListadoSesiones sesiones={sesiones} onAbrir={(id) => setVista({ tipo: "sesion", id })} onCrear={crearSesion} />
         </>
       ) : vista.tipo === "sesion" ? (
-        // Placeholder — Task 11 lo reemplaza por <SesionView id={vista.id} onVolver={...} />
-        <p className={styles.subtitulo}>Sesión {vista.id}</p>
+        <SesionView id={vista.id} onVolver={() => void cargarListado()} />
       ) : null}
     </div>
   );
