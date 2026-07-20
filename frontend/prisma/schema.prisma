@@ -70,10 +70,18 @@ model Conversation {
   /// Atomic guard for `corregirClasificacion`: flips false→true exactly once,
   /// enforced via a guarded `updateMany` (spec §6, at most ONE correction).
   correccionAplicada Boolean   @default(false)
+  /// Sesión creada por el equipo legal en /revision. Los Caso de estas
+  /// conversaciones se EXCLUYEN de toda métrica de negocio (join por este flag).
+  esRevision         Boolean   @default(false)
+  /// Nombre visible en el listado compartido de revisión.
+  titulo             String?
+  /// Nombre del experto que creó la sesión (listado compartido).
+  creadaPor          String?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
-  caso Caso?
+  caso  Caso?
+  notas NotaRevision[]
 }
 
 /// The lead — THE deliverable of the system (vision §5). Built incrementally.
@@ -126,4 +134,51 @@ enum CasoEventoTipo {
   CORRECCION
   REGISTRO_DATO
   CONTACTO
+}
+
+/// Nota de revisión del equipo legal: anclada a un mensaje persistido de
+/// Mastra (messageId) o a la sesión entera (messageId null). citaTexto guarda
+/// el extracto anotado — resiliencia si el anclaje falla y contexto del export.
+model NotaRevision {
+  id             String          @id @default(cuid())
+  conversationId String
+  messageId      String?
+  citaTexto      String?
+  autor          String
+  texto          String
+  estado         NotaEstado      @default(ABIERTA)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  conversation Conversation    @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  respuestas   RespuestaNota[]
+
+  @@index([conversationId, estado])
+}
+
+/// Hilo de ida y vuelta por nota. origen distingue quién habla.
+model RespuestaNota {
+  id        String       @id @default(cuid())
+  notaId    String
+  origen    AutorOrigen
+  autor     String
+  texto     String
+  createdAt DateTime     @default(now())
+
+  nota NotaRevision @relation(fields: [notaId], references: [id], onDelete: Cascade)
+
+  @@index([notaId, createdAt])
+}
+
+/// ABIERTA = pendiente del equipo dev · RESPONDIDA = pendiente del experto ·
+/// RESUELTA = cerrada (cualquiera de los dos lados puede cerrar).
+enum NotaEstado {
+  ABIERTA
+  RESPONDIDA
+  RESUELTA
+}
+
+enum AutorOrigen {
+  EXPERTO
+  DEV
 }
