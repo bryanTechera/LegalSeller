@@ -79,10 +79,16 @@ export type ItemTimeline = MensajeTimeline | ToolCallTimeline | AgenteTimeline |
 export function extraerTexto(content: unknown): string {
   if (typeof content === "string") {
     try {
-      return extraerTexto(JSON.parse(content));
+      const parsed: unknown = JSON.parse(content);
+      // Solo recursar en estructuras (o string anidado): un literal JSON puro
+      // ("45000", "true") ES el texto del mensaje, no un envoltorio.
+      if ((typeof parsed === "object" && parsed !== null) || typeof parsed === "string") {
+        return extraerTexto(parsed);
+      }
     } catch {
-      return content;
+      // no era JSON — texto plano
     }
+    return content;
   }
   if (Array.isArray(content)) {
     return content.map(extraerTexto).filter(Boolean).join("\n");

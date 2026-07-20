@@ -20,6 +20,12 @@ describe("extraerTexto", () => {
     expect(extraerTexto({ raro: true })).toBe("");
     expect(extraerTexto(null)).toBe("");
   });
+
+  it("un literal JSON puro es el texto del mensaje, no se pierde", () => {
+    expect(extraerTexto("45000")).toBe("45000");
+    expect(extraerTexto("6")).toBe("6");
+    expect(extraerTexto("true")).toBe("true");
+  });
 });
 
 describe("construirTimeline", () => {
