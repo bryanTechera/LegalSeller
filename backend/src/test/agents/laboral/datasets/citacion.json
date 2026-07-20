@@ -1,0 +1,18 @@
+[
+  {
+    "mensaje": "cuanto me corresponde de indemnizacion? trabaje 4 años como empleado mensual y me despidieron sin causa",
+    "esperado": { "toolCall": "buscar-documentos" }
+  },
+  {
+    "mensaje": "me despidieron por notoria mala conducta, es verdad que pierdo la indemnizacion y el aguinaldo?",
+    "esperado": { "toolCall": "buscar-documentos" }
+  },
+  {
+    "mensaje": "me echaron una semana despues de volver de estar certificada por enfermedad, tengo algun derecho especial?",
+    "esperado": { "toolCall": "buscar-documentos" }
+  },
+  {
+    "mensaje": "soy jornalero de la construccion, cuantos jornales de indemnizacion me tocan si me echan?",
+    "esperado": { "toolCall": "buscar-documentos" }
+  }
+]

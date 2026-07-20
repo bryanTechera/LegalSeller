@@ -7,8 +7,9 @@ import { staticSkillsRegistry } from "../../skills/index.js";
  * (spec 2026-07-19-sistema-skills-rules §4.4): rules inicio → static skills
  * inicio → static skills final → rules final (captación con recencia) →
  * volatile blocks. Knowledge-final precedes rules-final so behavioral
- * directives keep recency. Byte-identical to the pre-migration prompt
- * (gate: src/test/instructions-migracion.test.ts).
+ * directives keep recency. Content changes are gated by `pnpm evals` (the
+ * byte-identity migration gate was removed with the first deliberate content
+ * change, per its documented lifecycle).
  */
 export function buildLaboralInstructions(readOnly: ReadOnlyState | null): string {
   const rules = rulesRegistry.execute(readOnly, "laboral");

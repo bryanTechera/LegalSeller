@@ -1,8 +1,14 @@
 /**
- * Receptor classification evals: programmatic tool-call matcher over the
- * golden set (spec §9). Gate: precision >= THRESHOLD or exit 1 — enabling a
- * second category REQUIRES this to pass on an extended dataset.
- * Uses generate() without memory: each item is an isolated first message.
+ * Programmatic tool-call evals. Gate: every dataset's precision >= THRESHOLD
+ * or exit 1. Uses generate() without memory: each item is an isolated first
+ * message.
+ *
+ * Datasets:
+ * - Receptor classification (spec §9): golden set → asignar-clasificacion
+ *   matcher. Enabling a second category REQUIRES this to pass extended.
+ * - Laboral citación (procesamiento DESPIDO.pdf 2026-07-19): substantive
+ *   despido questions must trigger buscar-documentos before answering —
+ *   the tool-level half of "SIEMPRE citar la fuente".
  */
 import "dotenv/config";
 
@@ -12,6 +18,7 @@ import { fileURLToPath } from "node:url";
 
 import { RequestContext } from "@mastra/core/request-context";
 
+import { laboralAgent } from "../mastra/dominios/laboral/index.js";
 import { recepcionAgent } from "../mastra/dominios/recepcion/index.js";
 
 const THRESHOLD = 0.9;
@@ -19,6 +26,11 @@ const THRESHOLD = 0.9;
 interface EvalItem {
   mensaje: string;
   esperado: { categoria?: string; subcategoria?: string; casoSensible?: boolean; pregunta?: boolean };
+}
+
+interface CitacionItem {
+  mensaje: string;
+  esperado: { toolCall: string };
 }
 
 interface ToolCallInfo {
@@ -60,7 +72,7 @@ function buildEvalRequestContext(): RequestContext {
   return new RequestContext([["readOnly", { userId: "eval" }]]);
 }
 
-async function main(): Promise<number> {
+async function evalReceptorClasificacion(): Promise<number> {
   const datasetPath = join(dirname(fileURLToPath(import.meta.url)), "agents/recepcion/datasets/clasificacion.json");
   const items = JSON.parse(readFileSync(datasetPath, "utf8")) as EvalItem[];
 
@@ -94,7 +106,42 @@ async function main(): Promise<number> {
     `Receptor classification: ${String(passed)}/${String(items.length)} (${(precision * 100).toFixed(0)}%) — threshold ${String(THRESHOLD * 100)}%`,
   );
   for (const failure of failures) console.log(`  FAIL: ${failure}`);
-  return precision >= THRESHOLD ? 0 : 1;
+  return precision;
+}
+
+async function evalLaboralCitacion(): Promise<number> {
+  const datasetPath = join(dirname(fileURLToPath(import.meta.url)), "agents/laboral/datasets/citacion.json");
+  const items = JSON.parse(readFileSync(datasetPath, "utf8")) as CitacionItem[];
+
+  let passed = 0;
+  const failures: string[] = [];
+
+  for (const item of items) {
+    const result = await laboralAgent.generate(item.mensaje, {
+      requestContext: buildEvalRequestContext(),
+    });
+    const calls = extractToolCalls(result);
+    const ok = calls.some((c) => c.toolName === item.esperado.toolCall);
+
+    if (ok) passed += 1;
+    else
+      failures.push(
+        `"${item.mensaje}" → esperado tool-call ${item.esperado.toolCall}, obtuvo [${calls.map((c) => c.toolName).join(", ")}]`,
+      );
+  }
+
+  const precision = passed / items.length;
+  console.log(
+    `Laboral citación (buscar-documentos): ${String(passed)}/${String(items.length)} (${(precision * 100).toFixed(0)}%) — threshold ${String(THRESHOLD * 100)}%`,
+  );
+  for (const failure of failures) console.log(`  FAIL: ${failure}`);
+  return precision;
+}
+
+async function main(): Promise<number> {
+  const receptor = await evalReceptorClasificacion();
+  const laboral = await evalLaboralCitacion();
+  return receptor >= THRESHOLD && laboral >= THRESHOLD ? 0 : 1;
 }
 
 main()
