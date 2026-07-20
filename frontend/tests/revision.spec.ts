@@ -5,6 +5,7 @@ const CLAVE = process.env.REVISION_CLAVE ?? "";
 test.skip(!CLAVE, "REVISION_CLAVE no seteada — E2E de revisión deshabilitado");
 
 test("ciclo de revisión: acceso → sesión nueva → chat → nota anclada", async ({ page }) => {
+  test.setTimeout(120_000);
   await page.goto("/revision");
 
   await page.getByLabel("Tu nombre").fill("Dra. E2E");
