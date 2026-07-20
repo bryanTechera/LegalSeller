@@ -16,6 +16,12 @@ describe("instrucciones del agente laboral", () => {
     expect(prompt).toContain("Despido sin liquidación.");
   });
 
+  it("inyecta la fecha actual como bloque volátil", () => {
+    const prompt = buildLaboralInstructions(null);
+    expect(prompt).toContain("<contexto_temporal>");
+    expect(prompt).toContain(String(new Date().getFullYear()));
+  });
+
   it("nivel 2 colapsado: instruye determinar y registrar la subcategoría", () => {
     const prompt = buildLaboralInstructions(null);
     expect(prompt).toContain("registrar-caso");
