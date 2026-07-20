@@ -14,5 +14,21 @@
   {
     "mensaje": "soy jornalero de la construccion, cuantos jornales de indemnizacion me tocan si me echan?",
     "esperado": { "toolCall": "buscar-documentos" }
+  },
+  {
+    "mensaje": "si trabajo un feriado me lo tienen que pagar doble?",
+    "esperado": { "toolCall": "buscar-documentos" }
+  },
+  {
+    "mensaje": "hago 10 horas por dia y me pagan siempre lo mismo, corresponde que me paguen horas extra?",
+    "esperado": { "toolCall": "buscar-documentos" }
+  },
+  {
+    "mensaje": "el aguinaldo se calcula tambien con las comisiones que cobro?",
+    "esperado": { "toolCall": "buscar-documentos" }
+  },
+  {
+    "mensaje": "trabajo de 22 a 6 de la mañana, me corresponde algun plus por nocturnidad?",
+    "esperado": { "toolCall": "buscar-documentos" }
   }
 ]

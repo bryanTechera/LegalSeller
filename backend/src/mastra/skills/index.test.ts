@@ -11,17 +11,20 @@ describe("staticSkillsRegistry", () => {
     expect(result.inicio).toContain("laboral");
   });
 
-  it("laboral recibe sus subcategorías habilitadas y la guía de dimensionamiento", () => {
+  it("laboral recibe sus subcategorías habilitadas y las guías de dimensionamiento", () => {
     const result = staticSkillsRegistry.execute(null, "laboral");
-    expect(result.activatedIds).toEqual(["subcategorias-laboral", "dimensionar-despido"]);
+    expect(result.activatedIds).toEqual(["subcategorias-laboral", "dimensionar-despido", "dimensionar-rubros"]);
     expect(result.inicio).toContain("<subcategorias>");
     expect(result.inicio).toContain("despido");
+    expect(result.inicio).toContain("rubros-laborales");
     expect(result.inicio).toContain("<dimensionar_despido>");
+    expect(result.inicio).toContain("<dimensionar_rubros>");
     expect(result.inicio).toContain("buscar-documentos");
   });
 
-  it("recepcion no recibe la guía de dimensionamiento de despido", () => {
+  it("recepcion no recibe las guías de dimensionamiento del laboral", () => {
     const result = staticSkillsRegistry.execute(null, "recepcion");
     expect(result.activatedIds).not.toContain("dimensionar-despido");
+    expect(result.activatedIds).not.toContain("dimensionar-rubros");
   });
 });

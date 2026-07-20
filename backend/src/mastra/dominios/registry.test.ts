@@ -18,14 +18,14 @@ describe("registry de dominios", () => {
     ]);
   });
 
-  it("v1: solo laboral habilitada, solo despido habilitado", () => {
+  it("solo laboral habilitada, con despido y rubros-laborales habilitados", () => {
     expect(categoriasHabilitadas().map((c) => c.id)).toEqual(["laboral"]);
-    expect(subcategoriasHabilitadas("laboral").map((s) => s.id)).toEqual(["despido"]);
+    expect(subcategoriasHabilitadas("laboral").map((s) => s.id)).toEqual(["despido", "rubros-laborales"]);
     expect(subcategoriasHabilitadas("familia")).toEqual([]);
   });
 
-  it("detecta el cortocircuito de subcategoría única", () => {
-    expect(subcategoriaUnicaHabilitada("laboral")?.id).toBe("despido");
+  it("el cortocircuito de subcategoría única devuelve null cuando no hay exactamente una", () => {
+    expect(subcategoriaUnicaHabilitada("laboral")).toBeNull();
     expect(subcategoriaUnicaHabilitada("familia")).toBeNull();
   });
 
