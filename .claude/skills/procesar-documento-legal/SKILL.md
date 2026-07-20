@@ -34,8 +34,8 @@ Para CADA pieza, en orden:
 
 **Ambigüedad legal** (¿este criterio es correcto? ¿qué alcance tiene? ¿contradice la
 ley vigente?): NO asumir ni inventar — formular la pregunta concreta al equipo de
-expertos legales, registrarla (fase 6) y seguir con lo no ambiguo
-(docs/lineamientos-generales.md §3.13).
+expertos legales, registrarla en el archivo enviable (fase 6) y seguir con lo no
+ambiguo (docs/lineamientos-generales.md §3.13).
 
 ### Fase 3 — Mapeo contra lo existente
 - Corpus: consultar los documentos ya ingestados de la categoría (tabla Document por
@@ -84,7 +84,16 @@ Nunca conservar dos versiones del mismo conocimiento.
   detección). Un documento que no mueve ninguna eval es sospechoso: ¿aportó algo?
 - Registrar en docs/plans/ una entrada fechada
   (`YYYY-MM-DD-procesamiento-<documento>.md`): piezas, destinos, descartes con
-  motivo, preguntas abiertas al equipo legal, evals agregadas.
+  motivo, evals agregadas, y referencia al archivo de preguntas.
+- **Preguntas al equipo legal en archivo enviable**: si el procesamiento dejó
+  preguntas abiertas, crear `docs/preguntas-legales/YYYY-MM-DD-<documento>.md`
+  redactado PARA los abogados (auto-contenido: referencia al documento fuente y
+  sus páginas, cita textual del pasaje dudoso, la pregunta concreta en negrita;
+  sin rutas de código ni jerga del repo), con encabezado de estado
+  (`PENDIENTE de respuesta`) e instrucciones de cómo responder. Ese archivo se
+  envía tal cual al equipo legal; la entrada en docs/plans/ solo lo referencia.
+  Al recibir respuestas, se procesan como material nuevo (esta misma skill) y el
+  archivo pasa a estado `RESPONDIDA` con fecha.
 - Commit convencional; nunca push directo a main.
 
 ## Red flags

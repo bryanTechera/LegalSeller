@@ -82,6 +82,10 @@ CONDENSAR > AGREGAR — nada que agregar a nivel rule).
 
 ## Preguntas abiertas al equipo legal
 
+> **Archivo enviable**: `docs/preguntas-legales/2026-07-19-despido.md` — versión
+> redactada para los abogados, lista para enviar tal cual. Lo de abajo es el
+> registro técnico interno.
+
 1. Confirmar la corrección de la errata de notoria mala conducta (quien pierde la
    indemnización es el **trabajador**, no el empleador) — pieza 04.
 2. p. 20: la lista de normativa de gravidez incluye "ley 19.161 de 15 de noviembre
