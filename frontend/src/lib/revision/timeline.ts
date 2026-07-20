@@ -26,6 +26,13 @@ const filaSpanSchema = z.object({
   attributes: z.unknown(),
 });
 
+const filaAncestroSchema = z.object({
+  spanId: z.string(),
+  parentSpanId: z.string().nullable(),
+  spanType: z.string(),
+  entityName: z.string().nullable(),
+});
+
 const atributosGeneracionSchema = z
   .object({
     model: z.string().optional(),
@@ -149,6 +156,26 @@ export async function construirTimeline(
           AND "spanType" IN ('agent_run', 'tool_call', 'model_generation')
         ORDER BY "startedAt" ASC`,
     );
+
+    // Mastra no puebla parentEntityName en tool_call (verificado en vivo):
+    // la atribución al agente sube por parentSpanId sobre el árbol completo
+    // de spans del thread, que puede incluir intermedios fuera de la timeline.
+    const ancestros = filaAncestroSchema.array().parse(
+      await prisma.$queryRaw`
+        SELECT "spanId", "parentSpanId", "spanType", "entityName"
+        FROM mastra.mastra_ai_spans
+        WHERE "threadId" = ${threadId}`,
+    );
+    const porSpanId = new Map(ancestros.map((ancestro) => [ancestro.spanId, ancestro]));
+    const resolverAgente = (spanId: string): string | null => {
+      let actual = porSpanId.get(spanId);
+      for (let salto = 0; actual && salto < 20; salto++) {
+        if (actual.spanType === "agent_run") return actual.entityName;
+        actual = actual.parentSpanId ? porSpanId.get(actual.parentSpanId) : undefined;
+      }
+      return null;
+    };
+
     for (const span of filasSpans) {
       const fecha = span.startedAt.toISOString();
       if (span.spanType === "tool_call") {
@@ -156,7 +183,7 @@ export async function construirTimeline(
           tipo: "tool-call",
           spanId: span.spanId,
           tool: span.entityName ?? span.name,
-          agente: span.parentEntityName,
+          agente: span.parentEntityName ?? resolverAgente(span.spanId),
           input: span.input,
           output: span.output,
           error: span.error,

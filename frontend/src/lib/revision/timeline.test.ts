@@ -40,9 +40,14 @@ describe("construirTimeline", () => {
     { spanId: "s2", parentSpanId: "s1", spanType: "tool_call", name: "tool: 'buscar-documentos'", entityName: "buscar-documentos", parentEntityName: "laboral", input: { query: "plazo reclamo despido" }, output: { chunks: [] }, error: null, startedAt: new Date("2026-07-20T10:00:10Z"), endedAt: null, attributes: null },
     { spanId: "s3", parentSpanId: "s1", spanType: "model_generation", name: "model", entityName: null, parentEntityName: "laboral", input: null, output: null, error: null, startedAt: new Date("2026-07-20T10:00:15Z"), endedAt: null, attributes: { model: "gemini-3-flash", usage: { inputTokens: 100, outputTokens: 50 } } },
   ];
+  const ancestros = [
+    { spanId: "s1", parentSpanId: null, spanType: "agent_run", entityName: "laboral" },
+    { spanId: "s2", parentSpanId: "s1", spanType: "tool_call", entityName: "buscar-documentos" },
+    { spanId: "s3", parentSpanId: "s1", spanType: "model_generation", entityName: null },
+  ];
 
   it("intercala mensajes y spans por fecha, con atribución de tools", async () => {
-    db.$queryRaw.mockResolvedValueOnce(mensajes).mockResolvedValueOnce(spans);
+    db.$queryRaw.mockResolvedValueOnce(mensajes).mockResolvedValueOnce(spans).mockResolvedValueOnce(ancestros);
     const timeline = await construirTimeline("chat-x", { conSpans: true });
     expect(timeline.map((item) => item.tipo)).toEqual(["mensaje", "turno-agente", "tool-call", "generacion", "mensaje"]);
     const tool = timeline[2];
@@ -69,5 +74,21 @@ describe("construirTimeline", () => {
     ]);
     const timeline = await construirTimeline("chat-x");
     expect(timeline).toHaveLength(2);
+  });
+
+  it("atribuye la tool al agente por parentSpanId cuando parentEntityName viene null", async () => {
+    const spansSinParentName = [
+      { spanId: "t1", parentSpanId: "i1", spanType: "tool_call", name: "tool: 'buscar-documentos'", entityName: "buscar-documentos", parentEntityName: null, input: null, output: null, error: null, startedAt: new Date("2026-07-20T10:00:10Z"), endedAt: null, attributes: null },
+    ];
+    const arbol = [
+      { spanId: "a1", parentSpanId: null, spanType: "agent_run", entityName: "laboralAgent" },
+      { spanId: "i1", parentSpanId: "a1", spanType: "model_step", entityName: null },
+      { spanId: "t1", parentSpanId: "i1", spanType: "tool_call", entityName: "buscar-documentos" },
+    ];
+    db.$queryRaw.mockResolvedValueOnce([]).mockResolvedValueOnce(spansSinParentName).mockResolvedValueOnce(arbol);
+    const timeline = await construirTimeline("chat-x", { conSpans: true });
+    const tool = timeline[0];
+    if (tool.tipo !== "tool-call") throw new Error("esperaba tool-call");
+    expect(tool.agente).toBe("laboralAgent");
   });
 });
