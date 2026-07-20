@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const tx = vi.hoisted(() => ({
   notaRevision: { create: vi.fn(), findUnique: vi.fn(), findMany: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
   respuestaNota: { create: vi.fn() },
+  conversation: { findFirst: vi.fn() },
 }));
 vi.mock("../prisma", () => ({
   prisma: { ...tx, $transaction: vi.fn(async (fn: (t: typeof tx) => Promise<unknown>) => fn(tx)) },
@@ -14,6 +15,7 @@ describe("crearNota", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("nota de experto nace ABIERTA", async () => {
+    tx.conversation.findFirst.mockResolvedValue({ id: "c1" });
     tx.notaRevision.create.mockResolvedValue({ id: "n1" });
     await crearNota({ conversationId: "c1", origen: "EXPERTO", autor: "Dra. García", texto: "Inventó el plazo", messageId: "m2", citaTexto: "tenés 30 días" });
     expect(tx.notaRevision.create).toHaveBeenCalledWith(
@@ -22,11 +24,19 @@ describe("crearNota", () => {
   });
 
   it("nota del equipo dev nace RESPONDIDA (pendiente del experto)", async () => {
+    tx.conversation.findFirst.mockResolvedValue({ id: "c1" });
     tx.notaRevision.create.mockResolvedValue({ id: "n2" });
     await crearNota({ conversationId: "c1", origen: "DEV", autor: "equipo-dev", texto: "¿Podés aclarar el escenario?" });
     expect(tx.notaRevision.create).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ estado: "RESPONDIDA" }) }),
     );
+  });
+
+  it("rechaza una conversación que no es sesión de revisión", async () => {
+    tx.conversation.findFirst.mockResolvedValue(null);
+    const result = await crearNota({ conversationId: "c-real", origen: "DEV", autor: "equipo-dev", texto: "x" });
+    expect(result).toBeNull();
+    expect(tx.notaRevision.create).not.toHaveBeenCalled();
   });
 });
 

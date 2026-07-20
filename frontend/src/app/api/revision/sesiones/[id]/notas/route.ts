@@ -26,6 +26,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       messageId: validation.data.messageId,
       citaTexto: validation.data.citaTexto,
     });
+    if (!nota) return NextResponse.json({ error: "Sesión no encontrada" }, { status: 404 });
     return NextResponse.json({ nota }, { status: 201 });
   } catch (error) {
     logger.error("revision/notas POST failed", { error: error instanceof Error ? error.message : String(error) });

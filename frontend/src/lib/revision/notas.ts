@@ -57,7 +57,14 @@ export async function crearNota(params: {
   texto: string;
   messageId?: string;
   citaTexto?: string;
-}): Promise<{ id: string }> {
+}): Promise<{ id: string } | null> {
+  // Blindaje esRevision a nivel lib: ninguna nota puede colgarse de una
+  // conversación real de consultante, venga de la ruta o de un script.
+  const conversation = await prisma.conversation.findFirst({
+    where: { id: params.conversationId, esRevision: true },
+    select: { id: true },
+  });
+  if (!conversation) return null;
   return prisma.notaRevision.create({
     data: {
       conversationId: params.conversationId,

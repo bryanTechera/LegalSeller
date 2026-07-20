@@ -31,6 +31,7 @@ async function main(): Promise<void> {
   if (values.sesion) {
     if (!texto) throw new Error(`--sesion requiere --texto o --archivo\n${USO}`);
     const nota = await crearNota({ conversationId: values.sesion, origen: "DEV", autor: AUTOR_DEV, texto });
+    if (!nota) throw new Error(`La sesión ${values.sesion} no existe o no es una sesión de revisión.`);
     process.stdout.write(`Nota ${nota.id} creada (RESPONDIDA) en la sesión ${values.sesion}\n`);
     return;
   }
