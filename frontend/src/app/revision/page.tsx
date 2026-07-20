@@ -15,19 +15,24 @@ export default function RevisionPage() {
 
   const cargarListado = useCallback(async () => {
     setError(null);
-    const response = await fetch("/api/revision/sesiones");
-    if (response.status === 401 || response.status === 503) {
-      setVista({ tipo: "acceso" });
-      return;
-    }
-    if (!response.ok) {
+    try {
+      const response = await fetch("/api/revision/sesiones");
+      if (response.status === 401 || response.status === 503) {
+        setVista({ tipo: "acceso" });
+        return;
+      }
+      if (!response.ok) {
+        setError("No pudimos cargar las sesiones. Recargá la página.");
+        setVista({ tipo: "listado" });
+        return;
+      }
+      const payload = (await response.json()) as { sesiones: SesionResumen[] };
+      setSesiones(payload.sesiones);
+      setVista({ tipo: "listado" });
+    } catch {
       setError("No pudimos cargar las sesiones. Recargá la página.");
       setVista({ tipo: "listado" });
-      return;
     }
-    const payload = (await response.json()) as { sesiones: SesionResumen[] };
-    setSesiones(payload.sesiones);
-    setVista({ tipo: "listado" });
   }, []);
 
   useEffect(() => {
@@ -42,17 +47,21 @@ export default function RevisionPage() {
 
   const crearSesion = useCallback(
     async (titulo: string) => {
-      const response = await fetch("/api/revision/sesiones", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(titulo ? { titulo } : {}),
-      });
-      if (!response.ok) {
+      try {
+        const response = await fetch("/api/revision/sesiones", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(titulo ? { titulo } : {}),
+        });
+        if (!response.ok) {
+          setError("No pudimos crear la sesión.");
+          return;
+        }
+        const payload = (await response.json()) as { sesion: { id: string } };
+        setVista({ tipo: "sesion", id: payload.sesion.id });
+      } catch {
         setError("No pudimos crear la sesión.");
-        return;
       }
-      const payload = (await response.json()) as { sesion: { id: string } };
-      setVista({ tipo: "sesion", id: payload.sesion.id });
     },
     [],
   );
