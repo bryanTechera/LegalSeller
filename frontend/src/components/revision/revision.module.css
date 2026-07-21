@@ -1,43 +1,590 @@
-.shell { max-width: 960px; margin: 0 auto; padding: 24px 16px 48px; }
-.encabezado { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
-.titulo { font-size: 1.25rem; font-weight: 600; }
-.subtitulo { color: var(--ink-500, #667); font-size: 0.9rem; }
+/* Design system de /revision — mismo lenguaje visual que el chat real (tokens
+   de globals.css). Las burbujas y el composer del chat NO viven acá: son las
+   primitivas compartidas MessageBubble/Composer. */
 
-.formAcceso { display: grid; gap: 12px; max-width: 380px; margin: 48px auto; }
-.campo { display: grid; gap: 4px; }
-.campo label { font-size: 0.85rem; font-weight: 500; }
-.campo input { padding: 10px 12px; border: 1px solid var(--ink-100, #d5d5dd); border-radius: 8px; font: inherit; }
-.botonPrimario { padding: 10px 16px; border: none; border-radius: 8px; background: var(--accent, #1f2937); color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
-.botonPrimario:disabled { opacity: 0.5; cursor: default; }
-.botonSecundario { padding: 8px 12px; border: 1px solid var(--ink-100, #d5d5dd); border-radius: 8px; background: transparent; font: inherit; cursor: pointer; }
-.error { color: #b91c1c; font-size: 0.9rem; }
+/* --- Shell (header navy del home + lavado celeste) --- */
 
-.listado { display: grid; gap: 10px; }
-.tarjetaSesion { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px; border: 1px solid var(--ink-100, #d5d5dd); border-radius: 10px; background: transparent; font: inherit; text-align: left; cursor: pointer; width: 100%; }
-.tarjetaSesion:hover { border-color: var(--accent, #1f2937); }
-.tarjetaMeta { color: var(--ink-500, #667); font-size: 0.8rem; }
-.badges { display: flex; gap: 6px; flex-shrink: 0; }
-.badgeAbierta { background: #fef3c7; color: #92400e; border-radius: 999px; padding: 2px 10px; font-size: 0.75rem; }
-.badgeRespondida { background: #dbeafe; color: #1e40af; border-radius: 999px; padding: 2px 10px; font-size: 0.75rem; }
-.filaNueva { display: flex; gap: 8px; margin-bottom: 18px; }
-.filaNueva input { flex: 1; padding: 10px 12px; border: 1px solid var(--ink-100, #d5d5dd); border-radius: 8px; font: inherit; }
+.shell {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
 
-.sesionLayout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; }
-@media (max-width: 860px) { .sesionLayout { grid-template-columns: 1fr; } }
-.chatColumna { display: grid; gap: 10px; }
-.mensajeUsuario { justify-self: end; max-width: 85%; background: var(--accent, #1f2937); color: #fff; padding: 10px 14px; border-radius: 14px 14px 4px 14px; }
-.mensajeAsistente { max-width: 92%; padding: 10px 14px; border: 1px solid var(--ink-100, #d5d5dd); border-radius: 14px 14px 14px 4px; }
-.accionesMensaje { margin-top: 6px; }
-.botonNota { font-size: 0.75rem; padding: 2px 8px; border: 1px dashed var(--ink-100, #aab); border-radius: 999px; background: transparent; cursor: pointer; }
-.marcadorNota { font-size: 0.75rem; color: #92400e; }
-.composer { display: flex; gap: 8px; margin-top: 12px; }
-.composer textarea { flex: 1; padding: 10px 12px; border: 1px solid var(--ink-100, #d5d5dd); border-radius: 8px; font: inherit; resize: vertical; min-height: 44px; }
-.panelNotas { display: grid; gap: 12px; border: 1px solid var(--ink-100, #d5d5dd); border-radius: 10px; padding: 14px; }
-.nota { border-top: 1px solid var(--ink-100, #e2e2ea); padding-top: 10px; display: grid; gap: 6px; }
-.notaMeta { font-size: 0.75rem; color: var(--ink-500, #667); }
-.notaCita { font-size: 0.8rem; color: var(--ink-500, #667); border-left: 3px solid var(--ink-100, #d5d5dd); padding-left: 8px; font-style: italic; }
-.respuestaDev { background: #eef2ff; border-radius: 8px; padding: 8px 10px; font-size: 0.9rem; }
-.respuestaExperto { background: #f8fafc; border-radius: 8px; padding: 8px 10px; font-size: 0.9rem; }
-.formNota { display: grid; gap: 6px; }
-.formNota textarea { padding: 8px 10px; border: 1px solid var(--ink-100, #d5d5dd); border-radius: 8px; font: inherit; min-height: 60px; }
-.filaBotones { display: flex; gap: 8px; justify-content: flex-end; }
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-6);
+  background: var(--navy);
+  color: var(--on-navy);
+  border-bottom: 1px solid color-mix(in srgb, var(--on-navy) 10%, transparent);
+}
+
+.wordmark {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: var(--font-family-display);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  letter-spacing: var(--tracking-display);
+  text-transform: uppercase;
+  color: var(--on-navy);
+}
+
+.chipRevision {
+  font-family: var(--font-family-display);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--on-navy-muted);
+  border: 1px solid color-mix(in srgb, var(--on-navy) 25%, transparent);
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+
+.main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-6) var(--space-4) var(--space-8);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 8%, transparent), transparent 60%);
+}
+
+.columna {
+  width: 100%;
+  max-width: 46rem; /* misma métrica que .panel del chat real */
+}
+
+/* --- Tipografía compartida de las vistas --- */
+
+.titulo {
+  font-family: var(--font-family-serif);
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.subtitulo {
+  color: var(--ink-500);
+  font-size: var(--text-sm);
+}
+
+.error {
+  margin: var(--space-2) 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--state-error) 8%, var(--surface));
+  color: var(--state-error);
+  font-size: var(--text-sm);
+}
+
+/* --- Botones --- */
+
+.botonPrimario {
+  padding: var(--space-2) var(--space-4);
+  border: none;
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, var(--accent), var(--accent-strong));
+  color: var(--surface);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    transform 0.1s ease;
+}
+
+.botonPrimario:hover:not(:disabled) {
+  background: var(--accent-strong);
+}
+
+.botonPrimario:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.botonPrimario:disabled {
+  background: var(--ink-100);
+  color: var(--ink-300);
+  cursor: not-allowed;
+}
+
+.botonSecundario {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--ink-100);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--ink-700);
+  font: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.botonSecundario:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--navy);
+}
+
+/* --- Acceso --- */
+
+.formAcceso {
+  display: grid;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 400px;
+  margin: var(--space-8) auto;
+  background: var(--surface);
+  border: 1px solid var(--ink-100);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  padding: var(--space-6);
+}
+
+.campo {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.campo label {
+  font-family: var(--font-family-display);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ink-700);
+}
+
+.campo input {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--ink-100);
+  border-radius: var(--radius-md);
+  font: inherit;
+  background: var(--surface);
+}
+
+.campo input:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
+/* --- Listado de sesiones --- */
+
+.encabezado {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.filaNueva {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.filaNueva input {
+  flex: 1;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--ink-100);
+  border-radius: var(--radius-md);
+  font: inherit;
+  background: var(--surface);
+}
+
+.filaNueva input:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
+.listado {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.tarjetaSesion {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--ink-100);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-soft);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.tarjetaSesion:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-raised);
+}
+
+.tarjetaMeta {
+  color: var(--ink-500);
+  font-size: var(--text-xs);
+}
+
+.badges {
+  display: flex;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+.badgeAbierta {
+  background: color-mix(in srgb, var(--state-warning) 14%, var(--surface));
+  color: var(--state-warning);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.badgeRespondida {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+/* --- Sesión: header --- */
+
+.sesionHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.sesionMeta {
+  color: var(--ink-500);
+  font-size: var(--text-sm);
+}
+
+.sesionAcciones {
+  display: flex;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+/* --- Sesión: chat anotable --- */
+
+.chatColumna {
+  position: relative; /* marco de posicionamiento del pill de selección */
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-4) var(--space-1) var(--space-6);
+}
+
+.bloqueMensaje {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.mensajeConGutter {
+  position: relative;
+  display: flex;
+  flex-direction: column; /* el align-self de la burbuja aplica acá adentro */
+}
+
+/* El "+" del gutter estilo GitHub: aparece al hover del mensaje. */
+.botonAnotar {
+  position: absolute;
+  top: -10px;
+  inset-inline-end: -6px;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--accent), var(--accent-strong));
+  color: var(--surface);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: var(--shadow-soft);
+  opacity: 0;
+  transform: scale(0.85);
+  transition:
+    opacity 0.12s ease,
+    transform 0.12s ease;
+}
+
+.mensajeConGutter:hover .botonAnotar,
+.botonAnotar:focus-visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.pillSeleccion {
+  position: absolute;
+  z-index: 10;
+  transform: translateX(-50%);
+  padding: var(--space-1) var(--space-3);
+  border: none;
+  border-radius: 999px;
+  background: var(--navy);
+  color: var(--on-navy);
+  font: inherit;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow-raised);
+}
+
+/* --- Notas: tarjetas de hilo (estilo GitHub) --- */
+
+.nota {
+  background: var(--surface);
+  border: 1px solid var(--ink-100);
+  border-inline-start: 3px solid var(--ink-300);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-soft);
+  padding: var(--space-3) var(--space-4);
+  display: grid;
+  gap: var(--space-2);
+  max-width: 95%;
+}
+
+.notaAbierta {
+  border-inline-start-color: var(--state-warning);
+}
+
+.notaRespondida {
+  border-inline-start-color: var(--accent);
+}
+
+.notaResueltaCard {
+  border-inline-start-color: var(--state-success);
+}
+
+.notaHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.notaAutor {
+  font-weight: 600;
+  font-size: var(--text-sm);
+  color: var(--ink-900);
+}
+
+.notaFecha {
+  color: var(--ink-500);
+  font-size: var(--text-xs);
+}
+
+.chipAbierta {
+  margin-inline-start: auto;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--state-warning) 14%, var(--surface));
+  color: var(--state-warning);
+}
+
+.chipRespondida {
+  margin-inline-start: auto;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.chipResuelta {
+  margin-inline-start: auto;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--state-success) 12%, var(--surface));
+  color: var(--state-success);
+}
+
+.notaCita {
+  background: var(--surface-muted);
+  border-inline-start: 3px solid var(--ink-300);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  color: var(--ink-700);
+  font-size: var(--text-sm);
+  font-style: italic;
+  overflow-wrap: anywhere;
+}
+
+.notaTexto {
+  overflow-wrap: anywhere;
+}
+
+.respuestas {
+  display: grid;
+  gap: var(--space-2);
+  border-inline-start: 2px solid var(--ink-100);
+  padding-inline-start: var(--space-3);
+}
+
+.respuesta {
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.respuestaDev {
+  background: var(--accent-soft);
+}
+
+.respuestaExperto {
+  background: var(--surface-muted);
+}
+
+.respuestaMeta {
+  font-size: var(--text-xs);
+  color: var(--ink-500);
+  margin-bottom: 2px;
+}
+
+.notaPie {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.responderPlaceholder {
+  flex: 1;
+  text-align: start;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--ink-100);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink-300);
+  font: inherit;
+  font-size: var(--text-sm);
+  cursor: text;
+}
+
+.formNota {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.formNota textarea {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--ink-100);
+  border-radius: var(--radius-md);
+  font: inherit;
+  min-height: 64px;
+  resize: vertical;
+  background: var(--surface);
+}
+
+.formNota textarea:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
+/* Composer de nota nueva: borde accent = edición activa. */
+.formNotaCard {
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-soft);
+  padding: var(--space-3) var(--space-4);
+  display: grid;
+  gap: var(--space-2);
+  max-width: 95%;
+}
+
+.filaBotones {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+/* Hilo resuelto colapsado: una línea expandible, como GitHub. */
+.notaResuelta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: fit-content;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--ink-100);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--state-success);
+  font: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.notaResuelta:hover {
+  border-color: var(--state-success);
+}
+
+.linkSutil {
+  border: none;
+  background: none;
+  color: var(--ink-500);
+  font: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+  text-decoration: underline;
+  justify-self: start;
+  padding: 0;
+}
+
+/* --- Notas generales --- */
+
+.notasGenerales {
+  display: grid;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.seccionTitulo {
+  font-family: var(--font-family-display);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-500);
+}
+
+@media (max-width: 540px) {
+  .sesionHeader {
+    flex-direction: column;
+  }
+
+  .encabezado {
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+}

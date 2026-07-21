@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { BrandMark } from "@/components/brand/BrandMark";
 import { AccesoForm } from "@/components/revision/AccesoForm";
 import { ListadoSesiones, type SesionResumen } from "@/components/revision/ListadoSesiones";
 import { SesionView } from "@/components/revision/SesionView";
@@ -69,20 +70,31 @@ export default function RevisionPage() {
 
   return (
     <div className={styles.shell}>
-      {vista.tipo === "acceso" ? (
-        <AccesoForm onAcceso={() => void cargarListado()} />
-      ) : vista.tipo === "listado" ? (
-        <>
-          <header className={styles.encabezado}>
-            <h1 className={styles.titulo}>Sesiones de revisión</h1>
-            <p className={styles.subtitulo}>Espacio compartido del equipo legal</p>
-          </header>
-          {error ? <p role="alert" className={styles.error}>{error}</p> : null}
-          <ListadoSesiones sesiones={sesiones} onAbrir={(id) => setVista({ tipo: "sesion", id })} onCrear={crearSesion} />
-        </>
-      ) : vista.tipo === "sesion" ? (
-        <SesionView id={vista.id} onVolver={() => void cargarListado()} />
-      ) : null}
+      <header className={styles.header}>
+        <span className={styles.wordmark}>
+          <BrandMark size={22} />
+          Jurco
+        </span>
+        <span className={styles.chipRevision}>Revisión</span>
+      </header>
+      <main className={styles.main}>
+        <div className={styles.columna}>
+          {vista.tipo === "acceso" ? (
+            <AccesoForm onAcceso={() => void cargarListado()} />
+          ) : vista.tipo === "listado" ? (
+            <>
+              <header className={styles.encabezado}>
+                <h1 className={styles.titulo}>Sesiones de revisión</h1>
+                <p className={styles.subtitulo}>Espacio compartido del equipo legal</p>
+              </header>
+              {error ? <p role="alert" className={styles.error}>{error}</p> : null}
+              <ListadoSesiones sesiones={sesiones} onAbrir={(id) => setVista({ tipo: "sesion", id })} onCrear={crearSesion} />
+            </>
+          ) : vista.tipo === "sesion" ? (
+            <SesionView id={vista.id} onVolver={() => void cargarListado()} />
+          ) : null}
+        </div>
+      </main>
     </div>
   );
 }
