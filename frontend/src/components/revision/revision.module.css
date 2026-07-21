@@ -5,7 +5,7 @@
 /* --- Shell (header navy del home + lavado celeste) --- */
 
 .shell {
-  min-height: 100dvh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
 }
@@ -52,11 +52,21 @@
   align-items: center;
   padding: var(--space-6) var(--space-4) var(--space-8);
   background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 8%, transparent), transparent 60%);
+  overflow-y: auto; /* acceso/listado scrollean acá; la sesión llena el alto y scrollea adentro */
 }
 
 .columna {
   width: 100%;
   max-width: 46rem; /* misma métrica que .panel del chat real */
+}
+
+/* Vista de sesión: columna de alto completo (como .panel del chat real) para
+   que el composer quede fijo abajo en vez de seguir el flujo del contenido. */
+.columnaSesion {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 /* --- Tipografía compartida de las vistas --- */
@@ -289,6 +299,32 @@
 }
 
 /* --- Sesión: chat anotable --- */
+
+/* Raíz de la sesión: columna flex de alto completo. Header arriba (fijo),
+   scroll en el medio, composer abajo (fijo) — mismo esqueleto que ChatPanel. */
+.sesion {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Zona scrolleable: notas generales + conversación. Absorbe el overflow para
+   que el composer no se desplace. overflow-x hidden: el chat solo scrollea en
+   vertical; sin él, el overhang del "+" de anotar (inset-inline-end negativo)
+   dispara una barra horizontal espuria. */
+.sesionScroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Composer anclado al fondo de la sesión (no se encoge, respira del contenido). */
+.composerSesion {
+  flex-shrink: 0;
+  margin-top: var(--space-3);
+}
 
 .chatColumna {
   position: relative; /* marco de posicionamiento del pill de selección */

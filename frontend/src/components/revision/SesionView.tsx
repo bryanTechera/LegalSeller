@@ -122,7 +122,7 @@ export function SesionView({ id, onVolver }: { id: string; onVolver: () => void 
   const composerGeneralAbierto = composerAbierto !== null && composerAbierto.messageId === null;
 
   return (
-    <div>
+    <div className={styles.sesion}>
       <header className={styles.sesionHeader}>
         <div>
           <h1 className={styles.titulo}>{detalle?.sesion.titulo ?? "Sesión de revisión"}</h1>
@@ -137,67 +137,71 @@ export function SesionView({ id, onVolver }: { id: string; onVolver: () => void 
           </button>
         </div>
       </header>
-      {error ? <p role="alert" className={styles.error}>{error}</p> : null}
 
-      {notasGenerales.length > 0 || composerGeneralAbierto ? (
-        <section className={styles.notasGenerales} aria-label="Notas generales">
-          <h2 className={styles.seccionTitulo}>Notas generales</h2>
-          {notasGenerales.map((nota) => (
-            <NotaThread key={nota.id} nota={nota} onResponder={responderNota} onResolver={resolverNota} />
-          ))}
-          {composerGeneralAbierto ? (
-            <NotaComposer cita={null} onCancelar={() => setComposerAbierto(null)} onGuardar={crearNota} />
-          ) : null}
-        </section>
-      ) : null}
-
-      <section aria-label="Conversación de prueba" className={styles.chatColumna} ref={chatRef} onMouseUp={handleMouseUp}>
-        {mensajes.map((mensaje) => (
-          <div key={mensaje.id} className={styles.bloqueMensaje}>
-            <div className={styles.mensajeConGutter}>
-              <MessageBubble role={mensaje.rol} content={mensaje.texto} anchorId={mensaje.id} />
-              <button
-                type="button"
-                className={styles.botonAnotar}
-                onClick={() => abrirComposer(mensaje.id, null)}
-                aria-label="Dejar nota en este mensaje"
-              >
-                +
-              </button>
-            </div>
-            {notasDeMensaje(mensaje.id).map((nota) => (
+      <div className={styles.sesionScroll}>
+        {notasGenerales.length > 0 || composerGeneralAbierto ? (
+          <section className={styles.notasGenerales} aria-label="Notas generales">
+            <h2 className={styles.seccionTitulo}>Notas generales</h2>
+            {notasGenerales.map((nota) => (
               <NotaThread key={nota.id} nota={nota} onResponder={responderNota} onResolver={resolverNota} />
             ))}
-            {composerAbierto?.messageId === mensaje.id ? (
-              <NotaComposer
-                cita={composerAbierto.cita}
-                onCancelar={() => setComposerAbierto(null)}
-                onGuardar={crearNota}
-              />
+            {composerGeneralAbierto ? (
+              <NotaComposer cita={null} onCancelar={() => setComposerAbierto(null)} onGuardar={crearNota} />
             ) : null}
-          </div>
-        ))}
-        {pendienteUsuario ? <MessageBubble role="user" content={pendienteUsuario} /> : null}
-        {textoStreaming !== null ? (
-          <MessageBubble role="assistant" content={textoStreaming} showThinking={textoStreaming.length === 0} />
+          </section>
         ) : null}
-        {pill ? (
-          <button
-            type="button"
-            className={styles.pillSeleccion}
-            style={{ left: pill.x, top: pill.y }}
-            onMouseDown={(event) => event.preventDefault()}
-            onClick={() => {
-              abrirComposer(pill.messageId, pill.cita);
-              window.getSelection()?.removeAllRanges();
-            }}
-          >
-            Dejar nota
-          </button>
-        ) : null}
-      </section>
+
+        <section aria-label="Conversación de prueba" className={styles.chatColumna} ref={chatRef} onMouseUp={handleMouseUp}>
+          {mensajes.map((mensaje) => (
+            <div key={mensaje.id} className={styles.bloqueMensaje}>
+              <div className={styles.mensajeConGutter}>
+                <MessageBubble role={mensaje.rol} content={mensaje.texto} anchorId={mensaje.id} />
+                <button
+                  type="button"
+                  className={styles.botonAnotar}
+                  onClick={() => abrirComposer(mensaje.id, null)}
+                  aria-label="Dejar nota en este mensaje"
+                >
+                  +
+                </button>
+              </div>
+              {notasDeMensaje(mensaje.id).map((nota) => (
+                <NotaThread key={nota.id} nota={nota} onResponder={responderNota} onResolver={resolverNota} />
+              ))}
+              {composerAbierto?.messageId === mensaje.id ? (
+                <NotaComposer
+                  cita={composerAbierto.cita}
+                  onCancelar={() => setComposerAbierto(null)}
+                  onGuardar={crearNota}
+                />
+              ) : null}
+            </div>
+          ))}
+          {pendienteUsuario ? <MessageBubble role="user" content={pendienteUsuario} /> : null}
+          {textoStreaming !== null ? (
+            <MessageBubble role="assistant" content={textoStreaming} showThinking={textoStreaming.length === 0} />
+          ) : null}
+          {pill ? (
+            <button
+              type="button"
+              className={styles.pillSeleccion}
+              style={{ left: pill.x, top: pill.y }}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => {
+                abrirComposer(pill.messageId, pill.cita);
+                window.getSelection()?.removeAllRanges();
+              }}
+            >
+              Dejar nota
+            </button>
+          ) : null}
+        </section>
+      </div>
+
+      {error ? <p role="alert" className={styles.error}>{error}</p> : null}
 
       <Composer
+        className={styles.composerSesion}
         value={draft}
         onChange={setDraft}
         onSubmit={enviar}

@@ -78,7 +78,7 @@ export default function RevisionPage() {
         <span className={styles.chipRevision}>Revisión</span>
       </header>
       <main className={styles.main}>
-        <div className={styles.columna}>
+        <div className={`${styles.columna}${vista.tipo === "sesion" ? ` ${styles.columnaSesion}` : ""}`}>
           {vista.tipo === "acceso" ? (
             <AccesoForm onAcceso={() => void cargarListado()} />
           ) : vista.tipo === "listado" ? (
