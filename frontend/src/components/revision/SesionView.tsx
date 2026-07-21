@@ -33,22 +33,26 @@ export function SesionView({ id, onVolver }: { id: string; onVolver: () => void 
     }
   };
 
-  const responderNota = async (notaId: string, texto: string) => {
-    await fetch(`/api/revision/notas/${notaId}/respuestas`, {
+  const responderNota = async (notaId: string, texto: string): Promise<boolean> => {
+    const response = await fetch(`/api/revision/notas/${notaId}/respuestas`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ texto }),
-    });
+    }).catch(() => null);
+    if (!response?.ok) return false;
     await refetch();
+    return true;
   };
 
-  const resolverNota = async (notaId: string) => {
-    await fetch(`/api/revision/notas/${notaId}`, {
+  const resolverNota = async (notaId: string): Promise<boolean> => {
+    const response = await fetch(`/api/revision/notas/${notaId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ estado: "RESUELTA" }),
-    });
+    }).catch(() => null);
+    if (!response?.ok) return false;
     await refetch();
+    return true;
   };
 
   const mensajes = (detalle?.timeline ?? []).filter((item) => item.tipo === "mensaje");
