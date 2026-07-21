@@ -25,7 +25,7 @@ function fechaCorta(iso: string): string {
 /**
  * Hilo de nota estilo code review de GitHub: tarjeta con estado, cita del
  * pasaje, respuestas anidadas, responder expandible y resolver. Los hilos
- * resueltos colapsan a una linea expandible.
+ * resueltos colapsan a una línea expandible.
  */
 export function NotaThread({
   nota,

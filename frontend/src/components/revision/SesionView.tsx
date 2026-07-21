@@ -115,8 +115,10 @@ export function SesionView({ id, onVolver }: { id: string; onVolver: () => void 
 
   const mensajes = (detalle?.timeline ?? []).filter((item) => item.tipo === "mensaje");
   const notas = detalle?.notas ?? [];
+  const idsMensajes = new Set(mensajes.map((mensaje) => mensaje.id));
   const notasDeMensaje = (messageId: string): NotaConRespuestas[] => notas.filter((nota) => nota.messageId === messageId);
-  const notasGenerales = notas.filter((nota) => nota.messageId === null);
+  // Generales + huérfanas (messageId que no matchea el transcript): una nota jamás queda invisible.
+  const notasGenerales = notas.filter((nota) => nota.messageId === null || !idsMensajes.has(nota.messageId));
   const composerGeneralAbierto = composerAbierto !== null && composerAbierto.messageId === null;
 
   return (
@@ -184,6 +186,7 @@ export function SesionView({ id, onVolver }: { id: string; onVolver: () => void 
             type="button"
             className={styles.pillSeleccion}
             style={{ left: pill.x, top: pill.y }}
+            onMouseDown={(event) => event.preventDefault()}
             onClick={() => {
               abrirComposer(pill.messageId, pill.cita);
               window.getSelection()?.removeAllRanges();
