@@ -14,13 +14,11 @@ Las páginas citadas corresponden a cada PDF.
 devolvernos este mismo archivo, o responder por el canal habitual citando el
 número de pregunta.
 
-**Estado**: PARCIALMENTE RESPONDIDA (respuestas recibidas 2026-07-21). Las preguntas
-1, 2, 5 y 6 fueron respondidas y aplicadas al corpus. Las 3 y 4 se confirmaron sin
-cambios (ya estaban correctas). De las erratas de la 8 se aplicaron todas las
-confirmadas. Queda **PENDIENTE** la pregunta 7 (prescripción de créditos laborales):
-no llegó el material. Y quedan dos puntos por confirmar, de una palabra cada uno: el
-factor diario de licencia del jornalero (nota en la 8) y la errata «Pude/Puede»
-(primer ítem de la 8).
+**Estado**: RESPONDIDA salvo un tema pendiente (última respuesta 2026-07-21). Las
+preguntas 1 a 6 y todas las erratas de la 8 —incluidas las dos confirmaciones de una
+palabra (factor del jornalero **0,0664** y «**Puede**»)— fueron respondidas y aplicadas.
+Las 3 y 4 se confirmaron sin cambios. Queda **PENDIENTE únicamente la pregunta 7**
+(prescripción de créditos laborales): no llegó el material.
 
 ---
 
@@ -174,8 +172,8 @@ Las dejamos como están en el documento; avisen si corrigen el original:
 >   documento y lo que quedó en el corpus, coherente con el 0,0553 que el mismo pasaje
 >   da para el mensual con 1,66 ÷ 30). El 0,0667 surge de usar 1,6667 (20 ÷ 12 sin
 >   redondear). Para no cargar un número que no cierra con su propia división,
->   mantuvimos **0,0664**. **¿Confirman 0,0664, o prefieren usar 1,6667 sin redondear
->   en ambos casos (0,0667 el jornalero y 0,0556 el mensual)?**
+>   mantuvimos **0,0664**. **Confirmado por el equipo legal (2026-07-21): «Dejemos
+>   0,0664».** El corpus mantiene 0,0664; sin cambios.
 > - *"se **fracciones** en dos etapas"* (p. 12) → «se **fraccione**». *Aplicado.*
 > - *"**es tomados** en consideración"* (JORNADA, p. 5) → «es **tomado**». *Aplicado.*
 > - *"**premias** el mejor desempeño"* (p. 7) → «**premia**». *Aplicado.* Además, por
@@ -184,9 +182,8 @@ Las dejamos como están en el documento; avisen si corrigen el original:
 > - *"que **sea regulares y permanente**"* (p. 8) → «que **sean regulares y
 >   permanentes**». *Aplicado.*
 > - *"**los 20 corridos**"* (NOCTURNO, p. 2) → «los **20 días** corridos». *Aplicado.*
-> - *"**Pude** incluirse a todos los feriados"* (p. 6): sin respuesta explícita. Lo
->   aplicamos como «**Puede**» por ser una errata ortográfica inequívoca (misma clase
->   que las anteriores), pero lo señalamos por si el original dijera otra cosa.
+> - *"**Pude** incluirse a todos los feriados"* (p. 6) → «**Puede**». **Confirmado por el
+>   equipo legal (2026-07-21):** «La respuesta correcta es "Puede"». *Aplicado.*
 
 ---
 

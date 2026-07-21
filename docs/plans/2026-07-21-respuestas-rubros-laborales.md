@@ -86,12 +86,21 @@ consistente con la Ley 19.582/2017).
 - `pnpm evals`: receptor clasificación **19/19** (100%) y laboral citación **9/9** (100%,
   incluye el item nuevo de semana inglesa). Ambos gates sobre el umbral de 90%.
 
+## Segunda vuelta de respuestas (2026-07-21) — dos confirmaciones de una palabra
+
+El equipo legal confirmó los dos puntos que quedaban abiertos en la Q8, ambos
+validando lo que ya estaba en el corpus (sin cambios de contenido ni re-ingesta):
+
+- **Factor diario del jornalero**: «Dejemos 0,0664». El corpus mantiene **0,0664**
+  (1,66 ÷ 25, coherente con el 0,0553 del mensual). Confirmado; sin cambio.
+- **«Pude/Puede»**: «La respuesta correcta es "Puede"». El corpus ya decía **«Puede»**.
+  Confirmado; sin cambio.
+
+Como no cambió corpus ni código, la verificación previa (test 52/52, lint, evals 19/19
++ 9/9, 23 docs `READY`) sigue vigente.
+
 ## Pendiente (no bloqueante)
 
-- **Pregunta 7 — prescripción de créditos laborales**: sin material. El asistente no
-  afirma plazos (releva la fecha de egreso y es honesto si el corpus no lo trae). Reiterado
-  el pedido en el enviable.
-- **Q8 — factor diario del jornalero**: se espera confirmación de una palabra (¿0,0664 del
-  documento, o 0,0667/0,0556 usando 1,6667 sin redondear?).
-- **Q8 — «Pude/Puede»**: aplicado como errata inequívoca; señalado por si el original
-  dijera otra cosa.
+- **Pregunta 7 — prescripción de créditos laborales**: único punto abierto. Sin
+  material. El asistente no afirma plazos (releva la fecha de egreso y es honesto si el
+  corpus no lo trae). Reiterado el pedido en el enviable.
