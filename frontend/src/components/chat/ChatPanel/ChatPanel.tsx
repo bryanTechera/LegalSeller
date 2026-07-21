@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 
 import { BrandMark } from "@/components/brand/BrandMark";
+import { MessageBubble } from "@/components/chat/MessageBubble";
 import { useChatStream } from "@/hooks/useChatStream";
 
 import styles from "./ChatPanel.module.css";
@@ -140,30 +139,12 @@ export function ChatPanel() {
       </header>
       <div ref={scrollRef} className={styles.messages} aria-live="polite">
         {messages.map((message) => (
-          <article
+          <MessageBubble
             key={message.id}
-            className={message.role === "user" ? styles.userMessage : styles.assistantMessage}
-            aria-label={message.role === "user" ? "Tu mensaje" : "Respuesta del asistente"}
-          >
-            {message.role === "assistant" ? (
-              <>
-                <span className={styles.assistantHeader} aria-hidden="true">
-                  <span className={styles.assistantAvatar}>
-                    <BrandMark size={14} />
-                  </span>
-                  <span className={styles.assistantName}>Jurco</span>
-                </span>
-                <div className={styles.markdown}>
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
-                  {isStreaming && message.content.length === 0 ? (
-                    <span className={styles.thinking}>Buscando en el corpus…</span>
-                  ) : null}
-                </div>
-              </>
-            ) : (
-              <p>{message.content}</p>
-            )}
-          </article>
+            role={message.role}
+            content={message.content}
+            showThinking={isStreaming && message.content.length === 0}
+          />
         ))}
       </div>
 
