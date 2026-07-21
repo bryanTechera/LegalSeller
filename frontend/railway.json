@@ -6,6 +6,8 @@
   },
   "deploy": {
     "restartPolicyType": "ON_FAILURE",
+    "healthcheckPath": "/api/health",
+    "healthcheckTimeout": 30,
     "preDeployCommand": "npx prisma migrate deploy"
   }
 }
