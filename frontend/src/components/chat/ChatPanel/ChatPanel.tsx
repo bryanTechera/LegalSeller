@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { BrandMark } from "@/components/brand/BrandMark";
+import { Composer } from "@/components/chat/Composer";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { useChatStream } from "@/hooks/useChatStream";
 
@@ -38,48 +39,26 @@ export function ChatPanel() {
     inputRef.current?.focus();
   }, [isEmpty]);
 
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
+  const enviar = () => {
     if (isStreaming || isResetting || !draft.trim()) return;
     void sendMessage(draft);
     setDraft("");
   };
 
-  const composer = (
-    <form className={styles.composer} onSubmit={handleSubmit}>
-      <label htmlFor="chat-input" className={styles.srOnly}>
-        Escribí tu consulta
-      </label>
-      <textarea
-        ref={inputRef}
-        id="chat-input"
-        className={styles.input}
-        value={draft}
-        maxLength={MAX_MESSAGE_LENGTH}
-        rows={2}
-        placeholder="Escribí tu consulta…"
-        onChange={(event) => setDraft(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" && !event.shiftKey) {
-            event.preventDefault();
-            handleSubmit(event);
-          }
-        }}
-      />
-      {isStreaming ? (
-        <button type="button" className={styles.stopButton} onClick={stop} aria-label="Detener la respuesta">
-          <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true">
-            <rect x="3" y="3" width="10" height="10" rx="2" />
-          </svg>
-        </button>
-      ) : (
-        <button type="submit" className={styles.sendButton} disabled={!draft.trim()} aria-label="Enviar la consulta">
-          <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor" aria-hidden="true">
-            <path d="M2 18l16-8L2 2v6l11 2-11 2v6z" />
-          </svg>
-        </button>
-      )}
-    </form>
+  const composer = (heroStyle = false) => (
+    <Composer
+      value={draft}
+      onChange={setDraft}
+      onSubmit={enviar}
+      isStreaming={isStreaming}
+      onStop={stop}
+      placeholder="Escribí tu consulta…"
+      label="Escribí tu consulta"
+      inputId="chat-input"
+      maxLength={MAX_MESSAGE_LENGTH}
+      inputRef={inputRef}
+      className={heroStyle ? styles.heroComposer : undefined}
+    />
   );
 
   if (isEmpty) {
@@ -91,7 +70,7 @@ export function ChatPanel() {
           </span>
           <h2 className={styles.heroTitle}>¿Qué necesitás resolver hoy?</h2>
           <p className={styles.heroSubtitle}>Orientación legal en segundos, siempre con la fuente citada.</p>
-          {composer}
+          {composer(true)}
           <p className={styles.suggestionsLabel}>Resolvé tus dudas sobre despidos</p>
           <ul className={styles.suggestions}>
             {SUGGESTED_QUESTIONS.map(({ topic, question }) => (
@@ -154,7 +133,7 @@ export function ChatPanel() {
         </p>
       ) : null}
 
-      {composer}
+      {composer()}
     </section>
   );
 }
