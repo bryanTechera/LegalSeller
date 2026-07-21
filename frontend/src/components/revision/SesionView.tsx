@@ -1,156 +1,209 @@
 "use client";
 
-import { useState } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { useRef, useState } from "react";
 
+import { Composer } from "@/components/chat/Composer";
+import { MessageBubble } from "@/components/chat/MessageBubble";
 import { useRevisionChat } from "@/hooks/useRevisionChat";
+import type { NotaConRespuestas } from "@/lib/revision/notas";
+import { citaDesdeSeleccion } from "@/lib/revision/seleccion";
 
+import { NotaComposer } from "./NotaComposer";
 import { NotaThread } from "./NotaThread";
 import styles from "./revision.module.css";
+
+const MAX_MESSAGE_LENGTH = 4000;
+
+interface ComposerAbierto {
+  messageId: string | null;
+  cita: string | null;
+}
+
+interface PillSeleccion {
+  messageId: string;
+  cita: string;
+  x: number;
+  y: number;
+}
 
 export function SesionView({ id, onVolver }: { id: string; onVolver: () => void }) {
   const { detalle, isStreaming, pendienteUsuario, textoStreaming, error, sendMessage, refetch } = useRevisionChat(id);
   const [draft, setDraft] = useState("");
-  const [notaPara, setNotaPara] = useState<{ messageId: string | null; cita: string | null } | null>(null);
-  const [textoNota, setTextoNota] = useState("");
+  const [composerAbierto, setComposerAbierto] = useState<ComposerAbierto | null>(null);
+  const [pill, setPill] = useState<PillSeleccion | null>(null);
+  const chatRef = useRef<HTMLElement>(null);
 
-  const crearNota = async () => {
-    if (!notaPara || !textoNota.trim()) return;
-    const response = await fetch(`/api/revision/sesiones/${id}/notas`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        texto: textoNota.trim(),
-        ...(notaPara.messageId ? { messageId: notaPara.messageId } : {}),
-        ...(notaPara.cita ? { citaTexto: notaPara.cita.slice(0, 2000) } : {}),
-      }),
-    });
-    if (response.ok) {
-      setNotaPara(null);
-      setTextoNota("");
+  const enviar = () => {
+    if (isStreaming || !draft.trim()) return;
+    void sendMessage(draft);
+    setDraft("");
+  };
+
+  const abrirComposer = (messageId: string | null, cita: string | null) => {
+    setComposerAbierto({ messageId, cita });
+    setPill(null);
+  };
+
+  // Pill "Dejar nota" al soltar una selección contenida en un solo mensaje.
+  const handleMouseUp = () => {
+    const seleccion = window.getSelection();
+    const contenedor = chatRef.current;
+    if (!seleccion || seleccion.rangeCount === 0 || !contenedor) {
+      setPill(null);
+      return;
+    }
+    const ancla = citaDesdeSeleccion(seleccion, contenedor);
+    if (!ancla) {
+      setPill(null);
+      return;
+    }
+    const rect = seleccion.getRangeAt(0).getBoundingClientRect();
+    const marco = contenedor.getBoundingClientRect();
+    setPill({ ...ancla, x: rect.left - marco.left + rect.width / 2, y: rect.bottom - marco.top + 6 });
+  };
+
+  const crearNota = async (texto: string): Promise<boolean> => {
+    if (!composerAbierto) return false;
+    try {
+      const response = await fetch(`/api/revision/sesiones/${id}/notas`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          texto,
+          ...(composerAbierto.messageId ? { messageId: composerAbierto.messageId } : {}),
+          ...(composerAbierto.cita ? { citaTexto: composerAbierto.cita.slice(0, 2000) } : {}),
+        }),
+      });
+      if (!response.ok) return false;
+      setComposerAbierto(null);
       await refetch();
+      return true;
+    } catch {
+      return false;
     }
   };
 
   const responderNota = async (notaId: string, texto: string): Promise<boolean> => {
-    const response = await fetch(`/api/revision/notas/${notaId}/respuestas`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ texto }),
-    }).catch(() => null);
-    if (!response?.ok) return false;
-    await refetch();
-    return true;
+    try {
+      const response = await fetch(`/api/revision/notas/${notaId}/respuestas`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ texto }),
+      });
+      if (!response.ok) return false;
+      await refetch();
+      return true;
+    } catch {
+      return false;
+    }
   };
 
   const resolverNota = async (notaId: string): Promise<boolean> => {
-    const response = await fetch(`/api/revision/notas/${notaId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ estado: "RESUELTA" }),
-    }).catch(() => null);
-    if (!response?.ok) return false;
-    await refetch();
-    return true;
+    try {
+      const response = await fetch(`/api/revision/notas/${notaId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ estado: "RESUELTA" }),
+      });
+      if (!response.ok) return false;
+      await refetch();
+      return true;
+    } catch {
+      return false;
+    }
   };
 
   const mensajes = (detalle?.timeline ?? []).filter((item) => item.tipo === "mensaje");
-  const notasDeMensaje = (messageId: string) => (detalle?.notas ?? []).filter((nota) => nota.messageId === messageId);
+  const notas = detalle?.notas ?? [];
+  const notasDeMensaje = (messageId: string): NotaConRespuestas[] => notas.filter((nota) => nota.messageId === messageId);
+  const notasGenerales = notas.filter((nota) => nota.messageId === null);
+  const composerGeneralAbierto = composerAbierto !== null && composerAbierto.messageId === null;
 
   return (
     <div>
-      <header className={styles.encabezado}>
+      <header className={styles.sesionHeader}>
         <div>
           <h1 className={styles.titulo}>{detalle?.sesion.titulo ?? "Sesión de revisión"}</h1>
-          <p className={styles.subtitulo}>Creada por {detalle?.sesion.creadaPor ?? "—"}</p>
+          <p className={styles.sesionMeta}>Creada por {detalle?.sesion.creadaPor ?? "—"}</p>
         </div>
-        <button type="button" className={styles.botonSecundario} onClick={onVolver}>
-          Volver al listado
-        </button>
+        <div className={styles.sesionAcciones}>
+          <button type="button" className={styles.botonSecundario} onClick={() => abrirComposer(null, null)}>
+            Nota general
+          </button>
+          <button type="button" className={styles.botonSecundario} onClick={onVolver}>
+            Volver al listado
+          </button>
+        </div>
       </header>
       {error ? <p role="alert" className={styles.error}>{error}</p> : null}
-      <div className={styles.sesionLayout}>
-        <section aria-label="Conversación de prueba" className={styles.chatColumna}>
-          {mensajes.map((mensaje) => (
-            <article key={mensaje.id} className={mensaje.rol === "user" ? styles.mensajeUsuario : styles.mensajeAsistente}>
-              {mensaje.rol === "assistant" ? (
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{mensaje.texto}</ReactMarkdown>
-              ) : (
-                <p>{mensaje.texto}</p>
-              )}
-              <div className={styles.accionesMensaje}>
-                {notasDeMensaje(mensaje.id).length > 0 ? (
-                  <span className={styles.marcadorNota}>{notasDeMensaje(mensaje.id).length} nota(s)</span>
-                ) : null}{" "}
-                <button
-                  type="button"
-                  className={styles.botonNota}
-                  onClick={() => setNotaPara({ messageId: mensaje.id, cita: mensaje.texto.slice(0, 300) })}
-                >
-                  Dejar nota
-                </button>
-              </div>
-            </article>
-          ))}
-          {pendienteUsuario ? (
-            <article className={styles.mensajeUsuario}><p>{pendienteUsuario}</p></article>
-          ) : null}
-          {textoStreaming !== null ? (
-            <article className={styles.mensajeAsistente}>
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{textoStreaming}</ReactMarkdown>
-            </article>
-          ) : null}
-          {notaPara ? (
-            <div className={styles.formNota}>
-              {notaPara.cita ? <p className={styles.notaCita}>“{notaPara.cita}”</p> : null}
-              <textarea
-                value={textoNota}
-                placeholder="¿Qué observaste en esta respuesta?"
-                onChange={(event) => setTextoNota(event.target.value)}
-                aria-label="Texto de la nota"
-              />
-              <div className={styles.filaBotones}>
-                <button type="button" className={styles.botonSecundario} onClick={() => setNotaPara(null)}>
-                  Cancelar
-                </button>
-                <button type="button" className={styles.botonPrimario} disabled={!textoNota.trim()} onClick={() => void crearNota()}>
-                  Guardar nota
-                </button>
-              </div>
-            </div>
-          ) : null}
-          <form
-            className={styles.composer}
-            onSubmit={(event) => {
-              event.preventDefault();
-              void sendMessage(draft);
-              setDraft("");
-            }}
-          >
-            <textarea
-              value={draft}
-              placeholder="Probá al asistente como si fueras un consultante…"
-              onChange={(event) => setDraft(event.target.value)}
-              aria-label="Mensaje de prueba"
-            />
-            <button type="submit" className={styles.botonPrimario} disabled={isStreaming || !draft.trim()}>
-              Enviar
-            </button>
-          </form>
-        </section>
-        <aside aria-label="Notas de la sesión" className={styles.panelNotas}>
-          <div className={styles.filaBotones}>
-            <button type="button" className={styles.botonNota} onClick={() => setNotaPara({ messageId: null, cita: null })}>
-              Nota general de la sesión
-            </button>
-          </div>
-          {(detalle?.notas ?? []).length === 0 ? <p className={styles.subtitulo}>Sin notas todavía.</p> : null}
-          {(detalle?.notas ?? []).map((nota) => (
+
+      {notasGenerales.length > 0 || composerGeneralAbierto ? (
+        <section className={styles.notasGenerales} aria-label="Notas generales">
+          <h2 className={styles.seccionTitulo}>Notas generales</h2>
+          {notasGenerales.map((nota) => (
             <NotaThread key={nota.id} nota={nota} onResponder={responderNota} onResolver={resolverNota} />
           ))}
-        </aside>
-      </div>
+          {composerGeneralAbierto ? (
+            <NotaComposer cita={null} onCancelar={() => setComposerAbierto(null)} onGuardar={crearNota} />
+          ) : null}
+        </section>
+      ) : null}
+
+      <section aria-label="Conversación de prueba" className={styles.chatColumna} ref={chatRef} onMouseUp={handleMouseUp}>
+        {mensajes.map((mensaje) => (
+          <div key={mensaje.id} className={styles.bloqueMensaje}>
+            <div className={styles.mensajeConGutter}>
+              <MessageBubble role={mensaje.rol} content={mensaje.texto} anchorId={mensaje.id} />
+              <button
+                type="button"
+                className={styles.botonAnotar}
+                onClick={() => abrirComposer(mensaje.id, null)}
+                aria-label="Dejar nota en este mensaje"
+              >
+                +
+              </button>
+            </div>
+            {notasDeMensaje(mensaje.id).map((nota) => (
+              <NotaThread key={nota.id} nota={nota} onResponder={responderNota} onResolver={resolverNota} />
+            ))}
+            {composerAbierto?.messageId === mensaje.id ? (
+              <NotaComposer
+                cita={composerAbierto.cita}
+                onCancelar={() => setComposerAbierto(null)}
+                onGuardar={crearNota}
+              />
+            ) : null}
+          </div>
+        ))}
+        {pendienteUsuario ? <MessageBubble role="user" content={pendienteUsuario} /> : null}
+        {textoStreaming !== null ? (
+          <MessageBubble role="assistant" content={textoStreaming} showThinking={textoStreaming.length === 0} />
+        ) : null}
+        {pill ? (
+          <button
+            type="button"
+            className={styles.pillSeleccion}
+            style={{ left: pill.x, top: pill.y }}
+            onClick={() => {
+              abrirComposer(pill.messageId, pill.cita);
+              window.getSelection()?.removeAllRanges();
+            }}
+          >
+            Dejar nota
+          </button>
+        ) : null}
+      </section>
+
+      <Composer
+        value={draft}
+        onChange={setDraft}
+        onSubmit={enviar}
+        isStreaming={isStreaming}
+        placeholder="Probá al asistente como si fueras un consultante…"
+        label="Mensaje de prueba"
+        inputId="revision-input"
+        maxLength={MAX_MESSAGE_LENGTH}
+      />
     </div>
   );
 }
