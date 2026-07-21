@@ -14,11 +14,15 @@ Las páginas citadas corresponden a cada PDF.
 devolvernos este mismo archivo, o responder por el canal habitual citando el
 número de pregunta.
 
-**Estado**: RESPONDIDA salvo un tema pendiente (última respuesta 2026-07-21). Las
-preguntas 1 a 6 y todas las erratas de la 8 —incluidas las dos confirmaciones de una
-palabra (factor del jornalero **0,0664** y «**Puede**»)— fueron respondidas y aplicadas.
-Las 3 y 4 se confirmaron sin cambios. Queda **PENDIENTE únicamente la pregunta 7**
-(prescripción de créditos laborales): no llegó el material.
+**Estado**: RESPONDIDA (última respuesta 2026-07-21). Las preguntas 1 a 6 y todas las
+erratas de la 8 —incluidas las dos confirmaciones de una palabra (factor del jornalero
+**0,0664** y «**Puede**»)— fueron respondidas y aplicadas. Las 3 y 4 se confirmaron sin
+cambios. La **pregunta 7** (prescripción de créditos laborales) también quedó
+**RESPONDIDA**: el 2026-07-21 llegó el material (Ley N° 18.091 y Ley N° 18.572), ya
+procesado e ingresado al corpus (ver
+`docs/plans/2026-07-21-procesamiento-prescripcion-proceso-laboral.md`). Las
+confirmaciones de seguimiento sobre prescripción/proceso pasan a un enviable nuevo:
+`docs/preguntas-legales/2026-07-21-prescripcion-proceso-laboral.md`.
 
 ---
 
@@ -140,10 +144,16 @@ afirma ningún plazo.
 
 **¿Nos envían el material sobre prescripción de los créditos laborales?**
 
-> **Estado (2026-07-21):** PENDIENTE — no recibimos el material. El asistente sigue
-> sin afirmar plazos: releva la fecha de egreso y, si el corpus no trae el plazo, lo
-> dice con honestidad y capta igual el caso. Reiteramos el pedido del material sobre
-> prescripción de los créditos laborales.
+> **Estado (2026-07-21):** RESPONDIDA — recibimos el material: la **Ley N° 18.091**
+> (prescripción de acciones y créditos laborales) y la **Ley N° 18.572** (proceso
+> laboral). Con eso, el corpus ya orienta los plazos: las **acciones** prescriben al
+> **año** del cese (art. 1) y los **créditos** a los **cinco años** desde que pudieron
+> exigirse (art. 2), con las interrupciones de los arts. 3-4. Ambas leyes se cargaron
+> como corpus transversal (aplican a despido y a rubros) y el asistente ya cita esos
+> plazos con su fuente. Procesamiento en
+> `docs/plans/2026-07-21-procesamiento-prescripcion-proceso-laboral.md`; las
+> confirmaciones de seguimiento quedan en el enviable
+> `docs/preguntas-legales/2026-07-21-prescripcion-proceso-laboral.md`.
 
 ## 8. Erratas menores mantenidas tal cual (confirmar si corrigen el material fuente)
 

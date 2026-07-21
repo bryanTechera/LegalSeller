@@ -101,6 +101,7 @@ Como no cambió corpus ni código, la verificación previa (test 52/52, lint, ev
 
 ## Pendiente (no bloqueante)
 
-- **Pregunta 7 — prescripción de créditos laborales**: único punto abierto. Sin
-  material. El asistente no afirma plazos (releva la fecha de egreso y es honesto si el
-  corpus no lo trae). Reiterado el pedido en el enviable.
+- **Pregunta 7 — prescripción de créditos laborales**: ~~único punto abierto~~
+  **RESUELTA el mismo 2026-07-21**: llegó el material (Ley N° 18.091 y Ley N° 18.572) y se
+  procesó en `docs/plans/2026-07-21-procesamiento-prescripcion-proceso-laboral.md`. El
+  corpus ya orienta los plazos (acciones 1 año / créditos 5 años) con su fuente.

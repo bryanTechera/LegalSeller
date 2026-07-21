@@ -34,5 +34,17 @@
   {
     "mensaje": "en mi trabajo tenemos regimen de semana inglesa y a veces trabajo hasta las 2 de la tarde los sabados, eso me genera horas extra?",
     "esperado": { "toolCall": "buscar-documentos" }
+  },
+  {
+    "mensaje": "me despidieron hace casi dos años, todavia estoy a tiempo de reclamar la indemnizacion o ya prescribio?",
+    "esperado": { "toolCall": "buscar-documentos" }
+  },
+  {
+    "mensaje": "renuncie hace tres años, hasta cuanto tiempo hacia atras puedo reclamar horas extras y sueldos que nunca me pagaron?",
+    "esperado": { "toolCall": "buscar-documentos" }
+  },
+  {
+    "mensaje": "iniciar un reclamo o juicio laboral tiene algun costo para mi como trabajador?",
+    "esperado": { "toolCall": "buscar-documentos" }
   }
 ]

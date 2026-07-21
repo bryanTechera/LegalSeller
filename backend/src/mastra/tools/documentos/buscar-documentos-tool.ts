@@ -46,8 +46,12 @@ export function buildSearchQuery({ vector, minSimilarity, limit, categoria, subc
     conditions.push(`d."categoria" = $${String(params.length)}`);
   }
   if (subcategorias && subcategorias.length > 0) {
+    // Cross-cutting corpus lives at the categoria level (subcategoria NULL) and
+    // stays in scope for every subcategoria of that categoria — e.g. Ley 18.091
+    // (prescripción) and el proceso laboral (Ley 18.572) aplican tanto a despido
+    // como a rubros. Sin el OR IS NULL, un doc transversal nunca matchea el filtro.
     params.push(subcategorias);
-    conditions.push(`d."subcategoria" = ANY($${String(params.length)})`);
+    conditions.push(`(d."subcategoria" = ANY($${String(params.length)}) OR d."subcategoria" IS NULL)`);
   }
   const sql = `SELECT c."documentId"  AS document_id,
                 d."title"       AS document_title,

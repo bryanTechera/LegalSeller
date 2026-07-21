@@ -91,7 +91,12 @@ decisión formalizada en `docs/plans/2026-07-19-arquitectura-agentes-clasificaci
 - **Subcategoría = dato acumulativo del caso, no estado de ruteo**: se registra en
   `Caso.subcategorias` y parametriza el filtro de retrieval (`buscar-documentos` con
   WHERE por categoría/subcategoría sobre el corpus particionado), pero nunca dispara
-  un salto a otro agente. El **sub-agente especialista por subcategoría** (patrón
+  un salto a otro agente. **Corpus transversal**: el material que aplica a toda una
+  categoría y no a una subcategoría (p. ej. prescripción y proceso laboral, que rigen
+  tanto despido como rubros) se ingiere a **nivel categoría** (`Document.subcategoria =
+  NULL`) y el retrieval lo mantiene siempre en alcance aunque el agente filtre por
+  subcategorías (`... OR d."subcategoria" IS NULL`; ver
+  `docs/plans/2026-07-21-procesamiento-prescripcion-proceso-laboral.md`). El **sub-agente especialista por subcategoría** (patrón
   Networks) descrito originalmente acá queda como **evolución opcional**: se promueve
   solo cuando las evals muestren que el prompt del agente de categoría degrada al
   discriminar entre las subcategorías de su área (spec §4, §9) — no como paso
