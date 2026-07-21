@@ -30,5 +30,9 @@
   {
     "mensaje": "trabajo de 22 a 6 de la mañana, me corresponde algun plus por nocturnidad?",
     "esperado": { "toolCall": "buscar-documentos" }
+  },
+  {
+    "mensaje": "en mi trabajo tenemos regimen de semana inglesa y a veces trabajo hasta las 2 de la tarde los sabados, eso me genera horas extra?",
+    "esperado": { "toolCall": "buscar-documentos" }
   }
 ]

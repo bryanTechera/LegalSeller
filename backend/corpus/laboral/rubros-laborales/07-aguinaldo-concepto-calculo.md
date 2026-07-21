@@ -14,4 +14,4 @@ De acuerdo al artículo 1 de la ley n.º 12.840, los sujetos beneficiarios del a
 
 A los efectos del cálculo de la partida, se deberá sumar el total de las retribuciones en dinero abonadas por el patrono entre el 1.º de diciembre de un año y el 30 de noviembre del siguiente y dividirlas por doce. Esta operación nos dará como resultado el monto nominal del aguinaldo, al cual se le deberán efectuar luego los descuentos legales correspondientes.
 
-La ley n.º 12.840 estableció que el sueldo anual complementario se abonara en una sola partida anual, pero el decreto-ley n.º 14.525 del 25 de abril de 1976 facultó al Poder Ejecutivo a disponer que el aguinaldo se fracciones en dos etapas.
+La ley n.º 12.840 estableció que el sueldo anual complementario se abonara en una sola partida anual, pero el decreto-ley n.º 14.525 del 25 de abril de 1976 facultó al Poder Ejecutivo a disponer que el aguinaldo se fraccione en dos etapas.

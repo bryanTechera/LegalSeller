@@ -2,7 +2,7 @@
 
 ## Duración de la licencia
 
-El artículo 1 de la ley n.º 12.590 establece que por cada año completo de trabajo se tiene derecho a un período mínimo de vacaciones de 20 días continuos en el año siguiente. Por supuesto que esta disposición legal solo establece el mínimo, por lo que pueden existir disposiciones especiales, reglamentaciones o convenios colectivos que dispongan una cantidad mayor de días de licencia. Si el trabajador genera un número menor a 20 días de licencia, por no haber podido computar dentro del año civil el número de meses, quincenas o semanas que fija la ley, tendrá derecho a licencia en proporción al tiempo trabajado, en el entendido de que por cada mes de servicio o a la orden, corresponde 1 día y 2/3 de licencia (equivalente a 1,66 días), de acuerdo al artículo 10 del decreto reglamentario. La operación que hacemos es 20 dividido 12. Para saber cuánto genera de licencia por 1 día de trabajo, dividimos 1,66 entre 30, lo que equivale a 0,0553. En el caso del trabajador jornalero la cuenta el 1,66 entre 25, lo que equivale a 0,0664.
+El artículo 1 de la ley n.º 12.590 establece que por cada año completo de trabajo se tiene derecho a un período mínimo de vacaciones de 20 días continuos en el año siguiente. Por supuesto que esta disposición legal solo establece el mínimo, por lo que pueden existir disposiciones especiales, reglamentaciones o convenios colectivos que dispongan una cantidad mayor de días de licencia. Si el trabajador genera un número menor a 20 días de licencia, por no haber podido computar dentro del año civil el número de meses, quincenas o semanas que fija la ley, tendrá derecho a licencia en proporción al tiempo trabajado, en el entendido de que por cada mes de servicio o a la orden, corresponde 1 día y 2/3 de licencia (equivalente a 1,66 días), de acuerdo al artículo 10 del decreto reglamentario. La operación que hacemos es 20 dividido 12. Para saber cuánto genera de licencia por 1 día de trabajo, dividimos 1,66 entre 30, lo que equivale a 0,0553. En el caso del trabajador jornalero la cuenta consiste en dividir 1,66 entre 25, lo que equivale a 0,0664.
 
 ## Complemento por antigüedad
 
@@ -26,7 +26,7 @@ La regla es que la licencia se goce en un único período de 20 días ininterrum
 
 ## Computabilidad de los feriados
 
-Por acuerdo de partes se puede establecer que los llamados «días en rojo» (feriados comunes y feriados pagos) sean contados como parte de la licencia. Pude incluirse a todos los feriados o sólo algunos puntuales.
+Por acuerdo de partes se puede establecer que los llamados «días en rojo» (feriados comunes y feriados pagos) sean contados como parte de la licencia. Puede incluirse a todos los feriados o sólo algunos puntuales.
 
 Vale decir que la ley empleó la palabra «feriado» del artículo 1 en el sentido de día festivo, o los que están «marcados en rojo» en el calendario, como lo son los días de Carnaval y Turismo.
 

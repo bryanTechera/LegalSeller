@@ -6,9 +6,9 @@
 
 Cantidad que se da al empleado que debe desempeñar las funciones fuera del lugar del empleo, para compensar gastos y fatigas especiales que origina el lugar donde presta sus servicios. Hay dos tipos de viáticos: a) «a forfait»: es una cantidad fija no sujeta a rendición de cuenta. Es más alta que los gastos efectivos e incluye una compensación por la mayor fatiga del trabajador; b) «a pie de lista» o sujeto a rendición de cuentas: se pagan solo los gastos realmente efectuados, según comprobantes. Para el BPS los viáticos a forfait aportan por el 50 % si se refieren a una actividad realizada en el país o el 25 % si en el exterior. Eso es así porque el BPS presume que parte de ese viático (50 % o 25 %) es remuneratorio, tiene carácter salarial.
 
-### 5.2. Quebrantos de caja
+### 5.2. Quebranto de caja
 
-Sumas que periódicamente perciben los cajeros para resarcirlos de los eventuales errores o inadvertencias que, casi inevitablemente en el desempeño de la tarea de contar dinero. Tienen una doble finalidad: indemnizan de posibles perjuicios; premias el mejor desempeño de la tarea. Plá considera que es salario, porque en definitiva se mejora el sueldo. El art. 159 de la ley 16.713 expresa que constituyen materia gravada.
+Sumas que periódicamente perciben los cajeros para resarcirlos de los eventuales errores o inadvertencias que, casi inevitablemente en el desempeño de la tarea de contar dinero. Tienen una doble finalidad: indemnizan de posibles perjuicios; premia el mejor desempeño de la tarea. Plá considera que es salario, porque en definitiva se mejora el sueldo. El art. 159 de la ley 16.713 expresa que constituyen materia gravada.
 
 ### 5.3. Propinas
 
@@ -26,7 +26,7 @@ Suma de dinero percibida periódicamente por el empleado y calculada en forma de
 
 Sumas de dinero, de tipo variable, otorgadas voluntariamente por el empleador, a sus empleados, a modo de premio o incentivo para lograr la mayor dedicación y perseverancias de estos o en determinadas ocasiones especiales (ej., casamiento).
 
-Según la ley 16.713, a los efectos de la materia gravada las gratificaciones que sea regulares y permanente están sujetas a contribución. Se exceptúan las partidas que las empresas otorguen a sus trabajadores en forma discrecional o con motivos específicos no vinculados a la prestación de servicio propia del contrato de trabajo (ej., canasta de fin de año). El decreto 113/996 presupone que un ingreso es regular y permanente «cuando es percibido en no menos de tres oportunidades a intervalos de similar duración».
+Según la ley 16.713, a los efectos de la materia gravada las gratificaciones que sean regulares y permanentes están sujetas a contribución. Se exceptúan las partidas que las empresas otorguen a sus trabajadores en forma discrecional o con motivos específicos no vinculados a la prestación de servicio propia del contrato de trabajo (ej., canasta de fin de año). El decreto 113/996 presupone que un ingreso es regular y permanente «cuando es percibido en no menos de tres oportunidades a intervalos de similar duración».
 
 ### 5.7. Primas
 

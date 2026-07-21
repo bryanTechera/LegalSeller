@@ -18,4 +18,4 @@ En cuarto lugar, cumplidos todos los requisitos anteriores, el tiempo de traslad
 
 Si no se dan estos requisitos de forma acumulativa, no nacerá el derecho a que se compute como tiempo de trabajo, el traslado.
 
-Por ejemplo, si la empresa toma totalmente a su cargo el traslado, si desde el límite del centro poblado hasta el lugar de trabajo se demora más de 60 minutos, el tiempo que exceda se considera tiempo trabajado. Por ejemplo, si ese traslado demoró 120 minutos, se computan como tiempo trabajado los 60 minutos que exceden de 60. Siempre, en todo caso, hasta 60 minutos no se computa tiempo alguno, solo el exceso de dicho tiempo es tomados en consideración.
+Por ejemplo, si la empresa toma totalmente a su cargo el traslado, si desde el límite del centro poblado hasta el lugar de trabajo se demora más de 60 minutos, el tiempo que exceda se considera tiempo trabajado. Por ejemplo, si ese traslado demoró 120 minutos, se computan como tiempo trabajado los 60 minutos que exceden de 60. Siempre, en todo caso, hasta 60 minutos no se computa tiempo alguno, solo el exceso de dicho tiempo es tomado en consideración.

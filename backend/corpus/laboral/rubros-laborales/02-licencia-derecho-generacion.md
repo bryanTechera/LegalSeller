@@ -2,7 +2,7 @@
 
 ## Vacaciones anuales pagas (también llamada licencia)
 
-En la actualidad el régimen vigente se encuentra establecido en la ley n.º 12.590 del 23 de diciembre de 1958, y su decreto reglamentario del 26 de abril de 1962. En el derecho internacional del trabajo rige el Convenio n.º 132 sobre vacaciones anuales pagadas, de 1970, el cual fue ratificado por Uruguay a través del decreto-ley n.º 14.588 del 30 de agosto de 1970, por lo que resulta de aplicación en nuestro país.
+En la actualidad el régimen vigente se encuentra establecido en la ley n.º 12.590 del 23 de diciembre de 1958, y su decreto reglamentario del 26 de abril de 1962. En el derecho internacional del trabajo rige el Convenio n.º 132 sobre vacaciones anuales pagadas, de 1970, el cual fue ratificado por Uruguay a través del decreto-ley n.º 14.568 del 30 de agosto de 1976, por lo que resulta de aplicación en nuestro país.
 
 El derecho a gozarlas es irrenunciable.
 

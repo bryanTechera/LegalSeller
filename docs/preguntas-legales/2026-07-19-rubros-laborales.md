@@ -14,7 +14,13 @@ Las páginas citadas corresponden a cada PDF.
 devolvernos este mismo archivo, o responder por el canal habitual citando el
 número de pregunta.
 
-**Estado**: PENDIENTE de respuesta.
+**Estado**: PARCIALMENTE RESPONDIDA (respuestas recibidas 2026-07-21). Las preguntas
+1, 2, 5 y 6 fueron respondidas y aplicadas al corpus. Las 3 y 4 se confirmaron sin
+cambios (ya estaban correctas). De las erratas de la 8 se aplicaron todas las
+confirmadas. Queda **PENDIENTE** la pregunta 7 (prescripción de créditos laborales):
+no llegó el material. Y quedan dos puntos por confirmar, de una palabra cada uno: el
+factor diario de licencia del jornalero (nota en la 8) y la errata «Pude/Puede»
+(primer ítem de la 8).
 
 ---
 
@@ -32,6 +38,14 @@ Cargamos ambos textos tal cual están, pero se contradicen.
 **¿El Convenio 171 está ratificado por Uruguay o no? ¿Cuál de los dos pasajes
 debemos corregir?**
 
+> **Respuesta del equipo legal (2026-07-21):** El Convenio 171 fue ratificado por
+> Uruguay por la Ley n.º 19.582 del 28 de diciembre de 2017. El pasaje a corregir es
+> el de *TRABAJO NOCTURNO* («no ratificado»); el de *DESPIDO* («ratificó en el año
+> 2017») es correcto.
+> **Aplicado:** en el corpus (trabajo nocturno) se corrigió «(no ratificado)» →
+> «(ratificado por Uruguay por la ley n.º 19.582 del 28 de diciembre de 2017)». El
+> pasaje del corpus de despido ya era correcto; se cruzó y quedó sin cambios.
+
 ## 2. ¿Con qué norma ratificó Uruguay el Convenio 132 (vacaciones anuales pagadas)?
 
 El documento *DESCANSO SEMANAL + LICENCIA...* trae dos versiones distintas:
@@ -47,6 +61,12 @@ Difieren el número de la norma y el año.
 
 **¿Cuál es la norma de ratificación correcta (número y fecha)?**
 
+> **Respuesta del equipo legal (2026-07-21):** La norma correcta es el decreto-ley
+> n.º 14.568 del 30 de agosto de 1976 (la versión de la página 4).
+> **Aplicado:** en el corpus se corrigió la mención de la página 2 («decreto-ley
+> n.º 14.588 del 30 de agosto de 1970») → «decreto-ley n.º 14.568 del 30 de agosto de
+> 1976», quedando coherente con la otra mención del mismo documento.
+
 ## 3. Período de cálculo del aguinaldo: ¿"30 de noviembre"? (página 12)
 
 En la sección *Cálculo* dice: *"se deberá sumar el total de las retribuciones en
@@ -59,6 +79,11 @@ Así lo cargamos al sistema: **30 de noviembre**.
 
 **¿Confirman la corrección?**
 
+> **Respuesta del equipo legal (2026-07-21):** Confirmada la corrección: la fecha
+> correcta es el 30 de noviembre.
+> **Aplicado:** el corpus ya se había cargado con «30 de noviembre». Confirmación
+> registrada; sin cambios adicionales.
+
 ## 4. Tiempo in itinere: ¿"decreto de 29 de octubre de 1957"? (página 4 de JORNADA...)
 
 El documento dice: *"El **artículo** 29 de octubre de 1.957 en la redacción dada
@@ -69,6 +94,11 @@ en las demás menciones, p. ej. *"el art. 22 del decreto del 29 de octubre de
 
 **¿Confirman que se trata del decreto de 29 de octubre de 1957?**
 
+> **Respuesta del equipo legal (2026-07-21):** Confirmado: se trata del decreto del
+> 29 de octubre de 1957.
+> **Aplicado:** el corpus ya decía «decreto de 29 de octubre de 1957». Confirmación
+> registrada; sin cambios adicionales.
+
 ## 5. Falta el segundo paso de la incidencia de horas extras en licencia y salario vacacional (página 3 de JORNADA...)
 
 El procedimiento dice: *"El primer paso consiste en identificar todas las horas
@@ -77,6 +107,13 @@ lugar, El tercer paso** consiste en realizar los promedios de horas extras
 diarias..."* — la oración del segundo paso quedó incompleta o faltante.
 
 **¿Nos pueden completar el pasaje con el segundo paso del procedimiento?**
+
+> **Respuesta del equipo legal (2026-07-21):** El segundo paso consiste en distinguir
+> entre las horas extras realizadas en días hábiles y las realizadas en días inhábiles.
+> **Aplicado:** en el corpus se completó el pasaje: «En segundo lugar, debe distinguirse
+> entre las horas extras realizadas en días hábiles y las realizadas en días inhábiles.
+> El tercer paso consiste en...». Cierra con los pasos siguientes, que ya trataban las
+> situaciones «hábiles e inhábiles» por separado.
 
 ## 6. Semana inglesa sin desarrollar (página 1 de JORNADA...)
 
@@ -87,6 +124,14 @@ inglesa no vuelve a aparecer.
 
 **¿Nos envían el desarrollo del régimen de semana inglesa?**
 
+> **Respuesta del equipo legal (2026-07-21):** El régimen de semana inglesa lo regula
+> el art. 26 del decreto del 29 de octubre de 1957: «Pueden trabajar también más de 8
+> horas por día sin exceder de 9 los establecimientos que, previo acuerdo con su
+> personal, adoptan el régimen de semana inglesa. En ese caso deberán terminar sus
+> actividades los días sábados a las 12 y 30 sin excepción».
+> **Aplicado:** se agregó al corpus (jornada: límites y excepciones) una sección
+> «Semana inglesa» con esa cita textual.
+
 ## 7. Prescripción de los créditos laborales (falta el tema)
 
 Ninguno de los cuatro documentos trata los **plazos para reclamar** rubros
@@ -96,6 +141,11 @@ reclamar y hasta cuándo después del egreso. Mientras tanto, el asistente no
 afirma ningún plazo.
 
 **¿Nos envían el material sobre prescripción de los créditos laborales?**
+
+> **Estado (2026-07-21):** PENDIENTE — no recibimos el material. El asistente sigue
+> sin afirmar plazos: releva la fecha de egreso y, si el corpus no trae el plazo, lo
+> dice con honestidad y capta igual el caso. Reiteramos el pedido del material sobre
+> prescripción de los créditos laborales.
 
 ## 8. Erratas menores mantenidas tal cual (confirmar si corrigen el material fuente)
 
@@ -114,6 +164,29 @@ Las dejamos como están en el documento; avisen si corrigen el original:
   ¿"sean regulares y permanentes"?)
 - *"si transcurre **los 20 corridos**"* (TRABAJO NOCTURNO, p. 2 — ¿"los 20 días
   corridos"?)
+
+> **Respuesta del equipo legal (2026-07-21) y lo aplicado:**
+>
+> - *"En el caso del trabajador jornalero **la cuenta el** 1,66 entre 25"* (p. 5): la
+>   cuenta **consiste en dividir** 1,66 entre 25. *Aplicado* el complemento faltante.
+>   **Nota — pendiente de confirmación de una palabra:** la respuesta indica que ese
+>   cociente «equivale a 0,0667», pero 1,66 ÷ 25 = **0,0664** (que es lo que trae el
+>   documento y lo que quedó en el corpus, coherente con el 0,0553 que el mismo pasaje
+>   da para el mensual con 1,66 ÷ 30). El 0,0667 surge de usar 1,6667 (20 ÷ 12 sin
+>   redondear). Para no cargar un número que no cierra con su propia división,
+>   mantuvimos **0,0664**. **¿Confirman 0,0664, o prefieren usar 1,6667 sin redondear
+>   en ambos casos (0,0667 el jornalero y 0,0556 el mensual)?**
+> - *"se **fracciones** en dos etapas"* (p. 12) → «se **fraccione**». *Aplicado.*
+> - *"**es tomados** en consideración"* (JORNADA, p. 5) → «es **tomado**». *Aplicado.*
+> - *"**premias** el mejor desempeño"* (p. 7) → «**premia**». *Aplicado.* Además, por
+>   aclaración del equipo, el título «Quebrantos de caja» pasa a «**Quebranto de caja**»
+>   (singular). *Aplicado.*
+> - *"que **sea regulares y permanente**"* (p. 8) → «que **sean regulares y
+>   permanentes**». *Aplicado.*
+> - *"**los 20 corridos**"* (NOCTURNO, p. 2) → «los **20 días** corridos». *Aplicado.*
+> - *"**Pude** incluirse a todos los feriados"* (p. 6): sin respuesta explícita. Lo
+>   aplicamos como «**Puede**» por ser una errata ortográfica inequívoca (misma clase
+>   que las anteriores), pero lo señalamos por si el original dijera otra cosa.
 
 ---
 
