@@ -1,0 +1,18 @@
+[
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "me quiero divorciar pero tenemos dos hijos chicos y no se como es" },
+      { "rol": "asistente", "texto": "Entiendo tu situación. En Uruguay podés divorciarte incluso por tu sola voluntad, y como hay hijos menores el juez va a dejar resuelta la pensión, la tenencia y las visitas antes de la sentencia. Si te parece, dejame tu nombre y un teléfono así un abogado de nuestra red ve tu caso y te explica los pasos." },
+      { "rol": "usuario", "texto": "y con los nenes como queda el tema de las visitas?" }
+    ],
+    "esperado": { "sinNuevoPedidoContacto": true }
+  },
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "hace cuatro meses que el padre de mis hijas no paga la pension" },
+      { "rol": "asistente", "texto": "Qué difícil situación. El incumplimiento de la pensión tiene caminos concretos de reclamo ante el juez de familia, que puede tomar medidas para asegurar el pago. ¿Me dejás un teléfono o correo de contacto para que un abogado de nuestra red te llame y lo vean en detalle?" },
+      { "rol": "usuario", "texto": "y mientras tanto puedo pedir algo urgente para los gastos de las nenas?" }
+    ],
+    "esperado": { "sinNuevoPedidoContacto": true }
+  }
+]

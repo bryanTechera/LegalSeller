@@ -14,6 +14,10 @@
  *   2026-07-22): responses must not surface internal corpus mechanics
  *   (document titles, "documento", "corpus", "PDF") and, when asked about
  *   sources, must answer with the official Jurco phrase (rules conducta-*).
+ * - Captación por agente de categoría (feedback legal 2026-07-22, corrida
+ *   divorcio-con-hijos-visitas): multi-turn — after an ignored contact ask,
+ *   the agent must NOT repeat the request on its own initiative (rule
+ *   captacion-caso: pedido una sola vez; ignorado = "todavía no").
  */
 import "dotenv/config";
 
@@ -43,6 +47,22 @@ interface VozFuentesItem {
   mensaje: string;
   esperado: { sinReferenciasInternas?: boolean; contiene?: string[] };
 }
+
+interface CaptacionItem {
+  mensajes: { rol: "usuario" | "asistente"; texto: string }[];
+  esperado: { sinNuevoPedidoContacto: boolean };
+}
+
+/**
+ * Contact-ask phrasings observed in real runs ("dejame un teléfono o un
+ * correo", "pasame tu nombre y un teléfono", "¿te gustaría dejarme un
+ * teléfono?", "¿me dejás un contacto?"). Used to detect a REPEATED ask after
+ * the user ignored the first one.
+ */
+const PEDIDO_CONTACTO: readonly RegExp[] = [
+  /(dejame|dejarme|dej[aá]s|pasame|pasarme|pas[aá]s|compartime|compartirme|facilitame|brindame|dame).{0,60}(tel[eé]fono|celular|correo|mail|contacto)/i,
+  /(tus datos|un dato) de contacto/i,
+];
 
 /**
  * Internal-mechanics leak patterns (feedback legal 2026-07-22, notas de
@@ -210,14 +230,65 @@ async function evalVozFuentes(agent: CategoriaAgent, agentDir: string, label: st
   return precision;
 }
 
+async function evalCaptacion(agent: CategoriaAgent, agentDir: string, label: string): Promise<number> {
+  const datasetPath = join(dirname(fileURLToPath(import.meta.url)), `agents/${agentDir}/datasets/captacion.json`);
+  const items = JSON.parse(readFileSync(datasetPath, "utf8")) as CaptacionItem[];
+
+  let passed = 0;
+  const failures: string[] = [];
+
+  for (const item of items) {
+    const messages = item.mensajes.map((mensaje) => ({
+      role: mensaje.rol === "usuario" ? ("user" as const) : ("assistant" as const),
+      content: mensaje.texto,
+    }));
+    const result = await agent.generate(messages, {
+      requestContext: buildEvalRequestContext(),
+    });
+    const rawText = (result as { text?: unknown }).text;
+    const text = typeof rawText === "string" ? rawText : "";
+
+    const pedido = PEDIDO_CONTACTO.map((patron) => patron.exec(text)).find((match) => match !== null);
+    const ok = text.length > 0 && (!item.esperado.sinNuevoPedidoContacto || pedido === undefined);
+
+    if (ok) passed += 1;
+    else {
+      const ultimo = item.mensajes.at(-1)?.texto ?? "";
+      failures.push(`"${ultimo}" → ${text.length === 0 ? "respuesta vacía" : `re-pidió contacto: "${pedido?.[0] ?? ""}"`}`);
+    }
+  }
+
+  const precision = passed / items.length;
+  console.log(
+    `${label} captación (sin insistencia de contacto): ${String(passed)}/${String(items.length)} (${(precision * 100).toFixed(0)}%) — threshold ${String(THRESHOLD * 100)}%`,
+  );
+  for (const failure of failures) console.log(`  FAIL: ${failure}`);
+  return precision;
+}
+
+const EVALS: readonly { nombre: string; run: () => Promise<number> }[] = [
+  { nombre: "receptor", run: evalReceptorClasificacion },
+  { nombre: "laboral-citacion", run: () => evalCitacion(laboralAgent, "laboral", "Laboral") },
+  { nombre: "laboral-voz-fuentes", run: () => evalVozFuentes(laboralAgent, "laboral", "Laboral") },
+  { nombre: "laboral-captacion", run: () => evalCaptacion(laboralAgent, "laboral", "Laboral") },
+  { nombre: "familia-citacion", run: () => evalCitacion(familiaAgent, "familia", "Familia") },
+  { nombre: "familia-voz-fuentes", run: () => evalVozFuentes(familiaAgent, "familia", "Familia") },
+  { nombre: "familia-captacion", run: () => evalCaptacion(familiaAgent, "familia", "Familia") },
+];
+
+/** `pnpm evals [filtro]` — sin filtro corre todo; con filtro, los datasets cuyo nombre lo contenga. */
 async function main(): Promise<number> {
-  const resultados = [
-    await evalReceptorClasificacion(),
-    await evalCitacion(laboralAgent, "laboral", "Laboral"),
-    await evalVozFuentes(laboralAgent, "laboral", "Laboral"),
-    await evalCitacion(familiaAgent, "familia", "Familia"),
-    await evalVozFuentes(familiaAgent, "familia", "Familia"),
-  ];
+  // .at() (a diferencia del índice directo) tipa el undefined del fuera-de-rango.
+  const filtro = process.argv.at(2);
+  const seleccion = filtro === undefined ? EVALS : EVALS.filter((evalDef) => evalDef.nombre.includes(filtro));
+  if (seleccion.length === 0) {
+    console.error(
+      `Ningún dataset matchea "${filtro ?? ""}". Disponibles: ${EVALS.map((evalDef) => evalDef.nombre).join(", ")}`,
+    );
+    return 1;
+  }
+  const resultados: number[] = [];
+  for (const evalDef of seleccion) resultados.push(await evalDef.run());
   return resultados.every((precision) => precision >= THRESHOLD) ? 0 : 1;
 }
 
