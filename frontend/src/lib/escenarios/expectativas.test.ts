@@ -48,10 +48,29 @@ describe("evaluarExpectativas", () => {
     expect(resultado?.cumplida).toBe(true);
   });
 
-  it("clasificacion incumplida sin tool-call de clasificación", () => {
+  it("clasificacion incumplida sin tool-call ni evento del caso", () => {
     const [resultado] = evaluarExpectativas({ clasificacion: { categoria: "familia" } }, [turno([])], null);
     expect(resultado?.cumplida).toBe(false);
     expect(resultado?.obtenido).toBeNull();
+  });
+
+  it("clasificacion cumplida vía el evento CLASIFICACION del caso (el SSE del BFF no expone asignar-clasificacion)", () => {
+    const caso: CasoCorrida = {
+      ...casoCaptado,
+      eventos: [
+        {
+          tipo: "CLASIFICACION",
+          payload: { categoria: "familia", subcategoria: "divorcio-sociedad-conyugal", casoSensible: false },
+          createdAt: "2026-07-22T19:22:59.931Z",
+        },
+      ],
+    };
+    const [resultado] = evaluarExpectativas(
+      { clasificacion: { categoria: "familia", subcategoria: "divorcio-sociedad-conyugal" } },
+      [turno([])],
+      caso,
+    );
+    expect(resultado?.cumplida).toBe(true);
   });
 
   it("llamoBuscarDocumentos busca en todos los turnos", () => {
