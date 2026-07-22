@@ -77,6 +77,10 @@ model Conversation {
   titulo             String?
   /// Nombre del experto que creó la sesión (listado compartido).
   creadaPor          String?
+  /// Quién originó la sesión de revisión (null = conversación normal del home).
+  origenRevision     RevisionOrigen?
+  /// Corrida autónoma aún no publicada: fuera del listado del equipo legal.
+  borrador           Boolean   @default(false)
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
@@ -134,6 +138,13 @@ enum CasoEventoTipo {
   CORRECCION
   REGISTRO_DATO
   CONTACTO
+}
+
+/// Origen de una sesión de revisión: creada por un experto en /revision o
+/// generada por el runner autónomo de escenarios (pnpm escenario).
+enum RevisionOrigen {
+  EXPERTO
+  AUTONOMA
 }
 
 /// Nota de revisión del equipo legal: anclada a un mensaje persistido de
