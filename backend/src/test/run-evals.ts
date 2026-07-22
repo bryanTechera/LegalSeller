@@ -8,7 +8,11 @@
  *   matcher. Enabling a second category REQUIRES this to pass extended.
  * - Laboral citación (procesamiento DESPIDO.pdf 2026-07-19): substantive
  *   despido questions must trigger buscar-documentos before answering —
- *   the tool-level half of "SIEMPRE citar la fuente".
+ *   the tool-level half of "SIEMPRE fundar en el corpus".
+ * - Laboral voz-fuentes (revisión feedback legal 2026-07-22): responses must
+ *   not surface internal corpus mechanics (document titles, "documento",
+ *   "corpus", "PDF") and, when asked about sources, must answer with the
+ *   official Jurco phrase (rule conducta-laboral).
  */
 import "dotenv/config";
 
@@ -32,6 +36,26 @@ interface CitacionItem {
   mensaje: string;
   esperado: { toolCall: string };
 }
+
+interface VozFuentesItem {
+  mensaje: string;
+  esperado: { sinReferenciasInternas?: boolean; contiene?: string[] };
+}
+
+/**
+ * Internal-mechanics leak patterns (feedback legal 2026-07-22, notas de
+ * Federico): the agent must integrate corpus content as its own knowledge —
+ * naming document titles ("Despido — …"), "el documento", "corpus" or "PDF"
+ * breaks the product voice. "un/algún documento" stays legal (the agent may
+ * legitimately ask the consultante for their paperwork).
+ */
+const REFERENCIAS_INTERNAS: readonly RegExp[] = [
+  /\bcorpus\b/i,
+  /base de (datos|documentos|conocimiento)/i,
+  /\bPDF\b/i,
+  /\b(el|del) documento\b/i,
+  /(Despido|Rubros laborales|Laboral) —/,
+];
 
 interface ToolCallInfo {
   toolName: string;
@@ -145,10 +169,48 @@ async function evalLaboralCitacion(): Promise<number> {
   return precision;
 }
 
+async function evalLaboralVozFuentes(): Promise<number> {
+  const datasetPath = join(dirname(fileURLToPath(import.meta.url)), "agents/laboral/datasets/voz-fuentes.json");
+  const items = JSON.parse(readFileSync(datasetPath, "utf8")) as VozFuentesItem[];
+
+  let passed = 0;
+  const failures: string[] = [];
+
+  for (const item of items) {
+    const result = await laboralAgent.generate(item.mensaje, {
+      requestContext: buildEvalRequestContext(),
+    });
+    const rawText = (result as { text?: unknown }).text;
+    const text = typeof rawText === "string" ? rawText : "";
+
+    const problemas: string[] = [];
+    if (item.esperado.sinReferenciasInternas) {
+      for (const patron of REFERENCIAS_INTERNAS) {
+        const match = patron.exec(text);
+        if (match) problemas.push(`referencia interna "${match[0]}"`);
+      }
+    }
+    for (const requerido of item.esperado.contiene ?? []) {
+      if (!text.toLowerCase().includes(requerido.toLowerCase())) problemas.push(`falta "${requerido}"`);
+    }
+
+    if (text.length > 0 && problemas.length === 0) passed += 1;
+    else failures.push(`"${item.mensaje}" → ${text.length === 0 ? "respuesta vacía" : problemas.join("; ")}`);
+  }
+
+  const precision = passed / items.length;
+  console.log(
+    `Laboral voz-fuentes (sin mecánica interna): ${String(passed)}/${String(items.length)} (${(precision * 100).toFixed(0)}%) — threshold ${String(THRESHOLD * 100)}%`,
+  );
+  for (const failure of failures) console.log(`  FAIL: ${failure}`);
+  return precision;
+}
+
 async function main(): Promise<number> {
   const receptor = await evalReceptorClasificacion();
   const laboral = await evalLaboralCitacion();
-  return receptor >= THRESHOLD && laboral >= THRESHOLD ? 0 : 1;
+  const vozFuentes = await evalLaboralVozFuentes();
+  return receptor >= THRESHOLD && laboral >= THRESHOLD && vozFuentes >= THRESHOLD ? 0 : 1;
 }
 
 main()

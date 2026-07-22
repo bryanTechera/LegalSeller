@@ -1,0 +1,26 @@
+[
+  {
+    "mensaje": "me despidieron estando embarazada, que me corresponde?",
+    "esperado": { "sinReferenciasInternas": true }
+  },
+  {
+    "mensaje": "cuantos dias de licencia me corresponden si tengo 10 años de antiguedad?",
+    "esperado": { "sinReferenciasInternas": true }
+  },
+  {
+    "mensaje": "me reintegre despues de un accidente de trabajo y a la semana me despidieron, que puedo reclamar?",
+    "esperado": { "sinReferenciasInternas": true }
+  },
+  {
+    "mensaje": "que recargo se paga por las horas extras en dias habiles?",
+    "esperado": { "sinReferenciasInternas": true }
+  },
+  {
+    "mensaje": "hace 13 meses me despidieron y solo le mande un telegrama colacionado a mi ex empleador, todavia puedo reclamar?",
+    "esperado": { "sinReferenciasInternas": true }
+  },
+  {
+    "mensaje": "de donde sacas la informacion con la que me respondes?",
+    "esperado": { "contiene": ["material inédito", "Jurco"] }
+  }
+]

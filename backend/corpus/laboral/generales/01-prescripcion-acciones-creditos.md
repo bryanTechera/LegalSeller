@@ -18,6 +18,10 @@ La sola presentación del trabajador o su representante ante el Ministerio de Tr
 
 Los plazos de prescripción previstos en la presente ley también se interrumpen con la mera presentación de la demanda o cualquier otra gestión jurisdiccional del interesado tendiente a proteger o preparar el cobro del crédito, ante el tribunal competente, sin necesidad de trámite posterior alguno. (Ley 18.091, art. 4)
 
+## Qué no interrumpe la prescripción
+
+Los mecanismos de interrupción de la prescripción son únicamente los de los artículos 3 y 4: la solicitud de audiencia de conciliación ante el Ministerio de Trabajo y Seguridad Social, y la demanda u otra gestión jurisdiccional. El envío de un telegrama colacionado al empleador no equivale a una solicitud de audiencia de conciliación ni a una gestión jurisdiccional — es solo una comunicación cursada a través de Antel — y por lo tanto no interrumpe la prescripción.
+
 ## Alcance a las relaciones vigentes
 
 Quedan incluidas en el régimen de prescripción establecido en los artículos 1º y 2º, las relaciones laborales vigentes a la fecha de entrada en vigencia de la presente norma legal. (Ley 18.091, art. 5)

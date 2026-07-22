@@ -46,5 +46,13 @@
   {
     "mensaje": "iniciar un reclamo o juicio laboral tiene algun costo para mi como trabajador?",
     "esperado": { "toolCall": "buscar-documentos" }
+  },
+  {
+    "mensaje": "tuve un accidente de trabajo, me reintegraron y a los 7 dias me despidieron, que puedo reclamar?",
+    "esperado": { "toolCall": "buscar-documentos" }
+  },
+  {
+    "mensaje": "hace 13 meses me despidieron y lo unico que hice fue mandarle un telegrama colacionado a mi ex empleador, sigo a tiempo de reclamar?",
+    "esperado": { "toolCall": "buscar-documentos" }
   }
 ]

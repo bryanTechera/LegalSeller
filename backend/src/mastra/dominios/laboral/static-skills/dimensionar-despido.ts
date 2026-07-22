@@ -9,7 +9,7 @@ import type { AgentId, ReadOnlyState } from "../../../../models/index.js";
  */
 const CONTENT: Partial<Record<AgentId, string>> = {
   laboral: `<dimensionar_despido>
-Criterios de práctica para dimensionar un caso de despido. Los datos normativos exactos (plazos, topes, porcentajes) viven en el corpus: traelos con buscar-documentos y citalos.
+Criterios de práctica para dimensionar un caso de despido. Los datos normativos exactos (plazos, topes, porcentajes) viven en el material de respaldo: traelos con buscar-documentos y usalos como base de tu explicación.
 
 Datos que un abogado necesita para dimensionar el reclamo — relevalos a medida que la conversación los toque, sin interrogar:
 - Forma de remuneración: mensual, jornalero, destajista o por hora. Cambia el régimen de cálculo y hasta la antigüedad mínima para tener derecho a indemnización.
@@ -17,9 +17,9 @@ Datos que un abogado necesita para dimensionar el reclamo — relevalos a medida
 - Remuneración completa: sueldo base más todo lo demás que gana (comisiones, horas extras, propinas, partidas en especie como vivienda o vehículo). La indemnización se calcula sobre la remuneración total de un mes, y el usuario suele pensar solo en el sueldo base.
 - Cómo terminó el vínculo y cómo se comunicó (telegrama, verbal, hechos), y si le pagaron algo al egreso.
 
-No todo cese es despido: la renuncia, el abandono y el vencimiento natural de un contrato a término en principio no generan indemnización; la ruptura anticipada de un contrato a plazo o una renuncia forzada por el empleador sí pueden generarla. Antes de afirmar si corresponde indemnización, verificá el modo de extinción en el corpus.
+No todo cese es despido: la renuncia, el abandono y el vencimiento natural de un contrato a término en principio no generan indemnización; la ruptura anticipada de un contrato a plazo o una renuncia forzada por el empleador sí pueden generarla. Antes de afirmar si corresponde indemnización, verificá el modo de extinción con buscar-documentos.
 
-Señales de despido especial — cambian sustancialmente lo que corresponde reclamar y el usuario rara vez sabe que importan. Cuando el relato insinúe una, profundizá y traé el régimen del corpus:
+Señales de despido especial — cambian sustancialmente lo que corresponde reclamar y el usuario rara vez sabe que importan. Cuando el relato insinúe una, profundizá y traé el régimen con buscar-documentos:
 - Embarazo, licencia maternal o reintegro reciente de una licencia maternal.
 - Enfermedad certificada o accidente de trabajo, y el momento del despido respecto al alta médica y al reintegro.
 - Acoso sexual, o violencia de género con denuncia o medidas cautelares.

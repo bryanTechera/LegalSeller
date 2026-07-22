@@ -36,7 +36,7 @@ Cuando un LLM evalúa la salida de otro LLM (LLM-as-judge), el judge introduce s
 
 **3. Self-preference / family bias.** El judge sube el score a outputs de su propia familia de modelos. *Mitigación:* multi-judge ensemble (rotar judges entre familias) o cross-family judge cuando hay paridad.
 
-**4. Verbosity / authoritativeness bias.** Los judges prefieren respuestas con tono confiado y declarativo, aún cuando el contenido sea menos preciso. Peligroso en dominio legal: una respuesta que suena segura pero afirma un plazo inexistente NO debe ganarle a una que cita el corpus y aclara sus límites. *Mitigación:* rubric con anchor en exactitud factual y en cita de fuente, no en confianza retórica.
+**4. Verbosity / authoritativeness bias.** Los judges prefieren respuestas con tono confiado y declarativo, aún cuando el contenido sea menos preciso. Peligroso en dominio legal: una respuesta que suena segura pero afirma un plazo inexistente NO debe ganarle a una fiel al corpus que aclara sus límites. *Mitigación:* rubric con anchor en exactitud factual y en fidelidad al texto recuperado, no en confianza retórica.
 
 **5. Scoring inflation / overconfidence.** El pointwise scoring tiende a comprimirse hacia el extremo alto del rango (sobreuso de scores 0.8-1.0). *Mitigación:* pairwise > pointwise para criterios subjetivos; en pointwise, definir anchor levels específicos por valor.
 
@@ -81,7 +81,7 @@ Ejemplo de notas:
 
 **3. Axial coding.** Clusterá las notas en buckets nombrados. Esto produce la **failure taxonomy** del proyecto. Buckets típicos del dominio:
 - Fabricación legal (inventar artículo/plazo/monto que no está en el corpus)
-- Cita sin fuente (afirmar sin pasar por buscar-documentos)
+- Afirmación sin respaldo (afirmar sin pasar por buscar-documentos, o extender el texto recuperado más allá de sus condiciones)
 - Clasificación errónea o prematura (clasificar sin señal suficiente; no preguntar cuando debía)
 - Captación omitida (avanzar/derivar sin registrar el caso)
 - Ruptura de cuarta pared (referencia a la interfaz)
@@ -127,7 +127,7 @@ El pointwise scoring (judge devuelve un score 0-1) sufre de scoring inflation y 
 El pairwise (judge compara A vs B) tiene menos drift entre runs porque el judge solo decide cuál es mejor, no cuánto. Trade-off: pairwise requiere ~N×(N-1)/2 comparaciones para ranquear N opciones, pero para CI comparando dos versiones del prompt, el costo es N (un solo round por item).
 
 **Cuándo cada uno:**
-- Pointwise: criterios objetivos con ground truth claro (una cita corresponde textualmente a la fuente del corpus; detección de caso sensible; clasificación correcta).
+- Pointwise: criterios objetivos con ground truth claro (una afirmación corresponde textualmente al texto del corpus; detección de caso sensible; clasificación correcta).
 - Pairwise: criterios subjetivos sin referencia (calidad de venta, empatía, claridad de la explicación llana).
 
 ### 2. Anchor levels en rubric
@@ -136,9 +136,9 @@ En pointwise, no uses un continuum 0-1 ambiguo. Definí anchor levels con descri
 
 ```
 - 0.0 — Falla completa: el criterio no se cumple en absoluto (afirma un plazo/artículo que no está en el corpus).
-- 0.33 — Cumple parcial pero con omisiones críticas: cita el corpus pero omite la fuente (título y sección).
-- 0.67 — Cumple con omisiones menores: cita con fuente pero parafrasea el texto normativo.
-- 1.0 — Cumple completamente: cita textual con su fuente exacta.
+- 0.33 — Cumple parcial pero con omisiones críticas: el dato está en el texto recuperado pero omite las condiciones que lo limitan (generaliza una consecuencia condicionada).
+- 0.67 — Cumple con omisiones menores: fiel al texto recuperado pero parafrasea el texto normativo.
+- 1.0 — Cumple completamente: fiel al texto recuperado, con sus condiciones e hipótesis.
 ```
 
 > *"Question-specific rubrics improve human alignment significantly more than generic continuous scales."* — Rubric Is All You Need (ICER 2025)
@@ -159,7 +159,7 @@ Cuándo SÍ usar CoT en judge prompts:
 
 Cuándo NO:
 - Rubrics simples con anchor levels.
-- Criterios binarios (cita con fuente / no cita).
+- Criterios binarios (afirmación con respaldo del corpus / sin respaldo).
 
 > Sources: [Cameron R. Wolfe - Using LLMs for Evaluation (2024)](https://cameronrwolfe.substack.com/p/llm-as-a-judge) · [Rubric Is All You Need (ACM ICER 2025)](https://dl.acm.org/doi/10.1145/3702652.3744220) · [An Empirical Study of LLM-as-a-Judge (arXiv 2025-06)](https://arxiv.org/html/2506.13639v1) · [Eugene Yan - Evaluating LLM-Evaluators](https://eugeneyan.com/writing/llm-evaluators/)
 

@@ -10,7 +10,7 @@ import type { AgentId, ReadOnlyState } from "../../../../models/index.js";
  */
 const CONTENT: Partial<Record<AgentId, string>> = {
   laboral: `<dimensionar_rubros>
-Criterios de práctica para dimensionar un reclamo de rubros laborales (sueldos o diferencias, horas extras, licencia, salario vacacional, aguinaldo, feriados y descansos trabajados, nocturnidad). Los datos normativos exactos (recargos, fórmulas, topes, leyes) viven en el corpus: traelos con buscar-documentos y citalos.
+Criterios de práctica para dimensionar un reclamo de rubros laborales (sueldos o diferencias, horas extras, licencia, salario vacacional, aguinaldo, feriados y descansos trabajados, nocturnidad). Los datos normativos exactos (recargos, fórmulas, topes, leyes) viven en el material de respaldo: traelos con buscar-documentos y usalos como base de tu explicación.
 
 Datos que un abogado necesita para dimensionar el reclamo — relevalos a medida que la conversación los toque, sin interrogar:
 - Forma de remuneración (mensual, jornalero, destajista, comisionista) y todo lo que percibe además del básico: comisiones, propinas, horas extras, partidas en especie como vivienda, alimentación o vehículo. Buena parte de esas partidas tiene carácter salarial y aumenta la base de cada rubro, y el usuario suele pensar solo en el sueldo base.
@@ -18,14 +18,14 @@ Datos que un abogado necesita para dimensionar el reclamo — relevalos a medida
 - Qué figura en el recibo de sueldo frente a lo que cobra de verdad: la diferencia entre lo que corresponde y lo que se paga es un rubro reclamable en sí mismo.
 - Si el vínculo sigue vigente o terminó, cómo y cuándo terminó: con el egreso todos los créditos laborales se vuelven exigibles, incluida la licencia no gozada, y la fecha del cese pesa en qué se puede reclamar.
 
-Los rubros se arrastran entre sí: las horas extras impagas inciden en la licencia, el salario vacacional, el aguinaldo y hasta en la indemnización por despido. Un reclamo que el consultante ve chico suele ser bastante más grande una vez dimensionado — mostrarlo con el corpus es la mejor razón para que un abogado lo evalúe.
+Los rubros se arrastran entre sí: las horas extras impagas inciden en la licencia, el salario vacacional, el aguinaldo y hasta en la indemnización por despido. Un reclamo que el consultante ve chico suele ser bastante más grande una vez dimensionado — mostrarlo con respaldo normativo es la mejor razón para que un abogado lo evalúe.
 
-Errores comunes del consultante que vale la pena corregir con el corpus:
+Errores comunes del consultante que vale la pena corregir con respaldo de buscar-documentos:
 - Creer que renunciar hace perder la licencia o el aguinaldo ya generados.
 - No saber que el feriado pago trabajado, el descanso trabajado o el trabajo nocturno llevan recargos o sobretasas.
 - Creer que propinas, comisiones o pagos en especie no cuentan como salario.
 
-Señales que cambian el dimensionamiento y el usuario rara vez menciona solo: varias horas seguidas de trabajo nocturno, traslados largos a lugares alejados en transporte de la empresa, descansos intermedios que no se gozan, y categorías excluidas de la limitación de jornada (personal superior, vendedores fuera del establecimiento) — en ese último caso el derecho a horas extras puede no existir: verificalo en el corpus antes de afirmarlo.
+Señales que cambian el dimensionamiento y el usuario rara vez menciona solo: varias horas seguidas de trabajo nocturno, traslados largos a lugares alejados en transporte de la empresa, descansos intermedios que no se gozan, y categorías excluidas de la limitación de jornada (personal superior, vendedores fuera del establecimiento) — en ese último caso el derecho a horas extras puede no existir: verificalo con buscar-documentos antes de afirmarlo.
 </dimensionar_rubros>`,
 };
 
