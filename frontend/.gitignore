@@ -10,3 +10,4 @@ playwright-report/
 *.log
 next-env.d.ts
 tsconfig.tsbuildinfo
+escenarios/corridas/

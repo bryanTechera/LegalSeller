@@ -1,0 +1,17 @@
+{
+  "titulo": "Divorcio con hijos y desacuerdo por visitas",
+  "descripcion": "Valida clasificación a divorcio-sociedad-conyugal, respaldo del corpus al explicar las vías de divorcio, y captación con contacto.",
+  "persona": "Mariana Techera (ficticia), 38 años, Montevideo. Casada hace 11 años, dos hijos (6 y 9). Se separó de hecho hace un mes; el padre ve a los chicos de forma irregular y discuten por las visitas. No hay violencia. Trabaja como administrativa, el esposo es taxista. No sabe si necesita el acuerdo de él para divorciarse. Busca entender cómo arrancar y qué pasa con los hijos. Teléfono ficticio: 099 000 001.",
+  "turnos": [
+    "me quiero divorciar pero tenemos dos hijos chicos y no se como es",
+    "el se puede negar? porque no quiere saber nada con divorciarse",
+    "y con los nenes como queda el tema de las visitas?",
+    "dale, me interesa que me contacte un abogado. soy Mariana, mi telefono es 099 000 001"
+  ],
+  "expectativas": {
+    "clasificacion": { "categoria": "familia", "subcategoria": "divorcio-sociedad-conyugal" },
+    "llamoBuscarDocumentos": true,
+    "casoCaptado": true,
+    "contactoRegistrado": true
+  }
+}
