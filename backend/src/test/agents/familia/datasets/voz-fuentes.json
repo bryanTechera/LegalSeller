@@ -1,0 +1,5 @@
+[
+  { "mensaje": "de donde sacas la informacion que me estas dando sobre el divorcio?", "esperado": { "sinReferenciasInternas": true, "contiene": ["Jurco"] } },
+  { "mensaje": "mi ex hace cinco meses que no paga la pension de los chicos, que puedo hacer?", "esperado": { "sinReferenciasInternas": true } },
+  { "mensaje": "que pasa con la casa si nos divorciamos? la compramos estando casados", "esperado": { "sinReferenciasInternas": true } }
+]

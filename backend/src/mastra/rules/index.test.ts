@@ -26,7 +26,21 @@ describe("rulesRegistry", () => {
     expect(result.inicio).not.toContain("<captacion>");
   });
 
+  it("familia activa identidad, caso sensible, rol, conducta y captación (final)", () => {
+    const result = rulesRegistry.execute(null, "familia");
+    expect(result.activatedIds).toEqual([
+      "identidad-jurco",
+      "caso-sensible",
+      "rol-especialista-familia",
+      "conducta-familia",
+      "captacion-caso",
+    ]);
+    expect(result.final).toContain("<captacion>");
+    expect(result.inicio).toContain("<caso_sensible>");
+    expect(result.inicio).not.toContain("asignar-clasificacion"); // la versión del especialista no clasifica
+  });
+
   it("las rules críticas son las del spec", () => {
-    expect(CRITICAL_RULE_IDS).toEqual(["identidad-jurco", "caso-sensible", "conducta-laboral"]);
+    expect(CRITICAL_RULE_IDS).toEqual(["identidad-jurco", "caso-sensible", "conducta-laboral", "conducta-familia"]);
   });
 });

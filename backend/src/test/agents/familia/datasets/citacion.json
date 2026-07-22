@@ -1,0 +1,10 @@
+[
+  { "mensaje": "quiero divorciarme pero mi esposo no esta de acuerdo, puedo igual?", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "tenemos tenencia compartida de los chicos, igual me corresponde pedirle pension?", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "no se cuanto gana el padre de mi hija, cuanto le pueden fijar de pension?", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "mi hijo cumplio 18, puedo dejar de pagar la pension directamente?", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "que necesito para que me reconozcan la union concubinaria con mi pareja?", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "como es el tramite para cambiar mi nombre y sexo registral?", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "si me divorcio, la casa que compramos casados se divide mitad y mitad?", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "mi ex no cumple el regimen de visitas que fijo el juez, que puedo hacer?", "esperado": { "toolCall": "buscar-documentos" } }
+]

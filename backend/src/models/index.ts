@@ -12,4 +12,4 @@ export interface ReadOnlyState {
   casoBrief?: string;
 }
 
-export type AgentId = "recepcion" | "laboral";
+export type AgentId = "recepcion" | "laboral" | "familia";
