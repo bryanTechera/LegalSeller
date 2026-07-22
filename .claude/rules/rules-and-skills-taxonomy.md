@@ -13,7 +13,7 @@ A diferencia de colar (dos destinos), acá el triage decide entre **tres** — y
 
 | Destino | Criterio | Ejemplo | Ubicación |
 |---|---|---|---|
-| **RAG** | Texto normativo citable (leyes, plazos legales, jurisprudencia): el agente debe **citarlo con fuente** | "El art. X de la ley Y establece un plazo de Z días" | `pnpm ingest <archivo> --title "…" --categoria --subcategoria` → tabla `Document` (pgvector) |
+| **RAG** | Texto normativo (leyes, plazos legales, jurisprudencia): el agente debe **fundar su respuesta en ese texto**, traído con `buscar-documentos` (las fuentes son de uso interno, no se nombran al consultante) | "El art. X de la ley Y establece un plazo de Z días" | `pnpm ingest <archivo> --title "…" --categoria --subcategoria` → tabla `Document` (pgvector) |
 | **Skill** (static o tool) | Heurística de práctica profesional (cómo evaluar un caso, qué preguntar, errores comunes del consultante): conocimiento que el agente **aplica, no cita** | "Para dimensionar un despido, relevá antigüedad, salario y forma de despido" | `src/mastra/dominios/<dominio>/static-skills/` · `.../tool-skills/` |
 | **Rule** | Restricción de comportamiento (qué nunca afirmar, identidad, formato, safety): le dice al agente **CÓMO actuar** | "NUNCA des asesoramiento legal personalizado definitivo" · "Sos el especialista en derecho laboral" | `src/mastra/dominios/<dominio>/rules/` |
 | **Compositor** | Orquesta el ensamblado: filtra por agente y concatena rules + static skills + bloques volátiles en el orden de atención | N/A | `src/mastra/dominios/*/instructions.ts` sobre `rulesRegistry` / `staticSkillsRegistry` (ver `prompt-assembly.md`) |
@@ -31,7 +31,7 @@ Usá estos ejemplos para clasificar contenido:
 | "El art. X de la ley Y establece un plazo de Z días" | **RAG** | Texto normativo citable con fuente |
 | "Sos el especialista en derecho laboral" | **Rule** | Identidad/rol |
 
-**Litmus clave**: si el agente debería citarlo con fuente, va al RAG, no a una skill. Las skills no embeben citas normativas ni números de artículo — refieren conceptos y mandan a `buscar-documentos`. Una cita hardcodeada en un prompt no se actualiza cuando cambia la ley y esquiva la regla "SIEMPRE citar fuente".
+**Litmus clave**: si es texto normativo sobre el que el agente debería fundar su respuesta, va al RAG, no a una skill. Las skills no embeben citas normativas ni números de artículo — refieren conceptos y mandan a `buscar-documentos`. Una cita hardcodeada en un prompt no se actualiza cuando cambia la ley y esquiva la regla "SIEMPRE fundar en el corpus".
 
 **Test rápido**: una frase que empieza con "NUNCA", "NO uses", "SIEMPRE usá" y que NO es conocimiento que el agente aplica, va como **rule**, no como skill.
 
@@ -195,7 +195,7 @@ El contenido lo lee el AGENTE vendedor, no el consultante. El agente lo usa como
 | Agente | El contenido debe aportar | El contenido NO debe ser |
 |---|---|---|
 | `recepcion` | Patrones de escucha y clasificación, qué señales mirar para ubicar la consulta | Guiones literales para decirle al consultante |
-| `laboral` | Criterios para dimensionar un caso, qué datos releva un abogado, errores comunes del consultante, cómo citar el corpus | Respuestas cerradas ni libretos palabra por palabra |
+| `laboral` | Criterios para dimensionar un caso, qué datos releva un abogado, errores comunes del consultante, cómo apoyarse en el corpus | Respuestas cerradas ni libretos palabra por palabra |
 
 **Error común**: escribir el contenido como un guion literal para el consultante:
 
@@ -298,11 +298,11 @@ Lo que vence NO vive en el prompt. Leyes, montos, plazos normativos y jurisprude
 
 | Evitar (en skill/rule) | Usar en su lugar |
 |---|---|
-| "El plazo para reclamar es de 1 año" | "El plazo de reclamo lo fija la norma vigente — traelo del corpus con `buscar-documentos` y citalo" |
+| "El plazo para reclamar es de 1 año" | "El plazo de reclamo lo fija la norma vigente — traelo del corpus con `buscar-documentos` y fundá tu respuesta en ese texto" |
 | "La indemnización es de X salarios" | Referir el concepto ("la indemnización por despido se calcula sobre antigüedad y salario") y buscar el detalle en el RAG |
 | "A partir de 2026, la ley Y…" | (nada: el texto normativo vive en el RAG, con su fuente y fecha de vigencia) |
 
-Motivo: una cita hardcodeada no se actualiza cuando cambia la ley y esquiva la regla "SIEMPRE citar fuente". Este es el corolario legal del principio "sin información temporal".
+Motivo: una cita hardcodeada no se actualiza cuando cambia la ley y esquiva la regla "SIEMPRE fundar en el corpus". Este es el corolario legal del principio "sin información temporal".
 
 ### Content per Agent Pattern
 

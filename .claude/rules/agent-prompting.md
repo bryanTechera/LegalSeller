@@ -18,9 +18,10 @@ Gemini 3 y Claude 4.x responden bien a instrucciones claras y explícitas. Ser e
 Respondé la duda del consultante.
 
 // Más efectivo
-Respondé la duda del consultante citando la fuente del corpus (título y sección),
-explicá en lenguaje llano sin tecnicismos, y una vez que demostraste entender el caso
-ofrecé dimensionarlo para derivarlo a un abogado de la red.
+Respondé la duda del consultante fundándola en el texto que devolvió buscar-documentos,
+integrado como conocimiento propio (sin nombrar documentos internos), explicá en lenguaje
+llano sin tecnicismos, y una vez que demostraste entender el caso ofrecé dimensionarlo
+para derivarlo a un abogado de la red.
 ```
 
 ### Add Context to Improve Performance
@@ -146,16 +147,16 @@ Enmarcá las instrucciones como lo que HAY que hacer, no lo que NO hay que hacer
 | Negativo (evitar) | Positivo (preferir) |
 |---|---|
 | "NO uses viñetas" | "Respondé en prosa fluida, con párrafos completos" |
-| "NO listes todos los resultados del corpus" | "Sintetizá 1-2 fuentes relevantes con su cita y recomendá" |
+| "NO listes todos los resultados del corpus" | "Sintetizá 1-2 fuentes relevantes y recomendá" |
 | "NO le digas al usuario que complete un formulario" | "Registrá el dato directamente con `registrar-caso` apenas aparezca" |
-| "NO inventes plazos ni artículos" | "Citá TEXTUALMENTE el texto del corpus con `buscar-documentos`, con su fuente" |
+| "NO inventes plazos ni artículos" | "Afirmá SOLO lo que devolvió `buscar-documentos`, con las condiciones que el texto le pone" |
 
 **Excepción:** las prohibiciones absolutas (`NUNCA`) son apropiadas para reglas críticas donde el costo de violación es alto — safety e integridad legal:
 
 ```xml
 <reglas>
 NUNCA des asesoramiento legal personalizado definitivo — orientás y derivás, no dictaminás.
-NUNCA inventes contenido legal (artículos, plazos, montos) que no exista en el corpus; traelo con buscar-documentos y citá la fuente.
+NUNCA inventes contenido legal (artículos, plazos, montos) que no exista en el corpus; traelo con buscar-documentos y fundá tu respuesta en ese texto.
 NUNCA referencies elementos de la interfaz (formulario, botón, "acá abajo").
 </reglas>
 ```
@@ -193,12 +194,12 @@ Gemini 3 y Claude 4.x son **más** responsivos al system prompt que sus predeces
 Los modelos nuevos **no generalizan instrucciones implícitamente**. Una instrucción que el modelo viejo "extendía" a casos análogos ahora se aplica solo literalmente.
 
 ```xml
-<!-- Mal: el modelo cita la fuente solo de la primera afirmación -->
-<instruccion>Citá la fuente de la afirmación legal.</instruccion>
+<!-- Mal: el modelo verifica solo la primera afirmación -->
+<instruccion>Fundá la afirmación legal en el texto recuperado.</instruccion>
 
 <!-- Bien: scope explícito -->
-<instruccion>Citá la fuente (título y sección) de CADA afirmación basada en el corpus,
-no solo la primera.</instruccion>
+<instruccion>Fundá CADA afirmación basada en el corpus en el texto que devolvió
+buscar-documentos, no solo la primera.</instruccion>
 ```
 
 Aplica cuando una instrucción debe cubrir múltiples casos (cada afirmación citable, cada dato del caso a registrar, cada opción presentada).
@@ -225,7 +226,7 @@ OpenAI lo dice textual: *"clarify conflicting rules, remove redundant or contrad
 
 ## Multishot Prompting (Examples)
 
-Los ejemplos sirven para **fijar formato, voz y estructura** (voseo, tono cálido, cómo citar una fuente, cómo cerrar hacia la captación). En modelos con thinking **no enseñan a razonar**: si el ejemplo prescribe el contenido del razonamiento (qué categoría elegir, qué justificación dar), sesga al modelo hacia patrones de superficie en vez de dejarlo razonar. La evidencia reciente sobre modelos de razonamiento: *"output format alignment, not additional reasoning skill, is the principal effect of demonstration"* ([arXiv 2506.14641, 2025](https://arxiv.org/html/2506.14641)).
+Los ejemplos sirven para **fijar formato, voz y estructura** (voseo, tono cálido, cómo integrar el respaldo normativo, cómo cerrar hacia la captación). En modelos con thinking **no enseñan a razonar**: si el ejemplo prescribe el contenido del razonamiento (qué categoría elegir, qué justificación dar), sesga al modelo hacia patrones de superficie en vez de dejarlo razonar. La evidencia reciente sobre modelos de razonamiento: *"output format alignment, not additional reasoning skill, is the principal effect of demonstration"* ([arXiv 2506.14641, 2025](https://arxiv.org/html/2506.14641)).
 
 **Regla de decisión** antes de agregar un ejemplo: ¿esto fija formato/voz (OK, agregar) o intenta enseñar el razonamiento legal (riesgoso — preferí heurística declarativa en `<instrucciones>` con motivación)?
 
@@ -246,7 +247,7 @@ Calibrá cuánta latitud tiene el agente según la tolerancia de la tarea a la v
 
 | Task Type | Freedom | Prompt Pattern |
 |---|---|---|
-| Datos del corpus legal (citas, plazos normativos) | **LOW** — citar textual con fuente | "Citá la fuente (título y sección) de cada afirmación basada en el corpus. No parafrasees el texto normativo." |
+| Datos del corpus legal (citas, plazos normativos) | **LOW** — fiel al texto recuperado | "Fundá cada afirmación basada en el corpus en el texto devuelto por buscar-documentos, con sus condiciones. No parafrasees el texto normativo." |
 | Armado del caso (qué preguntar, qué registrar) | **MEDIUM** — heurísticas adaptables | "Registrá cada dato APENAS aparezca; preguntá solo lo que no podés inferir de la conversación" |
 | Conversación de venta / empatía | **HIGH** — objetivos y límites, el agente decide | "Primero aportá valor; pedí contacto cuando ya demostraste entender el caso" |
 
@@ -254,8 +255,8 @@ Calibrá cuánta latitud tiene el agente según la tolerancia de la tarea a la v
 
 ```xml
 <instrucciones>
-Para toda afirmación normativa usá EXCLUSIVAMENTE el texto devuelto por buscar-documentos.
-Transcribí la fuente (título y sección) tal cual aparece; no parafrasees el texto legal.
+Para toda afirmación normativa usá EXCLUSIVAMENTE el texto devuelto por buscar-documentos,
+respetando sus condiciones e hipótesis tal cual aparecen; no parafrasees el texto legal.
 </instrucciones>
 ```
 
@@ -321,6 +322,7 @@ Los agentes actúan, no solo sugieren. El agente usa sus tools para completar el
 | "acá abajo", "a la derecha" | Depende del layout |
 | "asistente", "interfaz", "pantalla" | Rompe la cuarta pared |
 | "completá el formulario" | El agente lo hace con `registrar-caso` |
+| "documento", "corpus", "PDF", títulos internos del corpus | Mecánica interna del conocimiento — las fuentes son de uso interno; ante la pregunta por el origen, la frase institucional (rule `conducta-laboral`) |
 
 **Patrón correcto:**
 
@@ -339,16 +341,16 @@ Solo pedí lo que no podés inferir de la conversación.</instruccion>
 
 El agente valida sus afirmaciones contra el corpus antes de dárselas al usuario. El patrón es: **generar, validar contra el oracle, corregir, responder.**
 
-**Validación = oracle externo, no auto-crítica.** El único oracle en este proyecto es **`buscar-documentos`** (el corpus legal): toda afirmación normativa (plazo, artículo, monto, criterio) se ancla contra el texto que devuelve la tool, con su fuente. "Revisá tu respuesta" o "asegurate de no haber inventado" sin referencia externa **amplifica el self-bias del modelo en vez de corregirlo** — los LLM sobrevaloran sus propias generaciones y el sesgo se amplifica con cada ronda de auto-crítica. Solo se corrigen errores que el modelo ya reconoce; los "unknown unknowns" quedan.
+**Validación = oracle externo, no auto-crítica.** El único oracle en este proyecto es **`buscar-documentos`** (el corpus legal): toda afirmación normativa (plazo, artículo, monto, criterio) se ancla contra el texto que devuelve la tool. "Revisá tu respuesta" o "asegurate de no haber inventado" sin referencia externa **amplifica el self-bias del modelo en vez de corregirlo** — los LLM sobrevaloran sus propias generaciones y el sesgo se amplifica con cada ronda de auto-crítica. Solo se corrigen errores que el modelo ya reconoce; los "unknown unknowns" quedan.
 
 **Una sola pasada.** El beneficio del verifier-generator loop está en la 1ª validación contra el oracle. Más rondas no agregan corrección (solo agregan self-bias). Si la validación falla, **corregí y respondé**, no entres en un loop. Si falla repetidamente, la causa NO es resoluble con más auto-crítica — es estructural (el dato no está en el corpus, la instrucción es ambigua, la tool es inadecuada).
 
-**Validación semántica, no solo formato.** Que una cita esté *bien formada* no basta: una afirmación con un número de artículo o un plazo plausible pero inexistente en el corpus pasa cualquier check sintáctico. **Una cita plausible pero inexistente es el peor vector de drift** — solo se detecta validando el contenido contra `buscar-documentos`. Si la tool no lo devuelve, no lo afirmes: es la regla "SIEMPRE citar la fuente" operacionalizada.
+**Validación semántica, no solo formato.** Que una cita esté *bien formada* no basta: una afirmación con un número de artículo o un plazo plausible pero inexistente en el corpus pasa cualquier check sintáctico. **Una cita plausible pero inexistente es el peor vector de drift** — solo se detecta validando el contenido contra `buscar-documentos`. Si la tool no lo devuelve, no lo afirmes: es la regla "SIEMPRE fundar en el corpus" operacionalizada.
 
 ```xml
 <verificacion>
 Antes de afirmarle al usuario un plazo, artículo o monto:
-1. Confirmá que buscar-documentos lo devuelve textualmente, con su fuente (título y sección).
+1. Confirmá que buscar-documentos lo devuelve textualmente, con las condiciones e hipótesis que el texto le pone.
 2. Si la tool no lo trae, no lo afirmes — decí que lo verificás y encaminá el caso a un abogado.
 </verificacion>
 ```
@@ -359,18 +361,18 @@ Antes de afirmarle al usuario un plazo, artículo o monto:
 
 Cuando el agente recupera resultados de `buscar-documentos`, debe **sintetizar y recomendar**, no volcar todos los chunks.
 
-**Patrón:** recuperar → analizar → citar 1-2 fuentes relevantes con su recomendación → ofrecer profundizar si hace falta.
+**Patrón:** recuperar → analizar → sintetizar 1-2 fuentes relevantes con su recomendación → ofrecer profundizar si hace falta.
 
 ```xml
 <!-- Mal: vuelca todos los resultados -->
 <instruccion>Mostrale al usuario los fragmentos que encontró buscar-documentos.</instruccion>
 
 <!-- Bien: sintetiza y cita -->
-<instruccion>De los resultados de buscar-documentos, elegí 1-2 fuentes relevantes, citalas
-(título y sección) y explicá qué implican para el caso. Ofrecé profundizar si le interesa.</instruccion>
+<instruccion>De los resultados de buscar-documentos, elegí 1-2 fuentes relevantes y explicá
+qué implican para el caso, integrándolas como conocimiento propio. Ofrecé profundizar si le interesa.</instruccion>
 ```
 
-**Por qué importa:** un consultante preocupado no quiere leer diez fragmentos normativos y evaluarlos — eso es trabajo del agente. Una respuesta curada, con la cita justa y la implicación clara, genera confianza y sostiene el funnel.
+**Por qué importa:** un consultante preocupado no quiere leer diez fragmentos normativos y evaluarlos — eso es trabajo del agente. Una respuesta curada, con el dato justo y la implicación clara, genera confianza y sostiene el funnel.
 
 ## Limiting Options
 
@@ -435,12 +437,12 @@ Forzar al modelo a emitir un veredicto antes del razonamiento degrada la calidad
 | Directivas de comportamiento sepultadas antes del conocimiento | Movelas después de la referencia (recencia); la captación va con `posicion:"final"` |
 | Todo enmarcado como "NO hagas X" | Reformulá como "Hacé Y en vez de X" |
 | `CRITICAL`/`SIEMPRE`/mayúsculas para triggering de tools | Reservalos para safety/integridad legal; lenguaje normal para tool triggering (over-triggering en modelos nuevos) |
-| Instrucción implícita para múltiples casos ("citá la fuente") | Declará scope explícito ("citá la fuente de CADA afirmación, no solo la primera") |
+| Instrucción implícita para múltiples casos ("fundá la afirmación") | Declará scope explícito ("fundá CADA afirmación en el texto recuperado, no solo la primera") |
 | Ejemplo few-shot que prescribe el contenido del razonamiento | Limitá ejemplos a fijar formato/voz; el razonamiento se enseña con heurística declarativa |
 | Template con veredicto antes que justificación | Razonamiento primero, resultado al final (-27pp si se invierte) |
 | "Revisá tu respuesta" como única validación | Anclá contra `buscar-documentos` (oracle externo); 1 sola pasada |
 | Afirmar un plazo/artículo plausible pero no verificado | Si `buscar-documentos` no lo trae, no lo afirmes (drift semántico = el peor vector) |
-| Volcar todos los chunks de `buscar-documentos` | Sintetizá 1-2 fuentes con su cita y recomendación |
+| Volcar todos los chunks de `buscar-documentos` | Sintetizá 1-2 fuentes con su recomendación |
 | Decirle al usuario "completá el formulario" | Usá `registrar-caso` directamente |
 | Mezclar "consultante"/"cliente"/"lead" | Elegí un término del glosario y usalo en todos lados |
 | Mismo nivel de freedom para toda tarea | Calibrá LOW/MEDIUM/HIGH por tipo de tarea |
@@ -465,7 +467,7 @@ Al escribir el prompt de un agente (rules + skills):
 - [ ] Templates con razonamiento ANTES del resultado (análisis → veredicto)
 - [ ] Feedback loops anclan contra `buscar-documentos`, no auto-crítica; una sola pasada
 - [ ] Ejemplos few-shot fijan formato/voz, no prescriben el razonamiento
-- [ ] Synthesis over dump: el agente cita 1-2 fuentes, no vuelca todo
+- [ ] Synthesis over dump: el agente sintetiza 1-2 fuentes, no vuelca todo
 - [ ] Opciones limitadas a 2-3 con default recomendado
 - [ ] Una idea = una vez — sin reformulaciones redundantes
 - [ ] Freedom calibrado por tipo de tarea (LOW/MEDIUM/HIGH)

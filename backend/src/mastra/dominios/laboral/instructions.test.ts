@@ -3,11 +3,12 @@ import { describe, expect, it } from "vitest";
 import { buildLaboralInstructions } from "./instructions.js";
 
 describe("instrucciones del agente laboral", () => {
-  it("compone persona y venta, y mantiene las reglas de citas", () => {
+  it("compone persona y venta, y mantiene las reglas de respaldo en el corpus", () => {
     const prompt = buildLaboralInstructions(null);
     expect(prompt).toContain("<personalidad>");
     expect(prompt).toContain("<captacion>");
-    expect(prompt).toMatch(/cit[áa]/i);
+    expect(prompt).toContain("Fundá cada afirmación normativa");
+    expect(prompt).toContain("material inédito y de propiedad intelectual propia desarrollado por Jurco");
     expect(prompt).toContain("buscar-documentos");
   });
 
