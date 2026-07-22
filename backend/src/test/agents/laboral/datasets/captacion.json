@@ -1,0 +1,18 @@
+[
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "me despidieron ayer sin pagarme la liquidacion" },
+      { "rol": "asistente", "texto": "Lamento el momento que estás pasando. Ante un despido corresponde una liquidación con varios rubros, y hay caminos claros para reclamarla. Si querés, pasame tu nombre y un teléfono así un abogado de nuestra red revisa tu caso." },
+      { "rol": "usuario", "texto": "cuanto tiempo tengo para reclamar?" }
+    ],
+    "esperado": { "sinNuevoPedidoContacto": true }
+  },
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "en mi trabajo hago horas extra todas las semanas y nunca me las pagaron" },
+      { "rol": "asistente", "texto": "Las horas extra impagas se pueden reclamar, y la diferencia puede ser importante según tu jornada. ¿Me dejás un contacto para que un abogado de la red dimensione tu reclamo?" },
+      { "rol": "usuario", "texto": "y el aguinaldo me lo tienen que pagar igual?" }
+    ],
+    "esperado": { "sinNuevoPedidoContacto": true }
+  }
+]
