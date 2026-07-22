@@ -38,11 +38,13 @@ consulta del usuario y la dirige a la categoría correspondiente.
 ### Familia
 | Subcategoría | Estado |
 |---|---|
-| Pensión alimenticia, tenencia y visitas | Pendiente |
-| Divorcio, sociedad conyugal | Pendiente |
-| Sucesiones | Pendiente |
-| Unión concubinaria | Pendiente |
-| Violencia de género | Pendiente — ⚠️ destacada en el diagrama; ver §4 |
+| Pensión alimenticia, tenencia y visitas | ✅ **habilitada 2026-07-22** (síntesis de derecho de familia + CNA consolidado) |
+| Divorcio, sociedad conyugal | ✅ **habilitada 2026-07-22** (incluye el divorcio por sola voluntad vigente desde 2026) |
+| Sucesiones | ✅ **habilitada 2026-07-22** — corpus mínimo (mapa del proceso); material profundo pedido al equipo legal |
+| Unión concubinaria | ✅ **habilitada 2026-07-22** (base: síntesis; texto de la Ley 18.246 pedido al equipo legal) |
+| Violencia de género | ✅ **habilitada 2026-07-22** con tratamiento diferencial (ver §4) |
+
+Temas de familia **sin subcategoría propia** (adopción, filiación y partidas, identidad de género/cambio registral, capacidad y curatela, viajes de menores): cubiertos por **corpus transversal a nivel categoría** (`Document.subcategoria = NULL`); el caso se registra sin subcategoría, con los hechos en el brief. Ver `docs/plans/2026-07-22-procesamiento-familia.md`.
 
 ### Arrendamiento y desalojo
 | Subcategoría | Estado |
@@ -120,7 +122,21 @@ hecha en la UI. Decisión registrada en
 
 ## 4. Casos con tratamiento especial
 
-- **Violencia de género** aparece destacada en el diagrama del dominio. Antes de
-  habilitarla, definir su tratamiento diferencial (p. ej. derivación inmediata a
-  canales de ayuda/urgencia además de —o en lugar de— la respuesta informativa
-  estándar). No tratarla como una subcategoría más.
+- **Violencia de género** aparece destacada en el diagrama del dominio y **no se trata
+  como una subcategoría más**. Su tratamiento diferencial quedó definido e implementado
+  al habilitarla (2026-07-22), sobre la base del material del equipo legal (Ley 19.580 +
+  síntesis de familia §9 y §16.4):
+  - El **receptor** mantiene su protocolo de caso sensible: ante peligro actual,
+    `casoSensible: true`, solo contención y canales de ayuda inmediata (rule
+    `caso-sensible`).
+  - El **agente familia** tiene el mismo protocolo para riesgo que aparece a mitad de
+    conversación (rule `caso-sensible`, versión especialista: seguridad primero, la
+    consulta legal después), y su rule de conducta (`conducta-familia`) prohíbe sugerir
+    mediación/conciliación/contacto directo con el agresor y recomendar incumplir
+    medidas vigentes.
+  - La consulta **informativa** sobre violencia ya denunciada, sin peligro actual, se
+    atiende como consulta de familia normal (no se corta hacia canales que la persona ya
+    usó).
+  - Pendiente del equipo legal: validación del protocolo y canales exactos (hoy: 911 y
+    0800 4141, marcados como interinos desde el procesamiento de despido). Ver
+    `docs/preguntas-legales/2026-07-22-familia.md`.

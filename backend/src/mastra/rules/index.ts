@@ -1,6 +1,8 @@
 import { ActivationRegistry, type RegistryItem } from "../common/activation-registry.js";
 import { captacionCasoRule } from "../dominios/comunes/rules/captacion-caso.js";
 import { identidadJurcoRule } from "../dominios/comunes/rules/identidad-jurco.js";
+import { conductaFamiliaRule } from "../dominios/familia/rules/conducta-familia.js";
+import { rolEspecialistaFamiliaRule } from "../dominios/familia/rules/rol-especialista-familia.js";
 import { conductaLaboralRule } from "../dominios/laboral/rules/conducta-laboral.js";
 import { rolEspecialistaLaboralRule } from "../dominios/laboral/rules/rol-especialista-laboral.js";
 import { casoSensibleRule } from "../dominios/recepcion/rules/caso-sensible.js";
@@ -19,6 +21,8 @@ const RULES: readonly RegistryItem[] = [
   { id: "conduccion-triage", fn: conduccionTriageRule },
   { id: "rol-especialista-laboral", fn: rolEspecialistaLaboralRule },
   { id: "conducta-laboral", fn: conductaLaboralRule, critical: true },
+  { id: "rol-especialista-familia", fn: rolEspecialistaFamiliaRule },
+  { id: "conducta-familia", fn: conductaFamiliaRule, critical: true },
   { id: "captacion-caso", fn: captacionCasoRule, posicion: "final" },
 ];
 

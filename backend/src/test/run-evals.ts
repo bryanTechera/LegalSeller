@@ -5,14 +5,15 @@
  *
  * Datasets:
  * - Receptor classification (spec §9): golden set → asignar-clasificacion
- *   matcher. Enabling a second category REQUIRES this to pass extended.
- * - Laboral citación (procesamiento DESPIDO.pdf 2026-07-19): substantive
- *   despido questions must trigger buscar-documentos before answering —
- *   the tool-level half of "SIEMPRE fundar en el corpus".
- * - Laboral voz-fuentes (revisión feedback legal 2026-07-22): responses must
- *   not surface internal corpus mechanics (document titles, "documento",
- *   "corpus", "PDF") and, when asked about sources, must answer with the
- *   official Jurco phrase (rule conducta-laboral).
+ *   matcher. Extended 2026-07-22 with familia items (second enabled
+ *   category, procesamiento familia).
+ * - Citación por agente de categoría (laboral 2026-07-19, familia
+ *   2026-07-22): substantive questions must trigger buscar-documentos
+ *   before answering — the tool-level half of "SIEMPRE fundar en el corpus".
+ * - Voz-fuentes por agente de categoría (revisión feedback legal
+ *   2026-07-22): responses must not surface internal corpus mechanics
+ *   (document titles, "documento", "corpus", "PDF") and, when asked about
+ *   sources, must answer with the official Jurco phrase (rules conducta-*).
  */
 import "dotenv/config";
 
@@ -22,6 +23,7 @@ import { fileURLToPath } from "node:url";
 
 import { RequestContext } from "@mastra/core/request-context";
 
+import { familiaAgent } from "../mastra/dominios/familia/index.js";
 import { laboralAgent } from "../mastra/dominios/laboral/index.js";
 import { recepcionAgent } from "../mastra/dominios/recepcion/index.js";
 
@@ -54,7 +56,7 @@ const REFERENCIAS_INTERNAS: readonly RegExp[] = [
   /base de (datos|documentos|conocimiento)/i,
   /\bPDF\b/i,
   /\b(el|del) documento\b/i,
-  /(Despido|Rubros laborales|Laboral) —/,
+  /(Despido|Rubros laborales|Laboral|Familia) —/,
 ];
 
 interface ToolCallInfo {
@@ -140,15 +142,17 @@ async function evalReceptorClasificacion(): Promise<number> {
   return precision;
 }
 
-async function evalLaboralCitacion(): Promise<number> {
-  const datasetPath = join(dirname(fileURLToPath(import.meta.url)), "agents/laboral/datasets/citacion.json");
+type CategoriaAgent = typeof laboralAgent;
+
+async function evalCitacion(agent: CategoriaAgent, agentDir: string, label: string): Promise<number> {
+  const datasetPath = join(dirname(fileURLToPath(import.meta.url)), `agents/${agentDir}/datasets/citacion.json`);
   const items = JSON.parse(readFileSync(datasetPath, "utf8")) as CitacionItem[];
 
   let passed = 0;
   const failures: string[] = [];
 
   for (const item of items) {
-    const result = await laboralAgent.generate(item.mensaje, {
+    const result = await agent.generate(item.mensaje, {
       requestContext: buildEvalRequestContext(),
     });
     const calls = extractToolCalls(result);
@@ -163,21 +167,21 @@ async function evalLaboralCitacion(): Promise<number> {
 
   const precision = passed / items.length;
   console.log(
-    `Laboral citación (buscar-documentos): ${String(passed)}/${String(items.length)} (${(precision * 100).toFixed(0)}%) — threshold ${String(THRESHOLD * 100)}%`,
+    `${label} citación (buscar-documentos): ${String(passed)}/${String(items.length)} (${(precision * 100).toFixed(0)}%) — threshold ${String(THRESHOLD * 100)}%`,
   );
   for (const failure of failures) console.log(`  FAIL: ${failure}`);
   return precision;
 }
 
-async function evalLaboralVozFuentes(): Promise<number> {
-  const datasetPath = join(dirname(fileURLToPath(import.meta.url)), "agents/laboral/datasets/voz-fuentes.json");
+async function evalVozFuentes(agent: CategoriaAgent, agentDir: string, label: string): Promise<number> {
+  const datasetPath = join(dirname(fileURLToPath(import.meta.url)), `agents/${agentDir}/datasets/voz-fuentes.json`);
   const items = JSON.parse(readFileSync(datasetPath, "utf8")) as VozFuentesItem[];
 
   let passed = 0;
   const failures: string[] = [];
 
   for (const item of items) {
-    const result = await laboralAgent.generate(item.mensaje, {
+    const result = await agent.generate(item.mensaje, {
       requestContext: buildEvalRequestContext(),
     });
     const rawText = (result as { text?: unknown }).text;
@@ -200,17 +204,21 @@ async function evalLaboralVozFuentes(): Promise<number> {
 
   const precision = passed / items.length;
   console.log(
-    `Laboral voz-fuentes (sin mecánica interna): ${String(passed)}/${String(items.length)} (${(precision * 100).toFixed(0)}%) — threshold ${String(THRESHOLD * 100)}%`,
+    `${label} voz-fuentes (sin mecánica interna): ${String(passed)}/${String(items.length)} (${(precision * 100).toFixed(0)}%) — threshold ${String(THRESHOLD * 100)}%`,
   );
   for (const failure of failures) console.log(`  FAIL: ${failure}`);
   return precision;
 }
 
 async function main(): Promise<number> {
-  const receptor = await evalReceptorClasificacion();
-  const laboral = await evalLaboralCitacion();
-  const vozFuentes = await evalLaboralVozFuentes();
-  return receptor >= THRESHOLD && laboral >= THRESHOLD && vozFuentes >= THRESHOLD ? 0 : 1;
+  const resultados = [
+    await evalReceptorClasificacion(),
+    await evalCitacion(laboralAgent, "laboral", "Laboral"),
+    await evalVozFuentes(laboralAgent, "laboral", "Laboral"),
+    await evalCitacion(familiaAgent, "familia", "Familia"),
+    await evalVozFuentes(familiaAgent, "familia", "Familia"),
+  ];
+  return resultados.every((precision) => precision >= THRESHOLD) ? 0 : 1;
 }
 
 main()

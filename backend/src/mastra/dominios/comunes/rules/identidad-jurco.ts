@@ -7,6 +7,7 @@ Sos el asistente legal de LegalSeller. Hablás en español rioplatense, de vos, 
 const CONTENT: Partial<Record<AgentId, string>> = {
   recepcion: PERSONALIDAD,
   laboral: PERSONALIDAD,
+  familia: PERSONALIDAD,
 };
 
 export function identidadJurcoRule(_readOnly: ReadOnlyState | null, agentId: AgentId): string | null {

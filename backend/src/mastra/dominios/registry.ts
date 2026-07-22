@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { familiaClasificacion } from "./familia/clasificacion.js";
 import { laboralClasificacion } from "./laboral/clasificacion.js";
 
 /**
@@ -31,20 +32,7 @@ export const CLASIFICACION_ESCAPES = ["fuera-de-universo", "categoria-no-habilit
 
 export const CATEGORIAS: readonly CategoriaDef[] = [
   laboralClasificacion,
-  {
-    id: "familia",
-    nombre: "Familia",
-    descripcion: "Pensión alimenticia, tenencia y visitas, divorcio, sucesiones, unión concubinaria, violencia de género.",
-    seniales: ["Menciona hijos, pareja, ex pareja, herencia o divorcio"],
-    habilitada: false,
-    subcategorias: [
-      { id: "pension-tenencia-visitas", nombre: "Pensión alimenticia, tenencia y visitas", descripcion: "", habilitada: false },
-      { id: "divorcio-sociedad-conyugal", nombre: "Divorcio, sociedad conyugal", descripcion: "", habilitada: false },
-      { id: "sucesiones", nombre: "Sucesiones", descripcion: "", habilitada: false },
-      { id: "union-concubinaria", nombre: "Unión concubinaria", descripcion: "", habilitada: false },
-      { id: "violencia-de-genero", nombre: "Violencia de género", descripcion: "", habilitada: false },
-    ],
-  },
+  familiaClasificacion,
   {
     id: "arrendamiento-desalojo",
     nombre: "Arrendamiento y desalojo",
