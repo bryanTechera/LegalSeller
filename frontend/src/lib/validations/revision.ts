@@ -8,8 +8,15 @@ export type AccesoRevisionInput = z.infer<typeof accesoRevisionSchema>;
 
 export const crearSesionSchema = z.object({
   titulo: z.string().trim().min(1).max(120).optional(),
+  /** "autonoma" = corrida del runner de escenarios; ausente = sesión de experto. */
+  origen: z.literal("autonoma").optional(),
 });
 export type CrearSesionInput = z.infer<typeof crearSesionSchema>;
+
+export const publicarSesionSchema = z.object({
+  borrador: z.literal(false),
+});
+export type PublicarSesionInput = z.infer<typeof publicarSesionSchema>;
 
 export const mensajeRevisionSchema = z.object({
   message: z.string().min(1, "no puede estar vacío").max(4000, "es demasiado largo"),
