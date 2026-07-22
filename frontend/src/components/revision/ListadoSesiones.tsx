@@ -57,6 +57,9 @@ export function ListadoSesiones({
                 </span>
               </span>
               <span className={styles.badges}>
+                {sesion.origenRevision === "AUTONOMA" ? (
+                  <span className={styles.badgeAutonoma}>Generada por el asistente técnico</span>
+                ) : null}
                 {sesion.notasAbiertas > 0 ? <span className={styles.badgeAbierta}>{sesion.notasAbiertas} abiertas</span> : null}
                 {sesion.notasRespondidas > 0 ? (
                   <span className={styles.badgeRespondida}>{sesion.notasRespondidas} con respuesta</span>
