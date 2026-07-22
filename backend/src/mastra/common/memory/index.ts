@@ -8,6 +8,7 @@ const WORKING_MEMORY_TEMPLATE = `# Caso del usuario
 - Subcategorías detectadas:
 - Intereses adicionales (otros temas mencionados):
 - Datos de contacto ya aportados:
+- Pedido de contacto ya realizado (sí/no):
 - Preferencias de respuesta:
 `;
 

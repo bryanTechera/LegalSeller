@@ -56,6 +56,24 @@ iteración 1 del fix antes de que llegara a un PR.
 Además, el runner ganó un filtro de datasets para iterar sin pagar la suite
 completa: `pnpm evals [filtro]` (ej. `pnpm evals captacion`).
 
+## Verificación en prod e iteración 3
+
+Re-corrida del escenario `divorcio-con-hijos-visitas` contra prod tras el deploy
+de la iteración 2 (corrida 2026-07-22T20-26-05): mejora clara pero parcial —
+los turnos 3 y 4 ya no piden contacto (el turno 3 cierra relevando el caso, el
+patrón BIEN del ejemplo), pero el turno 2 repitió el pedido una vez.
+
+**Causa de la divergencia prod vs. eval**: en prod el agente carga la memoria
+de trabajo, cuyo template trackea "Datos de contacto ya aportados: Ninguno" —
+una señal permanente de "falta el contacto" — y no tiene ningún campo que
+recuerde que el pedido ya se hizo. La eval (sin memoria) no reproduce ese
+empuje.
+
+**Iteración 3**: campo nuevo en el template de working memory
+(`Pedido de contacto ya realizado (sí/no)`) + la rule asienta ese campo al
+pedir y lo consulta en el check pre-cierre. El estado "ya pedí" pasa a ser
+durable en vez de depender de que el modelo re-escanee el historial.
+
 ## Estado
 
 - Sin nota en `/revision` → no hay `feedback:respond`; el canal de vuelta es el
