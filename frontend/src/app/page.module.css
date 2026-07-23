@@ -9,9 +9,9 @@
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-4) var(--space-6);
-  background: var(--navy);
-  color: var(--on-navy);
-  border-bottom: 1px solid color-mix(in srgb, var(--on-navy) 10%, transparent);
+  background: var(--surface);
+  color: var(--navy);
+  border-bottom: 1px solid var(--ink-100);
 }
 
 .wordmark {
@@ -23,7 +23,12 @@
   font-weight: 600;
   letter-spacing: var(--tracking-display);
   text-transform: uppercase;
-  color: var(--on-navy);
+  color: var(--navy);
+}
+
+/* La balanza (BrandMark) hereda currentColor: acento azul acero sobre header claro. */
+.wordmark svg {
+  color: var(--accent);
 }
 
 .main {
@@ -32,12 +37,6 @@
   display: flex;
   justify-content: center;
   padding: 0 var(--space-4);
-  /* Lavado celeste vertical bajo el header, se desvanece hacia el papel. */
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--accent) 8%, transparent),
-    transparent 60%
-  );
 }
 
 .footer {

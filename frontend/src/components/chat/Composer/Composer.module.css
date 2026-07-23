@@ -7,15 +7,13 @@
   border: 1px solid var(--ink-100);
   border-radius: var(--radius-lg);
   padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
-  box-shadow: var(--shadow-soft);
   transition: border-color 0.15s ease;
 }
 
+/* El textarea suprime su outline: el foco vive en el borde + anillo sutil. */
 .composer:focus-within {
   border-color: var(--accent);
-  box-shadow:
-    var(--shadow-soft),
-    0 0 0 4px var(--accent-soft);
+  box-shadow: 0 0 0 2px var(--accent-soft);
 }
 
 .input {
@@ -49,19 +47,12 @@
   border: none;
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition:
-    background 0.15s ease,
-    transform 0.1s ease;
-}
-
-.sendButton:active:not(:disabled),
-.stopButton:active {
-  transform: scale(0.95);
+  transition: background 0.15s ease;
 }
 
 .sendButton {
   color: var(--surface);
-  background: linear-gradient(180deg, var(--accent), var(--accent-strong));
+  background: var(--accent);
 }
 
 .sendButton:hover:not(:disabled) {
