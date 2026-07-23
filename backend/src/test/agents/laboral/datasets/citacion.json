@@ -54,5 +54,13 @@
   {
     "mensaje": "hace 13 meses me despidieron y lo unico que hice fue mandarle un telegrama colacionado a mi ex empleador, sigo a tiempo de reclamar?",
     "esperado": { "toolCall": "buscar-documentos" }
+  },
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "me despidieron a los 15 dias de reintegrarme de una certificacion del BSE" },
+      { "rol": "asistente", "texto": "Tenés una protección importante: tras reintegrarte de una certificación del BSE, la empresa debe conservarte el empleo durante 180 días corridos; si rompen ese período sin una causa grave, corresponde la indemnización común más los salarios que faltaban para completarlo. Para dimensionarlo, ¿hace cuánto trabajabas ahí y cuál era tu sueldo?" },
+      { "rol": "usuario", "texto": "trabaje 5 años y ganaba 30000 nominales por mes, cuanto me corresponderia de indemnizacion?" }
+    ],
+    "esperado": { "toolCall": "buscar-documentos" }
   }
 ]
