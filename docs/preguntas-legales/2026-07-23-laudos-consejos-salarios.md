@@ -13,7 +13,7 @@ convenio del sector puede mejorarla, y deriva la verificación al abogado.
 **Cómo responder**: pueden contestar directamente debajo de las preguntas y devolvernos
 este mismo archivo, o responder por el canal habitual.
 
-**Estado**: PENDIENTE de respuesta.
+**Estado**: RESPONDIDA (2026-07-23).
 
 ---
 
@@ -38,9 +38,17 @@ Hoy el sistema opera en el modo (b). **¿Prefieren mantener (b) o avanzar hacia 
 Si es (a), ¿qué sectores priorizarían y qué fuente usaríamos como texto de
 referencia?**
 
+> **Respuesta del equipo legal (2026-07-23):** En esta etapa nos concentramos en
+> la segunda opción, es decir (b).
+
 ## 2. Para el caso puntual de la seguridad privada
 
 Si mantienen el modo (b): ante un guardia que pregunta específicamente por su
 nocturnidad, ¿hay algo más que el sistema pueda decirle con seguridad además de la
 regla general de la ley 19.313, o la respuesta correcta es directamente "eso lo define
 el laudo de tu grupo y lo verifica el abogado"?
+
+> **Respuesta del equipo legal (2026-07-23):** No, la respuesta es correcta. El
+> sistema debe señalar el régimen general al que tenemos acceso, sin perjuicio de
+> que el consejo de salarios pueda contener una solución distinta o más
+> beneficiosa.

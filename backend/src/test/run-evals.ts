@@ -56,7 +56,7 @@ interface CitacionItem {
 
 interface FidelidadItem {
   mensaje: string;
-  esperado: { contiene?: string[]; prohibido?: string[] };
+  esperado: { contiene?: string[]; contieneAlguno?: string[]; prohibido?: string[] };
 }
 
 interface VozFuentesItem {
@@ -295,7 +295,9 @@ async function evalCaptacion(agent: CategoriaAgent, agentDir: string, label: str
 /**
  * Fidelity to the retrieved regime (review "Probando fallos anteriores",
  * 2026-07-23). Trace-derived checks: `contiene` = substrings any faithful
- * answer must state (the condition/regime the corpus attaches); `prohibido` =
+ * answer must state (the condition/regime the corpus attaches);
+ * `contieneAlguno` = at least one must appear (same fact, several valid
+ * wordings — e.g. the sector caveat as "convenio"/"laudo"); `prohibido` =
  * substrings that only appear when the agent extends the text beyond its
  * conditions (inapplicable triple) or fabricates sector content the corpus
  * does not have (laudo specifics). Case-insensitive on both sides.
@@ -317,6 +319,10 @@ async function evalFidelidad(agent: CategoriaAgent, agentDir: string, label: str
     const problemas: string[] = [];
     for (const requerido of item.esperado.contiene ?? []) {
       if (!text.includes(requerido.toLowerCase())) problemas.push(`falta "${requerido}"`);
+    }
+    const alternativas = item.esperado.contieneAlguno ?? [];
+    if (alternativas.length > 0 && !alternativas.some((alt) => text.includes(alt.toLowerCase()))) {
+      problemas.push(`falta alguna de: ${alternativas.map((alt) => `"${alt}"`).join(", ")}`);
     }
     for (const vedado of item.esperado.prohibido ?? []) {
       if (text.includes(vedado.toLowerCase())) problemas.push(`afirmó "${vedado}" sin respaldo`);

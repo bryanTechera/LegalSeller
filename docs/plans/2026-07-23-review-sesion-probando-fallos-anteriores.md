@@ -56,7 +56,9 @@ violados) — 2/2 en dos corridas consecutivas.
 ## Estado
 
 - Sin notas del experto → no hay `feedback:respond` para esta sesión.
-- Pregunta a los abogados PENDIENTE: laudos de Consejos de Salarios (modo (a)
-  ingesta de laudos vs. modo (b) solo regla general + derivación).
+- Pregunta a los abogados RESPONDIDA (2026-07-23): el equipo legal ratificó el
+  modo (b) — solo regla general + derivación, sin contenido sectorial de laudos.
+  Procesamiento de las respuestas en
+  `2026-07-23-procesamiento-respuestas-laudos-consejos-salarios.md`.
 - Queda abierta la sesión "test bryan 2" con 2 notas de prueba ("test") de
   Bryan-1, a resolver o descartar por el equipo técnico.
