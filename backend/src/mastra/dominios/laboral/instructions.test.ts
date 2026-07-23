@@ -28,4 +28,18 @@ describe("instrucciones del agente laboral", () => {
     expect(prompt).toContain("registrar-caso");
     expect(prompt).toContain("despido");
   });
+
+  it("con pedidoContactoHecho inyecta <estado_captacion> al final del prompt y cambia la variante de captación", () => {
+    const prompt = buildLaboralInstructions({ userId: "s1", pedidoContactoHecho: true });
+    expect(prompt).toContain("<estado_captacion>");
+    expect(prompt.indexOf("<estado_captacion>")).toBeGreaterThan(prompt.indexOf("<contexto_temporal>"));
+    expect(prompt).toContain("ya se hizo");
+    expect(prompt).not.toContain("Pedí los datos de contacto");
+  });
+
+  it("sin pedidoContactoHecho no hay <estado_captacion> y rige el pedido único", () => {
+    const prompt = buildLaboralInstructions({ userId: "s1" });
+    expect(prompt).not.toContain("<estado_captacion>");
+    expect(prompt).toContain("Pedí los datos de contacto");
+  });
 });

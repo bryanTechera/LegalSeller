@@ -40,4 +40,11 @@ describe("instrucciones del agente familia", () => {
     expect(prompt).toContain("registrar-caso");
     expect(prompt).toContain("pension-tenencia-visitas");
   });
+
+  it("con pedidoContactoHecho inyecta <estado_captacion> al final y cambia la variante de captación", () => {
+    const prompt = buildFamiliaInstructions({ userId: "s1", pedidoContactoHecho: true });
+    expect(prompt).toContain("<estado_captacion>");
+    expect(prompt.indexOf("<estado_captacion>")).toBeGreaterThan(prompt.indexOf("<contexto_temporal>"));
+    expect(prompt).not.toContain("Pedí los datos de contacto");
+  });
 });

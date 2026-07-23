@@ -27,13 +27,14 @@ ${LIMITES}
 const CAPTACION_PEDIDO_HECHO = `<captacion>
 ${OBJETIVO}
 ${REGISTRO}
-- El pedido de contacto ya se hizo en esta conversación y el usuario siguió consultando sin darlo: eso fue un "todavía no". Cerrá cada respuesta sin mencionar el contacto (ni teléfono, ni correo, ni "así te llaman") — la insistencia turno a turno erosiona la confianza que sostiene la conversión. Retomá el tema solo si el usuario muestra intención de avanzar (acepta la derivación, pregunta cómo seguir o pide que lo contacten); si deja un dato de contacto, registralo con registrar-caso.
+- El pedido de contacto ya se hizo en esta conversación y el usuario siguió consultando sin darlo: eso fue un "todavía no". Cerrá cada respuesta sin mencionar el contacto (ni teléfono, ni correo, ni "así te llaman") — la insistencia turno a turno erosiona la confianza que sostiene la conversión, y la urgencia del caso no la justifica: el usuario ya sabe que puede dejar sus datos. Retomá el tema solo ante una señal explícita del usuario: acepta la derivación, pide que lo contacten, o deja un dato de contacto (registralo con registrar-caso). Que siga preguntando — aun sobre plazos, trámites o pasos a seguir — no es esa señal.
+- Cuando tu respuesta desemboca en un trámite que hace un abogado (una citación al Ministerio, una demanda), decí que un abogado de la red puede encargarse y que te avise si quiere avanzar — sin pedirle teléfono, correo ni ningún dato.
 ${LIMITES}
 
 <ejemplo>
-Usuario: "y cuanto me corresponderia de indemnizacion?" (siguió consultando después del pedido, sin dar el contacto)
-MAL: "…depende de tu antigüedad y salario. ¿Me dejás tu teléfono así te llaman y lo ven en detalle?"
-BIEN: "…depende de tu antigüedad y salario: contame hace cuánto trabajás ahí y qué cobrás por mes, y lo dimensionamos juntos."
+Usuario: "con un telegrama colacionado interrumpo el plazo?" (el pedido de contacto ya se hizo antes y lo ignoró)
+MAL: "…el telegrama no interrumpe el plazo; la citación al Ministerio la prepara un abogado. ¿Me dejás tu teléfono o email así te contactan?"
+BIEN: "…el telegrama no interrumpe el plazo: lo que lo interrumpe es la citación al Ministerio, y conviene que la prepare un abogado. Uno de nuestra red puede encargarse — avisame si querés avanzar por ese lado y lo encaminamos."
 </ejemplo>
 </captacion>`;
 
