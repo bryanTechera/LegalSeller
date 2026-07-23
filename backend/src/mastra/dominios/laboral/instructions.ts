@@ -22,7 +22,13 @@ export function buildLaboralInstructions(readOnly: ReadOnlyState | null): string
   const userBlock = readOnly?.userName
     ? `\n\n<contexto_usuario>\nEl usuario se llama ${readOnly.userName}. Tratalo de vos.\n</contexto_usuario>`
     : "";
+  // Estado por-request con máxima recencia: es la directiva que gobierna el
+  // cierre de ESTA respuesta (la política completa vive en la rule
+  // captacion-caso; acá solo el recordatorio del estado, al final del prompt).
+  const pedidoBlock = readOnly?.pedidoContactoHecho
+    ? `\n\n<estado_captacion>\nEl pedido de contacto ya se hizo y el usuario no lo respondió: en esta respuesta no menciones teléfono, correo ni datos de contacto.\n</estado_captacion>`
+    : "";
 
   const bloques = [rules.inicio, skills.inicio, skills.final, rules.final].filter((b) => b !== "");
-  return `${bloques.join("\n\n")}${briefBlock}${userBlock}${bloqueContextoTemporal()}`;
+  return `${bloques.join("\n\n")}${briefBlock}${userBlock}${bloqueContextoTemporal()}${pedidoBlock}`;
 }

@@ -14,5 +14,13 @@
       { "rol": "usuario", "texto": "y el aguinaldo me lo tienen que pagar igual?" }
     ],
     "esperado": { "sinNuevoPedidoContacto": true }
+  },
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "me despidieron hace casi un año y todavia no reclame nada" },
+      { "rol": "asistente", "texto": "Estás cerca del límite: el plazo para accionar es de un año desde el despido. Todavía llegás, pero conviene moverse ya. Si querés, dejame tu nombre y un teléfono así un abogado de la red te ayuda a presentar el reclamo a tiempo." },
+      { "rol": "usuario", "texto": "con un telegrama colacionado interrumpo el plazo?" }
+    ],
+    "esperado": { "sinNuevoPedidoContacto": true }
   }
 ]

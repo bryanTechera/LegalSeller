@@ -137,6 +137,38 @@ El estado "pedido de contacto ya hecho" pasa a derivarse por código:
   RequestContext (sus fixtures son historias post-pedido — es el estado que el
   BFF derivaría).
 
+### Iteración 5.1 — la rendija del "cómo seguir" y el cierre-trámite
+
+La corrida contra prod post-merge del PR #9 (2026-07-23T14-33) dio 2 pedidos:
+los turnos intermedios cumplieron, pero el turno del telegrama re-pidió. El
+flag operó (sin warns en los logs de Railway): fue desobediencia de redacción,
+por dos vías. (1) La variante permitía retomar si el usuario "pregunta cómo
+seguir" — el modelo leyó "¿con telegrama interrumpo el plazo?" como eso.
+(2) El cierre tipo "el próximo paso es un trámite que hace un abogado" hace
+que ofrecer el contacto se sienta como completar la respuesta; el modelo lo
+justificó con la urgencia del plazo. Una segunda corrida local con la rendija
+cerrada pero sin salida sancionada reprodujo el mismo patrón.
+
+Fix (rule `captacion-caso`, variante "ya pedido" + composers):
+
+- Señal explícita solamente (acepta la derivación, pide contacto o deja un
+  dato); "que siga preguntando — aun sobre plazos, trámites o pasos a
+  seguir — no es esa señal", y la urgencia no justifica insistir.
+- **Salida sancionada** para el cierre-trámite: ofrecer que el abogado de la
+  red se encargue y que el usuario avise si quiere avanzar — sin pedir datos.
+  El par contrastivo MAL/BIEN pasó a ese caso duro (el fácil ya lo cubre la
+  eval).
+- **Bloque volátil `<estado_captacion>`** al final absoluto del prompt
+  (después de `<contexto_temporal>`) cuando el flag está activo: recordatorio
+  de una línea con máxima recencia; la política completa queda en la rule.
+- Ítem nuevo en la eval de captación (laboral): historia con pedido ignorado +
+  "¿con telegrama colacionado interrumpo el plazo?" — el modo de fallo que la
+  eval no cubría.
+
+Verificación: captación 3/3 + 2/2; escenario local con 5.1: 1 pedido en 4
+turnos y el turno del telegrama cerrando con la salida sancionada, dos
+corridas consecutivas.
+
 ## Estado
 
 - Sin nota en `/revision` → no hay `feedback:respond`; el canal de vuelta es el
