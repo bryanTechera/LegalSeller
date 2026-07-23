@@ -1,43 +1,33 @@
+/* Bloque del consultante: presente pero silencioso — tinte suave, radio chico. */
 .userMessage {
   align-self: flex-end;
   max-width: 78%;
-  background: var(--navy);
-  color: var(--on-navy);
+  background: var(--accent-soft);
+  color: var(--navy);
   padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-lg);
-  border-end-end-radius: var(--radius-sm);
+  border-radius: var(--radius-sm);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
-/* Respuesta del agente como tarjeta tipo dictamen, con firma de marca. */
+/* Respuesta del agente como texto editorial directo sobre el fondo, con firma liviana. */
 .assistantMessage {
   align-self: flex-start;
-  max-width: 95%;
+  max-width: 100%;
   color: var(--ink-900);
-  background: var(--surface);
-  border: 1px solid var(--ink-100);
-  border-radius: var(--radius-lg);
-  border-start-start-radius: var(--radius-sm);
-  box-shadow: var(--shadow-soft);
-  padding: var(--space-4);
 }
 
 .assistantHeader {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  margin-bottom: var(--space-3);
+  margin-bottom: var(--space-2);
 }
 
 .assistantAvatar {
   display: grid;
   place-items: center;
-  width: 1.5rem;
-  height: 1.5rem;
-  background: var(--navy);
-  color: var(--on-navy);
-  border-radius: var(--radius-sm);
+  color: var(--accent);
 }
 
 .assistantName {
