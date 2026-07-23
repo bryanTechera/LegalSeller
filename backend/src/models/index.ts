@@ -10,6 +10,12 @@ export interface ReadOnlyState {
   userName?: string;
   /** Case brief produced by the receptor's classification (never re-ask its contents). */
   casoBrief?: string;
+  /**
+   * true → an assistant message in this thread already asked for contact.
+   * Derived by the BFF from the thread history (deterministic regex scan) —
+   * the agent never tracks this itself; captacion-caso switches variant on it.
+   */
+  pedidoContactoHecho?: boolean;
 }
 
 export type AgentId = "recepcion" | "laboral" | "familia";

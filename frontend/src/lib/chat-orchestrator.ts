@@ -3,7 +3,8 @@ import "server-only";
 import { createSseLineSplitter, parseSseData } from "@/utils/sse";
 import { logger } from "@/utils/logger";
 
-import { appendThreadMessages, streamAgentMessage } from "./agent-service";
+import { appendThreadMessages, fetchAssistantTexts, streamAgentMessage } from "./agent-service";
+import { contienePedidoContacto } from "./pedido-contacto";
 import {
   type AsignacionArgs,
   asignacionArgsSchema,
@@ -230,12 +231,27 @@ async function callCategoryAgent(params: {
   message: string;
   casoBrief?: string;
 }): Promise<Response> {
+  const threadId = threadIdForSession(params.sessionId);
+  // Estado "pedido de contacto ya hecho": lo deriva el BFF del historial del
+  // thread con un scan determinístico — cuatro iteraciones de prompt mostraron
+  // que el agente no asienta su propio estado a tiempo (plan
+  // 2026-07-22-feedback-captacion-insistente). Si la lectura falla, se asume
+  // false: el peor caso es el comportamiento previo, nunca romper el turno.
+  const pedidoContactoHecho = await fetchAssistantTexts({ threadId, agentId: params.categoria })
+    .then((texts) => texts.some(contienePedidoContacto))
+    .catch((error: unknown) => {
+      logger.warn("pedido-contacto detection failed; assuming not asked", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return false;
+    });
   const upstream = await streamAgentMessage({
     agentId: params.categoria,
-    threadId: threadIdForSession(params.sessionId),
+    threadId,
     userId: params.sessionId,
     message: params.message,
     casoBrief: params.casoBrief,
+    pedidoContactoHecho,
     // NOTE: no client signal — upstream consumption is decoupled from aborts.
   });
   if (!upstream.ok || !upstream.body) {

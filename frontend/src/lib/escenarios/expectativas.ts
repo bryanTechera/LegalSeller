@@ -1,3 +1,4 @@
+import { contienePedidoContacto } from "../pedido-contacto";
 import type { CasoCorrida, ExpectativaResultado, Expectativas, TurnoCorrida } from "./schema";
 
 /** Clasificación registrada en el audit trail del Caso (evento CLASIFICACION). */
@@ -55,6 +56,18 @@ export function evaluarExpectativas(
       esperado: expectativas.casoCaptado,
       obtenido,
       cumplida: obtenido === expectativas.casoCaptado,
+    });
+  }
+  if (expectativas.pedidoContactoUnaVez !== undefined) {
+    // La regla de captación admite a lo sumo UN pedido de contacto por
+    // conversación; más de uno tras ser ignorado es la insistencia que el
+    // feedback legal 2026-07-22 pidió eliminar.
+    const pedidos = turnos.filter((turno) => contienePedidoContacto(turno.respuesta)).length;
+    resultados.push({
+      clave: "pedidoContactoUnaVez",
+      esperado: expectativas.pedidoContactoUnaVez,
+      obtenido: pedidos,
+      cumplida: (pedidos <= 1) === expectativas.pedidoContactoUnaVez,
     });
   }
   if (expectativas.contactoRegistrado !== undefined) {

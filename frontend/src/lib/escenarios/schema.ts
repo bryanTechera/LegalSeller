@@ -12,6 +12,7 @@ export const expectativasSchema = z.object({
   llamoBuscarDocumentos: z.boolean().optional(),
   casoCaptado: z.boolean().optional(),
   contactoRegistrado: z.boolean().optional(),
+  pedidoContactoUnaVez: z.boolean().optional(),
 });
 export type Expectativas = z.infer<typeof expectativasSchema>;
 
