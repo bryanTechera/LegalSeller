@@ -18,8 +18,8 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: var(--space-3);
-  padding: var(--space-6) 0;
+  gap: var(--space-4);
+  padding: var(--space-8) 0;
 }
 
 .heroMark {
@@ -69,6 +69,7 @@
   }
 }
 
+/* Sugerencia aplanada: hairline sin relleno ni sombra; el hover habla solo con tinta. */
 .suggestion {
   width: 100%;
   height: 100%;
@@ -78,22 +79,17 @@
   gap: var(--space-1);
   text-align: start;
   font-family: inherit;
-  background: var(--surface);
+  background: transparent;
   border: 1px solid var(--ink-100);
   border-radius: var(--radius-md);
   padding: var(--space-3) var(--space-4);
   cursor: pointer;
-  box-shadow: var(--shadow-soft);
-  transition:
-    border-color 0.15s ease,
-    transform 0.15s ease,
-    box-shadow 0.15s ease;
+  transition: border-color 0.15s ease;
 }
 
-.suggestion:hover {
+.suggestion:hover,
+.suggestion:focus-visible {
   border-color: var(--accent);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-raised);
 }
 
 .suggestionCategory {
@@ -108,23 +104,12 @@
 .suggestionText {
   font-size: var(--text-sm);
   color: var(--ink-700);
+  transition: color 0.15s ease;
 }
 
-.suggestionText::after {
-  content: " →";
-  display: inline-block;
-  opacity: 0;
-  transform: translateX(-4px);
-  transition:
-    opacity 0.15s ease,
-    transform 0.15s ease;
-  color: var(--accent);
-}
-
-.suggestion:hover .suggestionText::after,
-.suggestion:focus-visible .suggestionText::after {
-  opacity: 1;
-  transform: translateX(0);
+.suggestion:hover .suggestionText,
+.suggestion:focus-visible .suggestionText {
+  color: var(--ink-900);
 }
 
 /* --- Conversación --- */
@@ -151,14 +136,12 @@
   cursor: pointer;
   transition:
     color 0.15s ease,
-    border-color 0.15s ease,
-    background 0.15s ease;
+    border-color 0.15s ease;
 }
 
 .newChatButton:hover:not(:disabled) {
   color: var(--navy);
   border-color: var(--accent);
-  background: var(--surface);
 }
 
 .newChatButton:disabled {
@@ -184,38 +167,19 @@
   color: var(--state-error);
   font-size: var(--text-sm);
 }
+
 /* --- Movimiento (solo si el usuario no pidió reducirlo) --- */
 
+/* Un único fade de opacidad del hero completo — sin stagger ni desplazamiento. */
 @media (prefers-reduced-motion: no-preference) {
-  .hero > * {
-    animation: rise 0.45s ease both;
-  }
-
-  .hero > *:nth-child(2) {
-    animation-delay: 0.05s;
-  }
-
-  .hero > *:nth-child(3) {
-    animation-delay: 0.1s;
-  }
-
-  .hero > *:nth-child(4) {
-    animation-delay: 0.15s;
-  }
-
-  .hero > *:nth-child(5) {
-    animation-delay: 0.2s;
-  }
-
-  .hero > *:nth-child(6) {
-    animation-delay: 0.25s;
+  .hero {
+    animation: fade 0.4s ease both;
   }
 }
 
-@keyframes rise {
+@keyframes fade {
   from {
     opacity: 0;
-    transform: translateY(10px);
   }
 }
 
