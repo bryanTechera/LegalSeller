@@ -88,4 +88,24 @@ describe("evaluarExpectativas", () => {
     const [resultado] = evaluarExpectativas({ contactoRegistrado: true }, [turno([])], null);
     expect(resultado?.cumplida).toBe(false);
   });
+
+  it("pedidoContactoUnaVez cumplida con un único pedido en toda la corrida", () => {
+    const turnos = [
+      { ...turno([]), respuesta: "…dejame tu nombre y un teléfono así un abogado de la red revisa tu caso." },
+      { ...turno([]), respuesta: "El plazo es de un año desde el cese. Contame la fecha y lo dimensionamos." },
+    ];
+    const [resultado] = evaluarExpectativas({ pedidoContactoUnaVez: true }, turnos, null);
+    expect(resultado?.cumplida).toBe(true);
+    expect(resultado?.obtenido).toBe(1);
+  });
+
+  it("pedidoContactoUnaVez incumplida cuando el pedido se repite tras ser ignorado", () => {
+    const turnos = [
+      { ...turno([]), respuesta: "…dejame tu nombre y un teléfono así un abogado de la red revisa tu caso." },
+      { ...turno([]), respuesta: "Eso depende del laudo. ¿Me dejás un teléfono de contacto y tu nombre así te llaman?" },
+    ];
+    const [resultado] = evaluarExpectativas({ pedidoContactoUnaVez: true }, turnos, null);
+    expect(resultado?.cumplida).toBe(false);
+    expect(resultado?.obtenido).toBe(2);
+  });
 });

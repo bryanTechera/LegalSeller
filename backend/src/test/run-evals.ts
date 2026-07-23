@@ -18,6 +18,10 @@
  *   divorcio-con-hijos-visitas): multi-turn — after an ignored contact ask,
  *   the agent must NOT repeat the request on its own initiative (rule
  *   captacion-caso: pedido una sola vez; ignorado = "todavía no").
+ * - Fidelidad al régimen (review sesión "Probando fallos anteriores",
+ *   2026-07-23): substring/ban checks derived from real failures — the
+ *   answer must keep the retrieved text's conditions (no triple for a
+ *   readmitted worker; no invented sector-laudo benefits for nocturnidad).
  */
 import "dotenv/config";
 
@@ -38,9 +42,21 @@ interface EvalItem {
   esperado: { categoria?: string; subcategoria?: string; casoSensible?: boolean; pregunta?: boolean };
 }
 
+interface MensajeHistoria {
+  rol: "usuario" | "asistente";
+  texto: string;
+}
+
+/** `mensaje` (primer turno aislado) o `mensajes` (historia multi-turno); uno de los dos. */
 interface CitacionItem {
-  mensaje: string;
+  mensaje?: string;
+  mensajes?: MensajeHistoria[];
   esperado: { toolCall: string };
+}
+
+interface FidelidadItem {
+  mensaje: string;
+  esperado: { contiene?: string[]; prohibido?: string[] };
 }
 
 interface VozFuentesItem {
@@ -49,18 +65,26 @@ interface VozFuentesItem {
 }
 
 interface CaptacionItem {
-  mensajes: { rol: "usuario" | "asistente"; texto: string }[];
+  mensajes: MensajeHistoria[];
   esperado: { sinNuevoPedidoContacto: boolean };
+}
+
+function toGenerateMessages(mensajes: MensajeHistoria[]): { role: "user" | "assistant"; content: string }[] {
+  return mensajes.map((mensaje) => ({
+    role: mensaje.rol === "usuario" ? ("user" as const) : ("assistant" as const),
+    content: mensaje.texto,
+  }));
 }
 
 /**
  * Contact-ask phrasings observed in real runs ("dejame un teléfono o un
- * correo", "pasame tu nombre y un teléfono", "¿te gustaría dejarme un
- * teléfono?", "¿me dejás un contacto?"). Used to detect a REPEATED ask after
- * the user ignored the first one.
+ * correo", "pasame tu nombre y un teléfono", "¿me dejarías un teléfono?",
+ * "¿me dejás un contacto?"). Used to detect a REPEATED ask after the user
+ * ignored the first one. Mirror of frontend/src/lib/pedido-contacto.ts
+ * (BFF-side detection + escenario expectativas); keep aligned.
  */
 const PEDIDO_CONTACTO: readonly RegExp[] = [
-  /(dejame|dejarme|dej[aá]s|pasame|pasarme|pas[aá]s|compartime|compartirme|facilitame|brindame|dame).{0,60}(tel[eé]fono|celular|correo|mail|contacto)/i,
+  /(dejame|dejarme|dej[aá]s|dejar[ií]as|dejanos|pasame|pasarme|pas[aá]s|compartime|compartirme|facilitame|brindame|dame).{0,60}(tel[eé]fono|celular|correo|mail|contacto)/i,
   /(tus datos|un dato) de contacto/i,
 ];
 
@@ -172,16 +196,18 @@ async function evalCitacion(agent: CategoriaAgent, agentDir: string, label: stri
   const failures: string[] = [];
 
   for (const item of items) {
-    const result = await agent.generate(item.mensaje, {
+    const input = item.mensajes ? toGenerateMessages(item.mensajes) : (item.mensaje ?? "");
+    const result = await agent.generate(input, {
       requestContext: buildEvalRequestContext(),
     });
     const calls = extractToolCalls(result);
     const ok = calls.some((c) => c.toolName === item.esperado.toolCall);
 
+    const etiqueta = item.mensaje ?? item.mensajes?.at(-1)?.texto ?? "";
     if (ok) passed += 1;
     else
       failures.push(
-        `"${item.mensaje}" → esperado tool-call ${item.esperado.toolCall}, obtuvo [${calls.map((c) => c.toolName).join(", ")}]`,
+        `"${etiqueta}" → esperado tool-call ${item.esperado.toolCall}, obtuvo [${calls.map((c) => c.toolName).join(", ")}]`,
       );
   }
 
@@ -238,12 +264,12 @@ async function evalCaptacion(agent: CategoriaAgent, agentDir: string, label: str
   const failures: string[] = [];
 
   for (const item of items) {
-    const messages = item.mensajes.map((mensaje) => ({
-      role: mensaje.rol === "usuario" ? ("user" as const) : ("assistant" as const),
-      content: mensaje.texto,
-    }));
+    const messages = toGenerateMessages(item.mensajes);
+    // Cada item de captación fixtures una historia donde el asistente YA pidió
+    // el contacto — en prod el BFF deriva eso del historial y lo manda como
+    // readOnly.pedidoContactoHecho (la rule captacion-caso cambia de variante).
     const result = await agent.generate(messages, {
-      requestContext: buildEvalRequestContext(),
+      requestContext: new RequestContext([["readOnly", { userId: "eval", pedidoContactoHecho: true }]]),
     });
     const rawText = (result as { text?: unknown }).text;
     const text = typeof rawText === "string" ? rawText : "";
@@ -266,11 +292,54 @@ async function evalCaptacion(agent: CategoriaAgent, agentDir: string, label: str
   return precision;
 }
 
+/**
+ * Fidelity to the retrieved regime (review "Probando fallos anteriores",
+ * 2026-07-23). Trace-derived checks: `contiene` = substrings any faithful
+ * answer must state (the condition/regime the corpus attaches); `prohibido` =
+ * substrings that only appear when the agent extends the text beyond its
+ * conditions (inapplicable triple) or fabricates sector content the corpus
+ * does not have (laudo specifics). Case-insensitive on both sides.
+ */
+async function evalFidelidad(agent: CategoriaAgent, agentDir: string, label: string): Promise<number> {
+  const datasetPath = join(dirname(fileURLToPath(import.meta.url)), `agents/${agentDir}/datasets/fidelidad.json`);
+  const items = JSON.parse(readFileSync(datasetPath, "utf8")) as FidelidadItem[];
+
+  let passed = 0;
+  const failures: string[] = [];
+
+  for (const item of items) {
+    const result = await agent.generate(item.mensaje, {
+      requestContext: buildEvalRequestContext(),
+    });
+    const rawText = (result as { text?: unknown }).text;
+    const text = typeof rawText === "string" ? rawText.toLowerCase() : "";
+
+    const problemas: string[] = [];
+    for (const requerido of item.esperado.contiene ?? []) {
+      if (!text.includes(requerido.toLowerCase())) problemas.push(`falta "${requerido}"`);
+    }
+    for (const vedado of item.esperado.prohibido ?? []) {
+      if (text.includes(vedado.toLowerCase())) problemas.push(`afirmó "${vedado}" sin respaldo`);
+    }
+
+    if (text.length > 0 && problemas.length === 0) passed += 1;
+    else failures.push(`"${item.mensaje}" → ${text.length === 0 ? "respuesta vacía" : problemas.join("; ")}`);
+  }
+
+  const precision = passed / items.length;
+  console.log(
+    `${label} fidelidad (condiciones del régimen): ${String(passed)}/${String(items.length)} (${(precision * 100).toFixed(0)}%) — threshold ${String(THRESHOLD * 100)}%`,
+  );
+  for (const failure of failures) console.log(`  FAIL: ${failure}`);
+  return precision;
+}
+
 const EVALS: readonly { nombre: string; run: () => Promise<number> }[] = [
   { nombre: "receptor", run: evalReceptorClasificacion },
   { nombre: "laboral-citacion", run: () => evalCitacion(laboralAgent, "laboral", "Laboral") },
   { nombre: "laboral-voz-fuentes", run: () => evalVozFuentes(laboralAgent, "laboral", "Laboral") },
   { nombre: "laboral-captacion", run: () => evalCaptacion(laboralAgent, "laboral", "Laboral") },
+  { nombre: "laboral-fidelidad", run: () => evalFidelidad(laboralAgent, "laboral", "Laboral") },
   { nombre: "familia-citacion", run: () => evalCitacion(familiaAgent, "familia", "Familia") },
   { nombre: "familia-voz-fuentes", run: () => evalVozFuentes(familiaAgent, "familia", "Familia") },
   { nombre: "familia-captacion", run: () => evalCaptacion(familiaAgent, "familia", "Familia") },

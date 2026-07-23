@@ -1,0 +1,17 @@
+{
+  "titulo": "Despido tras reintegro del BSE con contacto ignorado",
+  "descripcion": "Reproduce la sesión 'Probando fallos anteriores' (2026-07-23): el consultante sigue preguntando sin dejar nunca el contacto — el pedido debe hacerse una sola vez en toda la conversación (rule captacion-caso + memoria del caso).",
+  "persona": "Jorge (ficticio), 45 años, Montevideo. Guardia de seguridad. Estuvo certificado por el BSE tras un accidente de trabajo, se reintegró y a los 15 días lo despidieron. 5 años de antigüedad, $30.000 nominales. Desconfiado: compara con lo que le dijeron en el Ministerio de Trabajo y no quiere dejar su teléfono todavía; si le piden el contacto, lo ignora y sigue con la próxima duda.",
+  "turnos": [
+    "Estuve certificado por BSE y volvi a trabajar despues de la certificacion, mas concretamente a los 15 dias de haber vuelto a trabajar me despidieron. Me protege en algo el haber estado certificado?",
+    "cuanto tiempo tengo para reclamar?",
+    "trabaje 5 años y ganaba 30000 nominales por mes, cuanto me corresponderia?",
+    "con un telegrama colacionado interrumpo el plazo?"
+  ],
+  "expectativas": {
+    "clasificacion": { "categoria": "laboral", "subcategoria": "despido" },
+    "llamoBuscarDocumentos": true,
+    "pedidoContactoUnaVez": true,
+    "contactoRegistrado": false
+  }
+}

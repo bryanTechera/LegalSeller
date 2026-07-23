@@ -21,6 +21,8 @@ export interface StreamAgentParams {
   message: string;
   /** Case brief from the receptor's classification, re-injected so the category agent never re-asks. */
   casoBrief?: string;
+  /** true → an assistant message in this thread already asked for contact (BFF-derived; the captacion-caso rule switches variant on it). */
+  pedidoContactoHecho?: boolean;
   /** true → the turn persists nothing (receptor runs; the category agent owns the durable turn). */
   memoryReadOnly?: boolean;
   signal?: AbortSignal;
@@ -54,10 +56,55 @@ export async function streamAgentMessage(params: StreamAgentParams): Promise<Res
           userId: params.userId,
           userName: params.userName,
           casoBrief: params.casoBrief,
+          pedidoContactoHecho: params.pedidoContactoHecho,
         },
       },
     }),
   });
+}
+
+/**
+ * Tolerant text extraction from `GET /api/memory/threads/:id/messages`
+ * (verified live 2026-07-23): each message is `{ role, content }` where
+ * `content` is the v2 shape `{ format: 2, parts: [...], content: "texto" }` —
+ * the flat string nests at `content.content`. Accepts also a plain-string
+ * `content` and a parts-only payload so a @mastra/core bump degrades
+ * gracefully instead of silently reading `undefined` (same fallback style as
+ * the SSE parser).
+ */
+export function extractAssistantTexts(payload: unknown): string[] {
+  if (payload === null || typeof payload !== "object") return [];
+  const messages = (payload as { messages?: unknown }).messages;
+  if (!Array.isArray(messages)) return [];
+  return messages.flatMap((message) => {
+    const record = message as Record<string, unknown>;
+    if (record.role !== "assistant") return [];
+    const content = record.content;
+    if (typeof content === "string") return [content];
+    if (content && typeof content === "object") {
+      const nested = (content as Record<string, unknown>).content;
+      if (typeof nested === "string") return [nested];
+      const parts = (content as Record<string, unknown>).parts;
+      if (Array.isArray(parts)) {
+        const texts = parts
+          .map((part) => part as Record<string, unknown>)
+          .filter((part) => part.type === "text" && typeof part.text === "string")
+          .map((part) => part.text as string);
+        if (texts.length > 0) return [texts.join("\n")];
+      }
+    }
+    return [];
+  });
+}
+
+/** Assistant-message texts of a thread, for BFF-side state derivation (e.g. pedido de contacto ya hecho). */
+export async function fetchAssistantTexts(params: { threadId: string; agentId: string }): Promise<string[]> {
+  const url = `${getMastraBaseUrl()}/api/memory/threads/${params.threadId}/messages?agentId=${params.agentId}`;
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`thread messages responded ${response.status}`);
+  }
+  return extractAssistantTexts(await response.json());
 }
 
 /**

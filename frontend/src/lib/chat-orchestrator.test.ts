@@ -18,7 +18,7 @@ const { clasificacion, dominios, agentService } = vi.hoisted(() => ({
     corregirClasificacion: vi.fn(),
   },
   dominios: { subcategoriaUnica: vi.fn(), esCategoriaHabilitada: vi.fn() },
-  agentService: { streamAgentMessage: vi.fn(), appendThreadMessages: vi.fn() },
+  agentService: { streamAgentMessage: vi.fn(), appendThreadMessages: vi.fn(), fetchAssistantTexts: vi.fn() },
 }));
 
 vi.mock("./clasificacion", () => clasificacion);
@@ -50,6 +50,7 @@ describe("orchestrateChatTurn", () => {
     clasificacion.asignarClasificacion.mockResolvedValue({ categoria: "laboral", aplicada: true });
     clasificacion.registrarDatosCaso.mockResolvedValue(undefined);
     agentService.appendThreadMessages.mockResolvedValue(undefined);
+    agentService.fetchAssistantTexts.mockResolvedValue([]);
     dominios.subcategoriaUnica.mockResolvedValue("despido");
     dominios.esCategoriaHabilitada.mockResolvedValue(true);
   });
@@ -59,8 +60,30 @@ describe("orchestrateChatTurn", () => {
     agentService.streamAgentMessage.mockResolvedValue(sseResponse([{ type: "text-delta", payload: { text: "hola" } }]));
     const response = await orchestrateChatTurn({ sessionId: "s1", message: "y el aguinaldo?" });
     expect(agentService.streamAgentMessage).toHaveBeenCalledTimes(1);
-    expect(agentService.streamAgentMessage.mock.calls[0][0]).toMatchObject({ agentId: "laboral" });
+    expect(agentService.streamAgentMessage.mock.calls[0][0]).toMatchObject({
+      agentId: "laboral",
+      pedidoContactoHecho: false,
+    });
     expect(await drain(response)).toContain("hola");
+  });
+
+  it("deriva pedidoContactoHecho del historial cuando un mensaje del asistente ya pidió contacto", async () => {
+    clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral" });
+    agentService.fetchAssistantTexts.mockResolvedValue([
+      "Tenés 180 días de protección. Si querés, dejame tu nombre y un teléfono así te contactamos.",
+    ]);
+    agentService.streamAgentMessage.mockResolvedValue(sseResponse([{ type: "text-delta", payload: { text: "ok" } }]));
+    await orchestrateChatTurn({ sessionId: "s1", message: "cuanto tiempo tengo para reclamar?" });
+    expect(agentService.streamAgentMessage.mock.calls[0][0]).toMatchObject({ pedidoContactoHecho: true });
+  });
+
+  it("si la lectura del historial falla asume pedidoContactoHecho false y no rompe el turno", async () => {
+    clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral" });
+    agentService.fetchAssistantTexts.mockRejectedValue(new Error("boom"));
+    agentService.streamAgentMessage.mockResolvedValue(sseResponse([{ type: "text-delta", payload: { text: "ok" } }]));
+    const response = await orchestrateChatTurn({ sessionId: "s1", message: "hola de nuevo" });
+    expect(await drain(response)).toContain("ok");
+    expect(agentService.streamAgentMessage.mock.calls[0][0]).toMatchObject({ pedidoContactoHecho: false });
   });
 
   it("fast-path: clasifica, persiste, encadena al agente de categoría en el mismo turno", async () => {

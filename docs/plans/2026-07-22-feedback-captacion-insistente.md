@@ -74,6 +74,69 @@ empuje.
 pedir y lo consulta en el check pre-cierre. El estado "ya pedí" pasa a ser
 durable en vez de depender de que el modelo re-escanee el historial.
 
+## Verificación en prod e iteración 4 (review sesión "Probando fallos anteriores", 2026-07-23)
+
+La sesión de Federico del 23/07 — corrida contra el deploy que YA incluía la
+iteración 3 (deploy de `e070e9e` activo desde las 21:42Z del 22/07; sesión de
+01:06Z a 02:42Z del 23/07) — volvió a mostrar la insistencia: pedido de contacto
+en 6 de 8 turnos. Primer fallo upstream (timeline
+`tmp/feedback-legal/cmrwt7hsi0015lg02dfsoncay.md`): el ÚNICO `updateWorkingMemory`
+de la sesión (turno 1) asentó "Pedido de contacto ya realizado: no" en el mismo
+turno cuya respuesta pidió el contacto, y nunca volvió a actualizarse. El modelo
+hace el update de memoria antes de redactar la respuesta y evalúa el estado en ese
+momento ("todavía no lo pedí") — "al hacerlo, asentá sí" no fija el orden. Peor:
+la memoria en "no" es una señal explícita que le gana al check pre-cierre sobre el
+historial (iteración 2), y con `lastMessages: 10` los primeros pedidos van
+saliendo de la ventana a medida que la conversación crece.
+
+**Iteración 4** (rule `captacion-caso`):
+
+- Timing explícito del asiento: "cuando decidas pedirlo, asentá primero … 'sí' y
+  recién después redactá la respuesta", con su motivación (asentarlo como "no"
+  hace que el turno siguiente lo repita).
+- Resolución del conflicto memoria vs. historial: un mensaje propio anterior que
+  ya pidió el contacto prueba el pedido aunque la memoria diga "no" — corregir la
+  memoria a "sí" y no repetirlo.
+
+**Anti-regresión**: la eval sin memoria no reproduce esta divergencia (limitación
+ya documentada en la iteración 3). Cobertura nueva por escenario reproducible:
+`frontend/escenarios/despido-bse-contacto-ignorado.json` + expectativa
+`pedidoContactoUnaVez` en el motor de expectativas del runner.
+
+**Verificación pre-PR (corrida local 2026-07-23T13-31)**: la iteración 4 también
+falló — 3 pedidos en 4 turnos. La corrida muestra el mecanismo completo: turno 1
+asienta "No" y pide en la misma respuesta (el timing explícito tampoco se
+cumplió); turno 2 lee "No" y re-pide; turno 3 corrige la memoria a "Sí" por la
+regla de conflicto nueva… y aun así cierra pidiendo; recién el turno 4 (memoria
+ya en "Sí" al inicio) no pide. Cuatro iteraciones de prompt parcialmente
+fallidas = el problema no es de redacción: el LLM no administra a tiempo su
+propio estado conversacional.
+
+## Iteración 5 — estructural (2026-07-23): el estado sale del LLM
+
+El estado "pedido de contacto ya hecho" pasa a derivarse por código:
+
+- **BFF** (`chat-orchestrator.ts` · `callCategoryAgent`): antes de cada turno de
+  agente de categoría, lee los mensajes del thread
+  (`GET /api/memory/threads/:id/messages`, helper `fetchAssistantTexts` con
+  extracción tolerante — el texto plano viaja anidado en `content.content`,
+  verificado en vivo) y escanea los mensajes del asistente con
+  `contienePedidoContacto` (`src/lib/pedido-contacto.ts`, módulo compartido con
+  las expectativas del runner; espejo del eval runner del backend). Si la
+  lectura falla, asume `false` y sigue (peor caso = comportamiento previo).
+- **Contrato** — `readOnly.pedidoContactoHecho` viaja en el RequestContext
+  (campo nuevo en `ReadOnlyState`).
+- **Rule `captacion-caso` condicional**: sin pedido previo → variante base
+  (pedido único cuando ya demostró entender el caso); con
+  `pedidoContactoHecho: true` → variante que instruye cerrar sin mencionar el
+  contacto (con el par contrastivo MAL/BIEN de la iteración 2), retomándolo
+  solo ante intención de avanzar. Toda la coreografía de memoria de las
+  iteraciones 3-4 se eliminó de la rule, y el campo
+  "Pedido de contacto ya realizado" salió del template de working memory.
+- **Eval**: `evalCaptacion` ahora manda `pedidoContactoHecho: true` en el
+  RequestContext (sus fixtures son historias post-pedido — es el estado que el
+  BFF derivaría).
+
 ## Estado
 
 - Sin nota en `/revision` → no hay `feedback:respond`; el canal de vuelta es el
