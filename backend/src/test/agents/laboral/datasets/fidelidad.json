@@ -5,6 +5,6 @@
   },
   {
     "mensaje": "Soy guardia de seguridad y trabajo 4 horas de 22:00 a 02:00. Me corresponde el pago de nocturnidad?",
-    "esperado": { "contiene": ["consecutivas"], "prohibido": ["grupo 19", "subgrupo", "desde la primera hora"] }
+    "esperado": { "contiene": ["consecutivas"], "contieneAlguno": ["convenio", "laudo", "consejo de salarios"], "prohibido": ["grupo 19", "subgrupo", "desde la primera hora"] }
   }
 ]
