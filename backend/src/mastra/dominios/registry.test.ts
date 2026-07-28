@@ -20,7 +20,12 @@ describe("registry de dominios", () => {
 
   it("laboral y familia habilitadas, con sus subcategorías habilitadas", () => {
     expect(categoriasHabilitadas().map((c) => c.id)).toEqual(["laboral", "familia"]);
-    expect(subcategoriasHabilitadas("laboral").map((s) => s.id)).toEqual(["despido", "rubros-laborales"]);
+    expect(subcategoriasHabilitadas("laboral").map((s) => s.id)).toEqual([
+      "despido",
+      "rubros-laborales",
+      "trabajador-rural",
+      "call-center",
+    ]);
     expect(subcategoriasHabilitadas("familia").map((s) => s.id)).toEqual([
       "pension-tenencia-visitas",
       "divorcio-sociedad-conyugal",

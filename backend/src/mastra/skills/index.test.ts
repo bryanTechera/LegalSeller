@@ -13,7 +13,12 @@ describe("staticSkillsRegistry", () => {
 
   it("laboral recibe sus subcategorías habilitadas y las guías de dimensionamiento", () => {
     const result = staticSkillsRegistry.execute(null, "laboral");
-    expect(result.activatedIds).toEqual(["subcategorias-laboral", "dimensionar-despido", "dimensionar-rubros"]);
+    expect(result.activatedIds).toEqual([
+      "subcategorias-laboral",
+      "dimensionar-despido",
+      "dimensionar-rubros",
+      "regimenes-especiales",
+    ]);
     expect(result.inicio).toContain("<subcategorias>");
     expect(result.inicio).toContain("despido");
     expect(result.inicio).toContain("rubros-laborales");

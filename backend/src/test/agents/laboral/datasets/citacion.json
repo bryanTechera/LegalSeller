@@ -56,6 +56,22 @@
     "esperado": { "toolCall": "buscar-documentos" }
   },
   {
+    "mensaje": "soy peon rural en una estancia y me despidieron, que indemnizacion me corresponde?",
+    "esperado": { "toolCall": "buscar-documentos" }
+  },
+  {
+    "mensaje": "trabajo en un tambo y vivo en el establecimiento, cuantos dias de licencia me tocan por año?",
+    "esperado": { "toolCall": "buscar-documentos" }
+  },
+  {
+    "mensaje": "soy teleoperador en un call center, cuantas horas por semana pueden hacerme trabajar como maximo?",
+    "esperado": { "toolCall": "buscar-documentos" }
+  },
+  {
+    "mensaje": "en el call center donde trabajo me marcaron mal en una escucha y ni me avisaron, tengo algun derecho?",
+    "esperado": { "toolCall": "buscar-documentos" }
+  },
+  {
     "mensajes": [
       { "rol": "usuario", "texto": "me despidieron a los 15 dias de reintegrarme de una certificacion del BSE" },
       { "rol": "asistente", "texto": "Tenés una protección importante: tras reintegrarte de una certificación del BSE, la empresa debe conservarte el empleo durante 180 días corridos; si rompen ese período sin una causa grave, corresponde la indemnización común más los salarios que faltaban para completarlo. Para dimensionarlo, ¿hace cuánto trabajabas ahí y cuál era tu sueldo?" },
