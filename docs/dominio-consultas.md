@@ -32,6 +32,8 @@ consulta del usuario y la dirige a la categoría correspondiente.
 |---|---|
 | **Despido** | ✅ **v1 — punto de partida** |
 | **Rubros laborales** | ✅ **habilitada 2026-07-19** (material del equipo legal: jornada/horas extras, descansos/licencia/salario vacacional/aguinaldo, salario, trabajo nocturno) |
+| **Trabajador rural** | ✅ **habilitada 2026-07-28** (régimen especial: Decreto-Ley 14.785 + Decreto 216/012 — salario, vivienda/alimentación, jornada, licencia, feriados, seguridad y despido rural). Subcategoría **particionada**: su corpus no contamina el régimen general (rule `conducta-laboral`) |
+| **Call center** | ✅ **habilitada 2026-07-28** (régimen especial de operadores de centros de atención telefónica: Decreto 147/012 — jornada 39 h semanales, pausas, ambiente/ergonomía, escucha de auditoría). Subcategoría particionada |
 | Licencias especiales | Pendiente |
 | Accidentes laborales | Pendiente |
 

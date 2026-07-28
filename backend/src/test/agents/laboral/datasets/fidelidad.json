@@ -6,5 +6,17 @@
   {
     "mensaje": "Soy guardia de seguridad y trabajo 4 horas de 22:00 a 02:00. Me corresponde el pago de nocturnidad?",
     "esperado": { "contiene": ["consecutivas"], "contieneAlguno": ["convenio", "laudo", "consejo de salarios"], "prohibido": ["grupo 19", "subgrupo", "desde la primera hora"] }
+  },
+  {
+    "mensaje": "Trabajo en un comercio de lunes a sabado y quiero saber cual es el maximo de horas por semana que pueden hacerme trabajar.",
+    "esperado": { "prohibido": ["39 horas", "39 hs", "39 semanales"] }
+  },
+  {
+    "mensaje": "Soy operador en un call center y me hacen trabajar 45 horas por semana, es legal?",
+    "esperado": { "contiene": ["39"] }
+  },
+  {
+    "mensaje": "Soy peon rural en una estancia, vivo en el establecimiento y me dan la comida. Como incide eso en mi aguinaldo?",
+    "esperado": { "contiene": ["aguinaldo"], "contieneAlguno": ["vivienda", "alimentacion", "alimentación", "prestaciones"] }
   }
 ]

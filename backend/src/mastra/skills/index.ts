@@ -3,6 +3,7 @@ import { dimensionarFamiliaSkill } from "../dominios/familia/static-skills/dimen
 import { subcategoriasFamiliaSkill } from "../dominios/familia/static-skills/subcategorias-familia.js";
 import { dimensionarDespidoSkill } from "../dominios/laboral/static-skills/dimensionar-despido.js";
 import { dimensionarRubrosSkill } from "../dominios/laboral/static-skills/dimensionar-rubros.js";
+import { regimenesEspecialesSkill } from "../dominios/laboral/static-skills/regimenes-especiales.js";
 import { subcategoriasLaboralSkill } from "../dominios/laboral/static-skills/subcategorias-laboral.js";
 import { universoCategoriasSkill } from "../dominios/recepcion/static-skills/universo-categorias.js";
 
@@ -11,6 +12,7 @@ const STATIC_SKILLS: readonly RegistryItem[] = [
   { id: "subcategorias-laboral", fn: subcategoriasLaboralSkill },
   { id: "dimensionar-despido", fn: dimensionarDespidoSkill },
   { id: "dimensionar-rubros", fn: dimensionarRubrosSkill },
+  { id: "regimenes-especiales", fn: regimenesEspecialesSkill },
   { id: "subcategorias-familia", fn: subcategoriasFamiliaSkill },
   { id: "dimensionar-familia", fn: dimensionarFamiliaSkill },
 ];

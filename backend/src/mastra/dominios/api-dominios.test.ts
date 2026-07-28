@@ -6,7 +6,11 @@ describe("payload de /api/dominios", () => {
   it("expone solo lo habilitado", () => {
     expect(buildDominiosPayload()).toEqual({
       categorias: [
-        { id: "laboral", nombre: "Laboral", subcategoriasHabilitadas: ["despido", "rubros-laborales"] },
+        {
+          id: "laboral",
+          nombre: "Laboral",
+          subcategoriasHabilitadas: ["despido", "rubros-laborales", "trabajador-rural", "call-center"],
+        },
         {
           id: "familia",
           nombre: "Familia",

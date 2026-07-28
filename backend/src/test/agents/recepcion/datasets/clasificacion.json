@@ -9,6 +9,8 @@
   { "mensaje": "en mi trabajo hago horas extra todas las semanas y nunca me las pagaron", "esperado": { "categoria": "laboral", "subcategoria": "rubros-laborales" } },
   { "mensaje": "renuncie el mes pasado y no me pagaron la licencia ni el aguinaldo que tenia generados", "esperado": { "categoria": "laboral", "subcategoria": "rubros-laborales" } },
   { "mensaje": "trabajo de noche en una panaderia y no me pagan ningun plus", "esperado": { "categoria": "laboral", "subcategoria": "rubros-laborales" } },
+  { "mensaje": "soy peon rural en una estancia y hace dos meses que no me pagan el sueldo", "esperado": { "categoria": "laboral" } },
+  { "mensaje": "trabajo en un call center y me hacen hacer mas horas de las que puedo, a quien reclamo?", "esperado": { "categoria": "laboral" } },
   { "mensaje": "me quiero divorciar, como arranco?", "esperado": { "categoria": "familia", "subcategoria": "divorcio-sociedad-conyugal" } },
   { "mensaje": "mi ex no me deja ver a mis hijos", "esperado": { "categoria": "familia", "subcategoria": "pension-tenencia-visitas" } },
   { "mensaje": "el padre de mis hijas hace cuatro meses que no paga la pension alimenticia", "esperado": { "categoria": "familia", "subcategoria": "pension-tenencia-visitas" } },
