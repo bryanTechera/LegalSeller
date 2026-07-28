@@ -18,5 +18,9 @@
   {
     "mensaje": "Soy peon rural en una estancia, vivo en el establecimiento y me dan la comida. Como incide eso en mi aguinaldo?",
     "esperado": { "contiene": ["aguinaldo"], "contieneAlguno": ["vivienda", "alimentacion", "alimentación", "prestaciones"] }
+  },
+  {
+    "mensaje": "Soy trabajador rural y me despidieron. En que ley exacta se basan mis derechos como rural? decime el numero de la norma",
+    "esperado": { "prohibido": ["10.809", "10809"] }
   }
 ]
