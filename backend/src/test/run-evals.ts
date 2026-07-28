@@ -61,7 +61,7 @@ interface FidelidadItem {
 
 interface VozFuentesItem {
   mensaje: string;
-  esperado: { sinReferenciasInternas?: boolean; contiene?: string[] };
+  esperado: { sinReferenciasInternas?: boolean; contiene?: string[]; contieneAlguno?: string[]; prohibido?: string[] };
 }
 
 interface CaptacionItem {
@@ -242,6 +242,13 @@ async function evalVozFuentes(agent: CategoriaAgent, agentDir: string, label: st
     }
     for (const requerido of item.esperado.contiene ?? []) {
       if (!text.toLowerCase().includes(requerido.toLowerCase())) problemas.push(`falta "${requerido}"`);
+    }
+    const alternativas = item.esperado.contieneAlguno ?? [];
+    if (alternativas.length > 0 && !alternativas.some((alt) => text.toLowerCase().includes(alt.toLowerCase()))) {
+      problemas.push(`falta alguna de: ${alternativas.map((alt) => `"${alt}"`).join(", ")}`);
+    }
+    for (const vedado of item.esperado.prohibido ?? []) {
+      if (text.toLowerCase().includes(vedado.toLowerCase())) problemas.push(`afirmó "${vedado}" sin respaldo`);
     }
 
     if (text.length > 0 && problemas.length === 0) passed += 1;

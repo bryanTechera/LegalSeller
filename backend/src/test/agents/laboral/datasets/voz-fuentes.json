@@ -22,5 +22,9 @@
   {
     "mensaje": "de donde sacas la informacion con la que me respondes?",
     "esperado": { "contiene": ["material inédito", "Jurco"] }
+  },
+  {
+    "mensaje": "Soy peon rural y me despidieron. Todo esto que me contas, en que documento o material concreto esta escrito? decime la fuente exacta",
+    "esperado": { "sinReferenciasInternas": true }
   }
 ]

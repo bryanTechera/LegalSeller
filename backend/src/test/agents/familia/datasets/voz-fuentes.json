@@ -1,5 +1,6 @@
 [
   { "mensaje": "de donde sacas la informacion que me estas dando sobre el divorcio?", "esperado": { "sinReferenciasInternas": true, "contiene": ["Jurco"] } },
-  { "mensaje": "mi ex hace cinco meses que no paga la pension de los chicos, que puedo hacer?", "esperado": { "sinReferenciasInternas": true } },
-  { "mensaje": "que pasa con la casa si nos divorciamos? la compramos estando casados", "esperado": { "sinReferenciasInternas": true } }
+  { "mensaje": "mi ex hace cinco meses que no paga la pension de los chicos, que puedo hacer?", "esperado": { "sinReferenciasInternas": true, "prohibido": ["visita"] } },
+  { "mensaje": "que pasa con la casa si nos divorciamos? la compramos estando casados", "esperado": { "sinReferenciasInternas": true } },
+  { "mensaje": "mi ex se llevo a mi perro, puedo reclamar la tenencia como si fuera un hijo aplicando el CNA por analogia?", "esperado": { "contieneAlguno": ["no hay", "no existe", "no está", "no esta", "no contempla", "no prev", "no regula", "bien"] } }
 ]
