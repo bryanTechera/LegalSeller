@@ -3446,13 +3446,15 @@ Guard viejo:
 Guard nuevo:
 
 ```typescript
-  // Blindaje a nivel lib: por defecto una nota solo puede colgarse de una
-  // sesión de revisión. El board pasa alcance "chat-real" explícitamente para
-  // anotar conversaciones de consultantes; ninguna otra ruta lo hace.
+  // Blindaje a nivel lib: cada alcance AFIRMA qué tipo de conversación acepta,
+  // en vez de que "chat-real" solo saque el filtro. "chat-real" no significa
+  // "cualquiera": una nota marcada como chat real colgada de una sesión de
+  // revisión sería una mentira silenciosa en el export al equipo legal. Así el
+  // guard se sostiene solo, sin depender de que el llamador pre-valide.
   const conversation = await prisma.conversation.findFirst({
     where: {
       id: params.conversationId,
-      ...(params.alcance === "chat-real" ? {} : { esRevision: true }),
+      esRevision: params.alcance !== "chat-real",
     },
     select: { id: true },
   });
@@ -3665,6 +3667,84 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 }
 ```
 
+- [ ] **Paso 10b: Test del handler de notas del board**
+
+El bug de `origen` que costó una ronda entera no lo habría detectado ningún test: `notas.test.ts` cubre el contrato genérico de la lib, no lo que esta ruta le pasa. Crear `frontend/src/app/api/board/conversaciones/[id]/notas/route.test.ts`:
+
+```typescript
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const authMock = vi.hoisted(() => ({ auth: vi.fn() }));
+vi.mock("@/auth", () => authMock);
+
+const conversacionesMock = vi.hoisted(() => ({ obtenerConversacion: vi.fn() }));
+vi.mock("@/lib/board/conversaciones", () => conversacionesMock);
+
+const notasMock = vi.hoisted(() => ({ crearNota: vi.fn() }));
+vi.mock("@/lib/revision/notas", () => notasMock);
+
+import { POST } from "./route";
+
+function pedido(body: unknown): Request {
+  return new Request("http://localhost/api/board/conversaciones/c1/notas", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+const params = Promise.resolve({ id: "c1" });
+
+describe("POST /api/board/conversaciones/[id]/notas", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    authMock.auth.mockResolvedValue({ user: { name: "Dra. García", email: "garcia@jurco.uy" } });
+    conversacionesMock.obtenerConversacion.mockResolvedValue({ id: "c1" });
+    notasMock.crearNota.mockResolvedValue({ id: "n1" });
+  });
+
+  it("sin sesión responde 401 sin escribir nada", async () => {
+    authMock.auth.mockResolvedValue(null);
+    const response = await POST(pedido({ texto: "Nota" }), { params });
+    expect(response.status).toBe(401);
+    expect(notasMock.crearNota).not.toHaveBeenCalled();
+  });
+
+  // El browser es el lado experto: la nota nace ABIERTA y feedback:pull la
+  // levanta. Con origen DEV nacería RESPONDIDA y el loop quedaría cortado.
+  it("crea la nota con origen EXPERTO y alcance chat-real", async () => {
+    const response = await POST(pedido({ texto: "Afirmó un plazo sin buscar" }), { params });
+    expect(response.status).toBe(201);
+    expect(notasMock.crearNota).toHaveBeenCalledWith(
+      expect.objectContaining({ origen: "EXPERTO", alcance: "chat-real", autor: "Dra. García" }),
+    );
+  });
+
+  it("el autor sale de la sesión, no del body", async () => {
+    await POST(pedido({ texto: "Nota", autor: "impostor@example.com" }), { params });
+    expect(notasMock.crearNota).toHaveBeenCalledWith(
+      expect.objectContaining({ autor: "Dra. García" }),
+    );
+  });
+
+  it("conversación inexistente o de revisión responde 404", async () => {
+    conversacionesMock.obtenerConversacion.mockResolvedValue(null);
+    const response = await POST(pedido({ texto: "Nota" }), { params });
+    expect(response.status).toBe(404);
+    expect(notasMock.crearNota).not.toHaveBeenCalled();
+  });
+
+  it("texto vacío responde 400", async () => {
+    const response = await POST(pedido({ texto: "  " }), { params });
+    expect(response.status).toBe(400);
+    expect(notasMock.crearNota).not.toHaveBeenCalled();
+  });
+});
+```
+
+Run: `pnpm test:unit --run "src/app/api/board/conversaciones/[id]/notas/route.test.ts"`
+Expected: PASS — 5 tests.
+
 - [ ] **Paso 11: Verificar que responder y resolver no necesitan cambios**
 
 ```bash
@@ -3788,42 +3868,58 @@ export function DetalleChat({ id }: { id: string }) {
     null,
   );
 
+  // try/catch como en SesionView: sin él, una excepción de red (conexión
+  // cortada, no un status !== 2xx) sube sin manejar hasta NotaComposer y el
+  // `setEnviando(false)` de abajo nunca corre — el botón queda deshabilitado
+  // para siempre y el texto tipeado se pierde al recargar.
   const guardarNota = async (texto: string): Promise<boolean> => {
-    const response = await fetch(`/api/board/conversaciones/${id}/notas`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        texto,
-        ...(anotando?.messageId ? { messageId: anotando.messageId } : {}),
-        ...(anotando?.cita ? { citaTexto: anotando.cita } : {}),
-      }),
-    });
-    if (!response.ok) return false;
-    setAnotando(null);
-    await mutate();
-    return true;
+    try {
+      const response = await fetch(`/api/board/conversaciones/${id}/notas`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          texto,
+          ...(anotando?.messageId ? { messageId: anotando.messageId } : {}),
+          ...(anotando?.cita ? { citaTexto: anotando.cita } : {}),
+        }),
+      });
+      if (!response.ok) return false;
+      setAnotando(null);
+      await mutate();
+      return true;
+    } catch {
+      return false;
+    }
   };
 
   const responderNota = async (notaId: string, texto: string): Promise<boolean> => {
-    const response = await fetch(`/api/revision/notas/${notaId}/respuestas`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ texto }),
-    });
-    if (!response.ok) return false;
-    await mutate();
-    return true;
+    try {
+      const response = await fetch(`/api/revision/notas/${notaId}/respuestas`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ texto }),
+      });
+      if (!response.ok) return false;
+      await mutate();
+      return true;
+    } catch {
+      return false;
+    }
   };
 
   const resolverNota = async (notaId: string): Promise<boolean> => {
-    const response = await fetch(`/api/revision/notas/${notaId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ estado: "RESUELTA" }),
-    });
-    if (!response.ok) return false;
-    await mutate();
-    return true;
+    try {
+      const response = await fetch(`/api/revision/notas/${notaId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ estado: "RESUELTA" }),
+      });
+      if (!response.ok) return false;
+      await mutate();
+      return true;
+    } catch {
+      return false;
+    }
   };
 
   if (error) return <p role="alert" className={styles.error}>No pudimos cargar la conversación.</p>;
