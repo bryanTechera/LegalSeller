@@ -130,9 +130,11 @@ Los handlers de `/api/revision/*` pasan de `getExperto()` a `getIdentidadBoard()
 |---|---|
 | `AUTH_SECRET` | Firma del JWT de sesión (`npx auth secret`) |
 | `ALLOWED_EMAILS` | Allowlist separada por comas |
-| `RESEND_API_KEY` | Envío del magic link |
-| `EMAIL_FROM` | Remitente; el dominio debe estar verificado en Resend |
+| `RESEND_API_KEY` | Envío del magic link — **se reusa la cuenta de Resend de `~/observability`**, ya verificada |
+| `EMAIL_FROM` | Mismo dominio verificado que observability, con display name propio: `Jurco <no-reply@…>` |
 | `REVISION_CLAVE` | *(existente, rol redefinido)* credencial de servicio del runner |
+
+**Branding del email**: el `mailer.ts` de observability trae el HTML con la identidad de Colar (tema oscuro, botón índigo, encabezado "Colar Observability"). El del board se escribe con la identidad Jurco — navy `#132a3b` y acento `#3185c9` sobre fondo claro, encabezado "Jurco". Un magic link que llega firmado como otro producto le da al equipo legal una razón razonable para no hacer click.
 
 ---
 
