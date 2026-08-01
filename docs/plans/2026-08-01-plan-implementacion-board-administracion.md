@@ -3640,11 +3640,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const validation = await parseRequestBody(request, crearNotaSchema);
     if (!validation.success) return validation.response;
 
-    // origen DEV: la nota nace del equipo técnico mirando producción, así que
-    // queda RESPONDIDA (pendiente del experto), no ABIERTA.
+    // origen EXPERTO como en /revision: en este sistema el browser ES el lado
+    // experto y el CLI (`feedback:respond`) es el lado dev — la máquina de
+    // estados de responderNota está construida sobre esa correspondencia.
+    // La nota nace ABIERTA, o sea pendiente del equipo dev, que es lo que
+    // levanta `feedback:pull`.
     const nota = await crearNota({
       conversationId: conversacion.id,
-      origen: "DEV",
+      origen: "EXPERTO",
       autor,
       texto: validation.data.texto,
       messageId: validation.data.messageId,
@@ -3689,6 +3692,8 @@ por:
 ```typescript
   // Incluye sesiones de revisión Y chats reales anotados desde el board: las
   // fallas de producción son el material más valioso del loop nota -> fix -> eval.
+  // El filtro por estado no cambia: una nota del board nace ABIERTA igual que
+  // una de /revision, porque ambas se crean desde el lado experto.
   const sesiones = await prisma.conversation.findMany({
     where: { notas: { some: { estado: "ABIERTA" } } },
     select: { id: true, threadId: true, titulo: true, creadaPor: true, esRevision: true },
