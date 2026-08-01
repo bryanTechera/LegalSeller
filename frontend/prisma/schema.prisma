@@ -86,6 +86,8 @@ model Conversation {
 
   caso  Caso?
   notas NotaRevision[]
+
+  @@index([esRevision, createdAt(sort: Desc)])
 }
 
 /// The lead — THE deliverable of the system (vision §5). Built incrementally.
