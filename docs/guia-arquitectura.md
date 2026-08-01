@@ -108,7 +108,9 @@ Instrucciones dinámicas ensambladas por stages en orden **cache-friendly**: con
 
 **Rate limiting (implementado)**: `frontend/src/lib/rate-limit.ts` mantiene dos ventanas deslizantes en memoria de proceso (v1: una sola instancia de FE) — por **sesión** (10 mensajes/min) y por **IP** (30 mensajes/min, más laxa porque varios usuarios legítimos pueden compartir una IP) — ambas chequeadas en `app/api/chat/stream/route.ts` antes de rutear el turno. Al superar cualquiera de las dos, `429` con header `Retry-After`. El mapa de contadores es acotado: por encima de un umbral (`SWEEP_THRESHOLD`) de claves activas dispara un barrido de entradas expiradas, para que un atacante rotando sesión/IP no lo haga crecer sin límite. Limpiar la cookie de sesión solo resetea el bucket de sesión — el de IP sigue conteniendo al abusador.
 
-**Evolución:** Auth.js v5 (next-auth beta) con estrategia JWT y adapter Prisma; `proxy.ts` (middleware de Next 16) solo verificando logged-in/out, con la autorización fina repetida en server components y route handlers (defensa en profundidad). El patrón completo está en la guía de codificación frontend §10.
+**Evolución (para el consultante):** Auth.js v5 (next-auth beta) con estrategia JWT y adapter Prisma; `proxy.ts` (middleware de Next 16) solo verificando logged-in/out, con la autorización fina repetida en server components y route handlers (defensa en profundidad). El patrón completo está en la guía de codificación frontend §10 — el mismo patrón, aplicado hoy al board (párrafo siguiente).
+
+**Dos identidades conviven** (desde 2026-08-01): el **consultante** del chat público, con la cookie anónima `ls_session` descrita arriba; y el **equipo interno** en `/board`, con sesión Auth.js (JWT 7 días) sobre allowlist `ALLOWED_EMAILS`. No se cruzan: el consultante nunca se persiste como `User`, y la sesión del board no habilita nada en el chat público. El runner de escenarios agrega una tercera credencial, de máquina, sobre `/api/revision/*`: la cookie `ls_experto` firmada con `REVISION_CLAVE`. Detalle en `docs/plans/2026-08-01-board-administracion.md`.
 
 ## 4. Modelo de datos
 

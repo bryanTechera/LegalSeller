@@ -120,14 +120,13 @@ export async function POST(request: Request) {
 - Mensaje al usuario siempre distinto del detalle técnico.
 - Boundaries: `error.tsx`, `global-error.tsx`, `not-found.tsx`, `loading.tsx` a nivel raíz y por segmento; `Suspense` con skeleton donde haya `useSearchParams`.
 
-## 10. Auth (Auth.js v5) — fase posterior
+## 10. Auth (Auth.js v5)
 
-**En v1 no hay auth**: identidad por cookie de sesión anónima (`lib/session.ts`, ver guía de arquitectura §3.4). Este patrón queda documentado para cuando se introduzca login:
+**El chat público sigue sin auth**: identidad por cookie de sesión anónima (`lib/session.ts`, ver guía de arquitectura §3.4). El **board interno** (`/board`) sí tiene auth desde 2026-08-01, implementada así:
 
-- Estrategia JWT (30 días, refresh diario), adapter Prisma. Callback `jwt` throttlea consultas a DB (~1 cada 5 min salvo triggers) y tolera caídas transitorias de conexión (preserva sesión con backoff); invalida token si el usuario fue borrado.
-- Rate limit en login por email/IP (Redis si está disponible).
-- `proxy.ts` con `matcher` acotado: solo verifica logged-in/out; la autorización real se repite server-side en cada página y handler.
-- Webhooks externos (si los hay): validar firma HMAC antes de procesar + idempotencia.
+- Estrategia JWT (7 días), adapter Prisma, provider Resend (magic link), allowlist `ALLOWED_EMAILS` verificada en el callback `signIn` — fail-closed si la lista está vacía.
+- `src/proxy.ts` (Next 16 renombró `middleware.ts`) con matcher acotado a `/board/*` y `/api/board/*`; la autorización real se repite server-side en cada page y handler.
+- Config partida en `auth.config.ts` (edge-safe, sin Prisma) y `auth.ts` (adapter + provider), porque el proxy corre en el runtime Edge.
 
 ## 11. Testing
 
