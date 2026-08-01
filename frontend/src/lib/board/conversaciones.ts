@@ -1,0 +1,115 @@
+import "server-only";
+
+import { Prisma } from "@prisma/client";
+import { z } from "zod";
+
+import type { FiltrosChats } from "@/lib/validations/board";
+import { prisma } from "@/lib/prisma";
+
+import { fechaDesde } from "./rango";
+import { conversacionesReales } from "./scope";
+
+export interface ChatResumen {
+  id: string;
+  fecha: string;
+  categoria: string | null;
+  estadoCaso: string | null;
+  mensajes: number;
+  preview: string;
+  notas: number;
+}
+
+/** Una página del listado. El componente homónimo vive en components/board/Chats. */
+export interface PaginaChats {
+  chats: ChatResumen[];
+  cursor: string | null;
+}
+
+const POR_PAGINA = 30;
+const LARGO_PREVIEW = 140;
+
+const filaResumenSchema = z.object({
+  threadId: z.string(),
+  mensajes: z.coerce.number(),
+  preview: z.string(),
+});
+
+export async function listarConversaciones(filtros: FiltrosChats): Promise<PaginaChats> {
+  const desde = fechaDesde(filtros.rango);
+
+  const where: Prisma.ConversationWhereInput = {
+    ...conversacionesReales(desde),
+    ...(filtros.categoria ? { categoria: filtros.categoria } : {}),
+    ...(filtros.estado ? { caso: { estado: filtros.estado } } : {}),
+  };
+
+  const filas = await prisma.conversation.findMany({
+    where,
+    select: {
+      id: true,
+      threadId: true,
+      categoria: true,
+      createdAt: true,
+      caso: { select: { estado: true } },
+      _count: { select: { notas: true } },
+    },
+    orderBy: { createdAt: "desc" },
+    take: POR_PAGINA,
+    ...(filtros.cursor ? { skip: 1, cursor: { id: filtros.cursor } } : {}),
+  });
+
+  const threadIds = filas.map((fila) => fila.threadId);
+  const resumenes =
+    threadIds.length === 0
+      ? []
+      : filaResumenSchema.array().parse(
+          await prisma.$queryRaw`
+            SELECT m.thread_id AS "threadId",
+                   COUNT(*)::float8 AS mensajes,
+                   COALESCE(
+                     (ARRAY_AGG(m.content::text ORDER BY m."createdAt" ASC)
+                      FILTER (WHERE m.role = 'user'))[1],
+                     ''
+                   ) AS preview
+            FROM mastra.mastra_messages m
+            WHERE m.thread_id IN (${Prisma.join(threadIds)})
+              ${filtros.busqueda ? Prisma.sql`AND m.content::text ILIKE ${`%${filtros.busqueda}%`}` : Prisma.empty}
+            GROUP BY m.thread_id`,
+        );
+
+  const porThread = new Map(resumenes.map((resumen) => [resumen.threadId, resumen]));
+
+  const chats = filas
+    .filter((fila) => !filtros.busqueda || porThread.has(fila.threadId))
+    .map((fila) => {
+      const resumen = porThread.get(fila.threadId);
+      return {
+        id: fila.id,
+        fecha: fila.createdAt.toISOString(),
+        categoria: fila.categoria,
+        estadoCaso: fila.caso?.estado ?? null,
+        mensajes: resumen?.mensajes ?? 0,
+        preview: recortar(resumen?.preview ?? ""),
+        notas: fila._count.notas,
+      };
+    });
+
+  return {
+    chats,
+    cursor: filas.length === POR_PAGINA ? (filas[filas.length - 1]?.id ?? null) : null,
+  };
+}
+
+/**
+ * El content de mastra_messages viene en varios shapes (string plano, JSON
+ * serializado, formato v2 con parts). Para el preview alcanza con limpiar el
+ * ruido estructural y recortar — el texto exacto lo resuelve la timeline.
+ */
+function recortar(crudo: string): string {
+  const limpio = crudo
+    .replace(/[{}[\]"]/g, " ")
+    .replace(/\b(format|parts|type|text)\b\s*:?/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return limpio.length > LARGO_PREVIEW ? `${limpio.slice(0, LARGO_PREVIEW)}…` : limpio;
+}
