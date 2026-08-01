@@ -1274,12 +1274,14 @@ const CLAVE = process.env.REVISION_CLAVE ?? "";
 
 test.skip(!CLAVE, "REVISION_CLAVE no seteada — E2E de revisión deshabilitado");
 
-test("ciclo de revisión: sesión → chat → nota inline → responder → resolver", async ({ page, request }) => {
+test("ciclo de revisión: sesión → chat → nota inline → responder → resolver", async ({ page }) => {
   test.setTimeout(120_000);
 
   // El E2E entra con la credencial de runner (la misma que usa `pnpm escenario`),
   // que no requiere completar un magic link desde el navegador.
-  await request.post("/api/revision/acceso", {
+  // Va por `page.request`, NO por el fixture `request`: este último es un
+  // APIRequestContext aislado y su cookie no viaja a la navegación de `page`.
+  await page.request.post("/api/revision/acceso", {
     data: { nombre: "Dra. E2E", clave: CLAVE },
   });
   await page.goto("/board/revision");
@@ -1287,7 +1289,7 @@ test("ciclo de revisión: sesión → chat → nota inline → responder → res
   await expect(page.getByRole("heading", { name: "Sesiones de revisión" })).toBeVisible();
 ```
 
-**Nota:** para que la cookie emitida por `request.post` viaje en la navegación de `page`, ambos deben compartir el contexto — en Playwright, `request` inyectado en el test ya comparte el `browserContext`, así que la cookie se propaga.
+**Nota:** la cookie tiene que viajar a la navegación de `page`, y por eso el login va por **`page.request`** y no por el fixture `request`. El fixture `request` de Playwright es un `APIRequestContext` **aislado**: su cookie jar no es el del browser context, así que un `request.post` de login deja a `page.goto` sin sesión y el test falla con un 401 desconcertante. `page.request` comparte las cookies de la página, que es lo que hace falta acá.
 
 - [ ] **Paso 7: Correr los E2E**
 
@@ -3782,9 +3784,11 @@ const CLAVE = process.env.REVISION_CLAVE ?? "";
 
 test.skip(!CLAVE, "REVISION_CLAVE no seteada — E2E del board deshabilitado");
 
-test("el board lista chats y abre el detalle", async ({ page, request }) => {
+test("el board lista chats y abre el detalle", async ({ page }) => {
   test.setTimeout(120_000);
-  await request.post("/api/revision/acceso", { data: { nombre: "Dra. E2E", clave: CLAVE } });
+  // page.request, no el fixture `request`: ese es un APIRequestContext aislado
+  // y su cookie no llegaría a la navegación de abajo.
+  await page.request.post("/api/revision/acceso", { data: { nombre: "Dra. E2E", clave: CLAVE } });
 
   await page.goto("/board/chats");
   await expect(page.getByRole("heading", { name: "Chats" })).toBeVisible();
