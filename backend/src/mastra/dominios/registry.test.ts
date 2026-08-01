@@ -9,17 +9,18 @@ import {
 } from "./registry.js";
 
 describe("registry de dominios", () => {
-  it("tiene las 4 categorías del universo", () => {
+  it("tiene las 5 categorías del universo", () => {
     expect(CATEGORIAS.map((c) => c.id)).toEqual([
       "laboral",
       "familia",
+      "transito",
       "arrendamiento-desalojo",
       "relaciones-consumo",
     ]);
   });
 
-  it("laboral, familia y relaciones-consumo habilitadas, con sus subcategorías habilitadas", () => {
-    expect(categoriasHabilitadas().map((c) => c.id)).toEqual(["laboral", "familia", "relaciones-consumo"]);
+  it("laboral, familia, transito y relaciones-consumo habilitadas, con sus subcategorías habilitadas", () => {
+    expect(categoriasHabilitadas().map((c) => c.id)).toEqual(["laboral", "familia", "transito", "relaciones-consumo"]);
     expect(subcategoriasHabilitadas("laboral").map((s) => s.id)).toEqual([
       "despido",
       "rubros-laborales",
@@ -33,6 +34,7 @@ describe("registry de dominios", () => {
       "union-concubinaria",
       "violencia-de-genero",
     ]);
+    expect(subcategoriasHabilitadas("transito")).toEqual([]);
     expect(subcategoriasHabilitadas("relaciones-consumo").map((s) => s.id)).toEqual([
       "derechos-del-consumidor",
       "procedimiento-mef-judicial",
@@ -43,6 +45,7 @@ describe("registry de dominios", () => {
   it("el cortocircuito de subcategoría única devuelve null cuando no hay exactamente una", () => {
     expect(subcategoriaUnicaHabilitada("laboral")).toBeNull();
     expect(subcategoriaUnicaHabilitada("familia")).toBeNull();
+    expect(subcategoriaUnicaHabilitada("transito")).toBeNull();
     expect(subcategoriaUnicaHabilitada("relaciones-consumo")).toBeNull();
   });
 
@@ -50,6 +53,7 @@ describe("registry de dominios", () => {
     const values = categoriaAsignableSchema.options;
     expect(values).toContain("laboral");
     expect(values).toContain("familia");
+    expect(values).toContain("transito");
     expect(values).toContain("fuera-de-universo");
     expect(values).toContain("categoria-no-habilitada");
     expect(values).not.toContain("arrendamiento-desalojo");

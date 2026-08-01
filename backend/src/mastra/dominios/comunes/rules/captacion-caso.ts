@@ -42,12 +42,14 @@ BIEN: "…el telegrama no interrumpe el plazo: lo que lo interrumpe es la citaci
 const CONTENT: Partial<Record<AgentId, string>> = {
   laboral: CAPTACION_SIN_PEDIDO,
   familia: CAPTACION_SIN_PEDIDO,
+  transito: CAPTACION_SIN_PEDIDO,
   "relaciones-consumo": CAPTACION_SIN_PEDIDO,
 };
 
 const CONTENT_PEDIDO_HECHO: Partial<Record<AgentId, string>> = {
   laboral: CAPTACION_PEDIDO_HECHO,
   familia: CAPTACION_PEDIDO_HECHO,
+  transito: CAPTACION_PEDIDO_HECHO,
   "relaciones-consumo": CAPTACION_PEDIDO_HECHO,
 };
 
