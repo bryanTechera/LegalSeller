@@ -88,4 +88,30 @@ describe("listarConversaciones", () => {
     expect(resultado).toEqual({ chats: [], cursor: null });
     expect(prismaMock.prisma.conversation.findMany).not.toHaveBeenCalled();
   });
+
+  // Regression guard: una regex que borra "format"/"parts"/"type"/"text" como
+  // ruido JSON también se come esas palabras cuando las escribe el consultante.
+  it("el preview conserva palabras como 'text' que no son claves JSON", async () => {
+    prismaMock.prisma.$queryRaw.mockResolvedValue([
+      { threadId: "chat-c1", mensajes: 3, preview: "le mande un text a mi jefe avisando que renunciaba" },
+    ]);
+
+    const resultado = await listarConversaciones({ rango: "30d" });
+
+    expect(resultado.chats[0]?.preview).toBe("le mande un text a mi jefe avisando que renunciaba");
+  });
+
+  it("el preview de un mensaje v2 con parts devuelve solo el texto", async () => {
+    prismaMock.prisma.$queryRaw.mockResolvedValue([
+      {
+        threadId: "chat-c1",
+        mensajes: 3,
+        preview: JSON.stringify({ format: 2, parts: [{ type: "text", text: "Hola, tengo una consulta" }] }),
+      },
+    ]);
+
+    const resultado = await listarConversaciones({ rango: "30d" });
+
+    expect(resultado.chats[0]?.preview).toBe("Hola, tengo una consulta");
+  });
 });

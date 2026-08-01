@@ -11,6 +11,11 @@ import styles from "./chats.module.css";
 
 const ESTADOS = ["EN_CONVERSACION", "CAPTADO", "FUERA_DE_COBERTURA"] as const;
 
+/** El board se lee desde Uruguay; slice(0,10) sobre el ISO mostraría el día UTC. */
+function fechaCorta(iso: string): string {
+  return new Date(iso).toLocaleDateString("es-UY", { timeZone: "America/Montevideo" });
+}
+
 async function traer(url: string): Promise<PaginaChats> {
   const response = await fetch(url);
   if (!response.ok) throw new Error("No pudimos cargar los chats");
@@ -99,7 +104,7 @@ export function ListadoChats() {
           <tbody>
             {data.chats.map((chat) => (
               <tr key={chat.id}>
-                <td>{chat.fecha.slice(0, 10)}</td>
+                <td>{fechaCorta(chat.fecha)}</td>
                 <td>{chat.categoria ?? "—"}</td>
                 <td>{chat.estadoCaso?.replace(/_/g, " ").toLowerCase() ?? "—"}</td>
                 <td>{chat.mensajes}</td>

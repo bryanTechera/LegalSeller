@@ -6,6 +6,8 @@ import { z } from "zod";
 import type { FiltrosChats } from "@/lib/validations/board";
 import { prisma } from "@/lib/prisma";
 
+import { extraerTexto } from "@/lib/revision/timeline";
+
 import { fechaDesde } from "./rango";
 import { conversacionesReales } from "./scope";
 
@@ -119,14 +121,13 @@ export async function listarConversaciones(filtros: FiltrosChats): Promise<Pagin
 
 /**
  * El content de mastra_messages viene en varios shapes (string plano, JSON
- * serializado, formato v2 con parts). Para el preview alcanza con limpiar el
- * ruido estructural y recortar — el texto exacto lo resuelve la timeline.
+ * serializado, formato v2 con parts). Se parsea con `extraerTexto`, el mismo
+ * helper verificado en producción que usa la timeline de revisión, en vez de
+ * limpiar el JSON con regex: una regex que borra las palabras "format",
+ * "parts", "type" o "text" también se come las del consultante — "le mande un
+ * text a mi jefe" quedaba como "le mande un a mi jefe".
  */
 function recortar(crudo: string): string {
-  const limpio = crudo
-    .replace(/[{}[\]"]/g, " ")
-    .replace(/\b(format|parts|type|text)\b\s*:?/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  const limpio = extraerTexto(crudo).replace(/\s+/g, " ").trim();
   return limpio.length > LARGO_PREVIEW ? `${limpio.slice(0, LARGO_PREVIEW)}…` : limpio;
 }
