@@ -48,7 +48,7 @@ El método de auth replica el del proyecto `~/observability`, con los desvíos d
 frontend/src/
 ├─ auth.ts                          NextAuth({ PrismaAdapter, Resend, signIn: isAllowed })
 ├─ auth.config.ts                   edge-safe: pages, sesión JWT, callbacks jwt/session
-├─ proxy.ts                         gate de /board/*, /api/board/*, /api/revision/*
+├─ proxy.ts                         gate de /board/* y /api/board/* (ver §3.2)
 ├─ app/
 │  ├─ login/page.tsx                form de email
 │  ├─ login/check-email/page.tsx    confirmación "revisá tu correo"
@@ -56,7 +56,8 @@ frontend/src/
 │  ├─ api/board/
 │  │  ├─ metricas/route.ts          agregados de las 4 familias, por rango
 │  │  ├─ conversaciones/route.ts    listado paginado + filtros + búsqueda
-│  │  └─ conversaciones/[id]/route.ts  detalle: timeline + caso + notas
+│  │  ├─ conversaciones/[id]/route.ts  detalle: timeline + caso + notas
+│  │  └─ conversaciones/[id]/notas/route.ts  crear nota sobre un chat real
 │  ├─ board/
 │  │  ├─ layout.tsx                 server component: auth() + sidebar
 │  │  ├─ page.tsx                   métricas (sección por defecto)
@@ -86,7 +87,9 @@ Observability corre un `Pool` crudo sobre un schema `observability` creado con S
 Next 16 renombró el archivo de middleware (`PROXY_FILENAME = 'proxy'` en `next/dist/lib/constants.js`; la guía de arquitectura §3.4 ya lo anticipaba). Un `middleware.ts` copiado de observability **no se ejecutaría, y no fallaría**: el board quedaría sin protección de forma silenciosa.
 
 **Desvío 3 — matcher inverso.**
-En observability *todo* es privado. Acá el producto es público y tiene que seguir siéndolo. El matcher cubre exclusivamente `/board/*`, `/api/board/*` y `/api/revision/*`; quedan intactos `/`, `/api/chat/*` y `/api/health`.
+En observability *todo* es privado. Acá el producto es público y tiene que seguir siéndolo. El matcher cubre exclusivamente `/board/*` y `/api/board/*`; quedan intactos `/`, `/api/chat/*` y `/api/health`.
+
+**`/api/revision/*` queda fuera del matcher, deliberadamente.** Dos razones: (a) `POST /api/revision/acceso` es el endpoint de login del runner — si el proxy exigiera sesión ahí, el runner nunca podría autenticarse; (b) la credencial del runner es un HMAC verificado con `node:crypto`, que no existe en el runtime Edge donde corre el proxy. Esas rutas quedan protegidas a nivel handler por `getIdentidadBoard()` (§3.3), que es estrictamente más capaz que el proxy porque entiende las dos credenciales. La protección no se debilita: se mueve a la única capa que puede evaluarla completa.
 
 **Defensa en profundidad**: el proxy es un filtro grueso. Cada page y cada route handler del board repite el chequeo con `auth()` server-side, según la guía de arquitectura §3.1 y §3.4. Un fallo del matcher no debe alcanzar para exponer datos.
 
@@ -122,7 +125,14 @@ Los handlers de `/api/revision/*` pasan de `getExperto()` a `getIdentidadBoard()
 
 ### 3.4 Dependencias nuevas
 
-`next-auth@beta`, `@auth/prisma-adapter`, `resend`, `recharts`. Recharts entra únicamente en el bundle de `/board`, que Next code-splitea por ruta; el chat público no lo carga.
+| Paquete | Versión | Nota de compatibilidad (verificada) |
+|---|---|---|
+| `next-auth` | `^5.0.0-beta.32` | peer `next: ^16.0.0` — soporta Next 16 |
+| `@auth/prisma-adapter` | `^2.11.3` | peer `@prisma/client: >=6` |
+| `resend` | `^6.18.1` | — |
+| `recharts` | `^3.10.1` | **v3 es obligatoria**: recharts 2.x declara peer React `^18` hasta 2.15, y el proyecto corre React 19 |
+
+Recharts entra únicamente en el bundle de `/board`, que Next code-splitea por ruta; el chat público no lo carga.
 
 ### 3.5 Variables de entorno
 
@@ -209,7 +219,13 @@ Sección por defecto. Tarjetas de KPI arriba (conversaciones, tasa de captación
 
 **Detalle** (`/board/chats/[id]`): reusa `construirTimeline(threadId, { conSpans: true })` — la misma vista que ya usa revisión, incluida la atribución de tool-calls al agente subiendo por `parentSpanId` (Mastra no puebla `parentEntityName` en `tool_call`; el workaround ya está resuelto en `timeline.ts`). Al costado, el `Caso` (contacto, subcategorías, resumen) y el hilo de notas.
 
-**Anotar**: `NotaComposer` y `NotaThread` funcionan sin cambios, porque `NotaRevision` cuelga de `Conversation` y nunca supo de "sesiones de revisión". Una nota sobre un chat real entra al mismo flujo que ya procesa la skill `revisar-feedback-legal`, incluido `pnpm feedback:pull`.
+**Anotar**: los componentes `NotaComposer` y `NotaThread` se reusan sin cambios, y `listarNotasDeSesion()` ya lee notas de cualquier conversación. Pero **dos guards deliberados hay que abrir explícitamente** — descubiertos al planificar, corrigen la suposición inicial de que "todo funcionaba sin cambios":
+
+1. **`crearNota()` rechaza conversaciones reales.** Tiene un chequeo `esRevision: true` con el comentario *"ninguna nota puede colgarse de una conversación real de consultante, venga de la ruta o de un script"*. Era correcto cuando el único anotador era el equipo legal sobre sesiones de prueba; el board le da a esa operación un caso de uso legítimo por primera vez. Se abre con un parámetro explícito `alcance: "revision" | "chat-real"` que **default a `"revision"`**: los seis call sites existentes no cambian de comportamiento y el board declara su intención en el único lugar donde hace falta. No se borra el guard — se le agrega una puerta con nombre.
+
+2. **`scripts/feedback-pull.ts` filtra `esRevision: true`.** Sin tocarlo, una nota sobre un chat real nunca llegaría al equipo dev y el loop nota → fix → eval quedaría cortado justo para las fallas de producción, que es lo que el board viene a habilitar. El script pasa a traer ambos orígenes, marcando cuál es cuál en el export.
+
+El aislamiento del sistema de revisión no se debilita: las rutas `/api/revision/*` siguen exigiendo `esRevision: true` vía `getSesionRevision()`. Las notas sobre chats reales entran por una ruta propia del board (`/api/board/conversaciones/[id]/notas`).
 
 ### 5.3 Revisión (`/board/revision`)
 
