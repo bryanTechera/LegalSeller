@@ -2927,6 +2927,8 @@ import { z } from "zod";
 import type { FiltrosChats } from "@/lib/validations/board";
 import { prisma } from "@/lib/prisma";
 
+import { extraerTexto } from "@/lib/revision/timeline";
+
 import { fechaDesde } from "./rango";
 import { conversacionesReales } from "./scope";
 
@@ -2957,7 +2959,7 @@ const filaResumenSchema = z.object({
 
 const filaThreadSchema = z.object({ threadId: z.string() });
 
-export async function listarConversaciones(filtros: FiltrosChats): Promise<ListadoChats> {
+export async function listarConversaciones(filtros: FiltrosChats): Promise<PaginaChats> {
   const desde = fechaDesde(filtros.rango);
 
   // La búsqueda acota el conjunto ANTES de paginar. Filtrando después, un
@@ -3040,15 +3042,14 @@ export async function listarConversaciones(filtros: FiltrosChats): Promise<Lista
 
 /**
  * El content de mastra_messages viene en varios shapes (string plano, JSON
- * serializado, formato v2 con parts). Para el preview alcanza con limpiar el
- * ruido estructural y recortar — el texto exacto lo resuelve la timeline.
+ * serializado, formato v2 con parts). Se parsea con `extraerTexto`, el mismo
+ * helper verificado en producción que usa la timeline de revisión, en vez de
+ * limpiar el JSON con regex: una regex que borra las palabras "format",
+ * "parts", "type" o "text" también se come las del consultante — "le mande un
+ * text a mi jefe" quedaba como "le mande un a mi jefe".
  */
 function recortar(crudo: string): string {
-  const limpio = crudo
-    .replace(/[{}[\]"]/g, " ")
-    .replace(/\b(format|parts|type|text)\b\s*:?/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  const limpio = extraerTexto(crudo).replace(/\s+/g, " ").trim();
   return limpio.length > LARGO_PREVIEW ? `${limpio.slice(0, LARGO_PREVIEW)}…` : limpio;
 }
 ```
@@ -3056,7 +3057,7 @@ function recortar(crudo: string): string {
 - [ ] **Paso 5: Correr el test y verificar que pasa**
 
 Run: `pnpm test:unit --run src/lib/board/conversaciones.test.ts`
-Expected: PASS — 5 tests
+Expected: PASS — 7 tests
 
 - [ ] **Paso 6: Escribir el endpoint del listado**
 
@@ -3115,6 +3116,11 @@ import type { Rango } from "@/lib/board/rango";
 import styles from "./chats.module.css";
 
 const ESTADOS = ["EN_CONVERSACION", "CAPTADO", "FUERA_DE_COBERTURA"] as const;
+
+/** El board se lee desde Uruguay; slice(0,10) sobre el ISO mostraría el día UTC. */
+function fechaCorta(iso: string): string {
+  return new Date(iso).toLocaleDateString("es-UY", { timeZone: "America/Montevideo" });
+}
 
 async function traer(url: string): Promise<PaginaChats> {
   const response = await fetch(url);
@@ -3204,7 +3210,7 @@ export function ListadoChats() {
           <tbody>
             {data.chats.map((chat) => (
               <tr key={chat.id}>
-                <td>{chat.fecha.slice(0, 10)}</td>
+                <td>{fechaCorta(chat.fecha)}</td>
                 <td>{chat.categoria ?? "—"}</td>
                 <td>{chat.estadoCaso?.replace(/_/g, " ").toLowerCase() ?? "—"}</td>
                 <td>{chat.mensajes}</td>
