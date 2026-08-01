@@ -4,13 +4,17 @@ const CLAVE = process.env.REVISION_CLAVE ?? "";
 
 test.skip(!CLAVE, "REVISION_CLAVE no seteada — E2E de revisión deshabilitado");
 
-test("ciclo de revisión: acceso → sesión → chat → nota inline → responder → resolver", async ({ page }) => {
+test("ciclo de revisión: sesión → chat → nota inline → responder → resolver", async ({ page }) => {
   test.setTimeout(120_000);
-  await page.goto("/revision");
 
-  await page.getByLabel("Tu nombre").fill("Dra. E2E");
-  await page.getByLabel("Clave de acceso").fill(CLAVE);
-  await page.getByRole("button", { name: "Entrar" }).click();
+  // El E2E entra con la credencial de runner (la misma que usa `pnpm escenario`),
+  // que no requiere completar un magic link desde el navegador.
+  // Va por `page.request`, NO por el fixture `request`: este último es un
+  // APIRequestContext aislado y su cookie no viaja a la navegación de `page`.
+  await page.request.post("/api/revision/acceso", {
+    data: { nombre: "Dra. E2E", clave: CLAVE },
+  });
+  await page.goto("/board/revision");
 
   await expect(page.getByRole("heading", { name: "Sesiones de revisión" })).toBeVisible();
   await page.getByLabel("Título de la nueva sesión").fill("E2E despido");
