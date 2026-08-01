@@ -1,0 +1,18 @@
+[
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "compre una tele hace diez dias y dejo de andar, el local no me quiere devolver la plata" },
+      { "rol": "asistente", "texto": "Qué bronca esa situación. Ante un producto fallado la elección es tuya: podés exigir el cambio, la reparación o la devolución de lo pagado — el comercio no puede imponerte una salida. Si querés, dejame tu nombre y un teléfono así un abogado de nuestra red ve tu caso y te ayuda a encaminar el reclamo." },
+      { "rol": "usuario", "texto": "y si igual no me quieren dar la plata, puedo denunciarlos en algun lado?" }
+    ],
+    "esperado": { "sinNuevoPedidoContacto": true }
+  },
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "el gimnasio me renovo el contrato automaticamente y me siguen cobrando la cuota" },
+      { "rol": "asistente", "texto": "Entiendo, es una situación muy común. La renovación automática tiene una ventana para pedir la baja y el proveedor tiene un plazo acotado para procesarla — conviene moverse pronto. ¿Me dejás un teléfono o un correo para que un abogado de nuestra red te contacte y lo resuelvan?" },
+      { "rol": "usuario", "texto": "y cuantos dias tengo para pedir la baja desde que me renovaron?" }
+    ],
+    "esperado": { "sinNuevoPedidoContacto": true }
+  }
+]

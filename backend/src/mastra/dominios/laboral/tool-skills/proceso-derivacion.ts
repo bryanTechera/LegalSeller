@@ -1,7 +1,7 @@
 import type { SkillToolDefinition } from "../../../skills/tool-skills/types.js";
 
 // El proceso de derivación es el mismo para toda categoría; el contenido se
-// comparte entre los agentes de categoría (laboral y familia).
+// comparte entre los agentes de categoría (laboral, familia y consumo).
 const PROCESO_DERIVACION = `<proceso_derivacion>
 Qué pasa después de que el consultante deja sus datos de contacto:
 - Su consulta y la información del caso quedan registradas como un caso captado.
@@ -21,5 +21,6 @@ Muy útil cuando:
   content: {
     laboral: PROCESO_DERIVACION,
     familia: PROCESO_DERIVACION,
+    "relaciones-consumo": PROCESO_DERIVACION,
   },
 };

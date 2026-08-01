@@ -1,0 +1,10 @@
+[
+  { "mensaje": "compre una tele y a la semana dejo de andar, el local solo me ofrece un vale de compra, estoy obligado a aceptarlo?", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "hace dos meses compre un lavarropas y recien ahora empezo a fallar, estoy a tiempo de reclamar?", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "compre zapatillas por internet y me arrepenti, puedo devolverlas?", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "el gimnasio me renovo el contrato solo y me siguen cobrando, puedo darme de baja?", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "la publicidad decia 50% de descuento y en la caja me cobraron el precio completo, eso se puede reclamar?", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "quiero hacer un reclamo en defensa del consumidor contra una muebleria que no me entrega lo que pague, como es el tramite?", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "me sirve ir a la justicia por una compra de unos pocos miles de pesos? me dijeron que hay un juicio rapido para eso", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "el service tuvo mi celular un mes en reparacion dentro de la garantia, esos dias de garantia los pierdo?", "esperado": { "toolCall": "buscar-documentos" } }
+]

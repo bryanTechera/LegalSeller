@@ -22,6 +22,11 @@ describe("payload de /api/dominios", () => {
             "violencia-de-genero",
           ],
         },
+        {
+          id: "relaciones-consumo",
+          nombre: "Relaciones de consumo",
+          subcategoriasHabilitadas: ["derechos-del-consumidor", "procedimiento-mef-judicial"],
+        },
       ],
     });
   });

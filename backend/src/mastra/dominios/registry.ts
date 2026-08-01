@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { familiaClasificacion } from "./familia/clasificacion.js";
 import { laboralClasificacion } from "./laboral/clasificacion.js";
+import { relacionesConsumoClasificacion } from "./relaciones-consumo/clasificacion.js";
 
 /**
  * Single source of truth for the domain taxonomy wiring (spec
@@ -47,17 +48,7 @@ export const CATEGORIAS: readonly CategoriaDef[] = [
       { id: "cobro-alquileres", nombre: "Cobro alquileres", descripcion: "", habilitada: false },
     ],
   },
-  {
-    id: "relaciones-consumo",
-    nombre: "Relaciones de consumo",
-    descripcion: "Derechos del consumidor, reclamos ante el MEF y el poder judicial.",
-    seniales: ["Menciona una compra, un servicio contratado, una garantía o un reclamo a una empresa"],
-    habilitada: false,
-    subcategorias: [
-      { id: "derechos-del-consumidor", nombre: "Derechos del consumidor", descripcion: "", habilitada: false },
-      { id: "procedimiento-mef-judicial", nombre: "Procedimiento ante MEF y poder judicial", descripcion: "", habilitada: false },
-    ],
-  },
+  relacionesConsumoClasificacion,
 ];
 
 export function categoriasHabilitadas(): CategoriaDef[] {
