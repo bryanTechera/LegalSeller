@@ -1040,6 +1040,14 @@ export function Sidebar({ usuario }: { usuario: string }) {
 
 - [ ] **Paso 2: Escribir el CSS del shell**
 
+El sidebar necesita un velo claro sobre el navy para el hover, y no existe token para eso. Agregarlo a `frontend/src/app/globals.css`, junto a `--on-navy-muted`:
+
+```css
+  --overlay-on-navy: rgb(255 255 255 / 8%);
+```
+
+Va como token y no como literal en el módulo porque `globals.css` es la fuente única de color del proyecto ("no se hardcodean colores ni tamaños en los CSS Modules", su propio encabezado) y porque un board con sidebar va a necesitar más de un estado sobre navy.
+
 Crear `frontend/src/components/board/BoardShell/board.module.css`:
 
 ```css
@@ -1084,7 +1092,7 @@ Crear `frontend/src/components/board/BoardShell/board.module.css`:
 }
 
 .link:hover {
-  background: rgb(255 255 255 / 8%);
+  background: var(--overlay-on-navy);
   color: var(--on-navy);
 }
 
