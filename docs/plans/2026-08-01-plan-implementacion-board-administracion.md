@@ -1470,6 +1470,18 @@ export function conversacionesReales(desde: Date | null): Prisma.ConversationWhe
 }
 
 /**
+ * Alcance para queries que parten de `Caso` en vez de `Conversation`. Compone
+ * sobre `conversacionesReales` en vez de repetir la condición: si algún día
+ * "real" pasa a significar algo más, este helper lo hereda solo.
+ */
+export function casosReales(desde: Date | null): Prisma.CasoWhereInput {
+  return {
+    conversation: conversacionesReales(null),
+    ...(desde ? { createdAt: { gte: desde } } : {}),
+  };
+}
+
+/**
  * Mismo alcance para SQL crudo sobre el schema `mastra`, que no conoce el
  * flag. Requiere que la tabla de spans o mensajes esté aliasada como `s`.
  */
@@ -1478,7 +1490,20 @@ export const JOIN_REALES = Prisma.sql`
     ON c."threadId" = s."threadId"
    AND c."esRevision" = false
 `;
+
+/**
+ * Alcance para SQL crudo que parte de `Caso`. Requiere los alias `caso` y
+ * `conv`. Existe para que ninguna query escriba la condición a mano: la
+ * duplicación es justamente el modo de falla que este módulo previene.
+ */
+export const JOIN_CASO_REAL = Prisma.sql`
+  JOIN "Conversation" conv
+    ON conv.id = caso."conversationId"
+   AND conv."esRevision" = false
+`;
 ```
+
+**Regla del módulo:** ninguna query del board escribe `esRevision` a mano. Si ninguno de los cuatro helpers encaja, el arreglo es agregar un helper acá — no inlinear la condición en el call site. La condición vive en un solo archivo o no sirve de nada.
 
 - [ ] **Paso 7: Escribir el test del funnel (falla)**
 
@@ -1582,6 +1607,26 @@ describe("calcularDemanda", () => {
       },
     ]);
   });
+
+  // Mismo guard que el del funnel: la demanda también es métrica de negocio.
+  it("las queries de Prisma filtran por esRevision:false", async () => {
+    await calcularDemanda(DESDE);
+    expect(prismaMock.prisma.conversation.groupBy.mock.calls[0][0].where).toMatchObject({
+      esRevision: false,
+    });
+    expect(prismaMock.prisma.caso.findMany.mock.calls[0][0].where.conversation).toMatchObject({
+      esRevision: false,
+    });
+  });
+
+  // El SQL crudo no lo ejecuta ningún test (Prisma está mockeado), así que al
+  // menos se asegura que el fragmento con el join scopeado esté presente: sin
+  // esto, borrar el JOIN_CASO_REAL no rompería nada visible.
+  it("el SQL de subcategorías usa el join scopeado", async () => {
+    await calcularDemanda(DESDE);
+    const sql = JSON.stringify(prismaMock.prisma.$queryRaw.mock.calls[0]);
+    expect(sql).toContain("esRevision");
+  });
 });
 ```
 
@@ -1602,7 +1647,7 @@ import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
 
-import { conversacionesReales } from "./scope";
+import { casosReales, conversacionesReales, JOIN_CASO_REAL } from "./scope";
 
 export interface Funnel {
   iniciadas: number;
@@ -1636,14 +1681,6 @@ export interface Demanda {
 
 const LIMITE_FUERA_DE_COBERTURA = 50;
 
-/** Estados verificados en lib/clasificacion.ts. */
-function casoReal(desde: Date | null): Prisma.CasoWhereInput {
-  return {
-    conversation: { esRevision: false },
-    ...(desde ? { createdAt: { gte: desde } } : {}),
-  };
-}
-
 export async function calcularFunnel(desde: Date | null): Promise<Funnel> {
   const [iniciadas, clasificadas, conCaso, captadas, fueraDeCobertura] = await Promise.all([
     prisma.conversation.count({ where: conversacionesReales(desde) }),
@@ -1651,8 +1688,8 @@ export async function calcularFunnel(desde: Date | null): Promise<Funnel> {
       where: { ...conversacionesReales(desde), categoria: { not: null } },
     }),
     prisma.conversation.count({ where: { ...conversacionesReales(desde), caso: { isNot: null } } }),
-    prisma.caso.count({ where: { ...casoReal(desde), estado: "CAPTADO" } }),
-    prisma.caso.count({ where: { ...casoReal(desde), estado: "FUERA_DE_COBERTURA" } }),
+    prisma.caso.count({ where: { ...casosReales(desde), estado: "CAPTADO" } }),
+    prisma.caso.count({ where: { ...casosReales(desde), estado: "FUERA_DE_COBERTURA" } }),
   ]);
 
   return { iniciadas, clasificadas, conCaso, captadas, fueraDeCobertura };
@@ -1683,14 +1720,13 @@ export async function calcularDemanda(desde: Date | null): Promise<Demanda> {
     prisma.$queryRaw`
       SELECT sub AS subcategoria, COUNT(*)::float8 AS casos
       FROM "Caso" caso
-      JOIN "Conversation" conv ON conv.id = caso."conversationId"
+      ${JOIN_CASO_REAL}
       CROSS JOIN LATERAL unnest(caso.subcategorias) AS sub
-      WHERE conv."esRevision" = false
-        AND (${desde}::timestamptz IS NULL OR caso."createdAt" >= ${desde}::timestamptz)
+      WHERE (${desde}::timestamptz IS NULL OR caso."createdAt" >= ${desde}::timestamptz)
       GROUP BY sub
       ORDER BY casos DESC`,
     prisma.caso.findMany({
-      where: { ...casoReal(desde), estado: "FUERA_DE_COBERTURA" },
+      where: { ...casosReales(desde), estado: "FUERA_DE_COBERTURA" },
       select: { conversationId: true, createdAt: true, resumen: true },
       orderBy: { createdAt: "desc" },
       take: LIMITE_FUERA_DE_COBERTURA,
@@ -1717,7 +1753,18 @@ export async function calcularDemanda(desde: Date | null): Promise<Demanda> {
 Run: `pnpm test:unit --run src/lib/board/metricas-funnel.test.ts`
 Expected: PASS — 5 tests
 
-- [ ] **Paso 11: Commit**
+- [ ] **Paso 11: Ejecutar el SQL crudo contra la base real**
+
+Los tests mockean Prisma, así que el string SQL de `calcularDemanda` nunca llega a Postgres — es la única pieza del archivo que TypeScript no cubre, y un SQL plausible-pero-mal es exactamente lo que se escapa por ahí. Con `DATABASE_URL` seteada:
+
+```bash
+cd frontend
+pnpm tsx --conditions=react-server -e "import('./src/lib/board/metricas-funnel.ts').then(async (m) => { console.info(JSON.stringify(await m.calcularDemanda(null))); console.info(JSON.stringify(await m.calcularFunnel(null))); process.exit(0); })"
+```
+
+Expected: dos objetos JSON, sin excepción. Un `operator does not exist`, un `column ... does not exist` o un `syntax error at or near` significa que el SQL está mal — corregirlo contra `lib/revision/timeline.ts`, que tiene los nombres de columna verificados en vivo. Pegar la salida en el reporte: es la única evidencia de que la query corre.
+
+- [ ] **Paso 12: Commit**
 
 ```bash
 cd frontend && pnpm lint && pnpm typecheck
@@ -2756,7 +2803,7 @@ import type { FiltrosChats } from "@/lib/validations/board";
 import { prisma } from "@/lib/prisma";
 
 import { fechaDesde } from "./rango";
-import { conversacionesReales } from "./scope";
+import { casosReales, conversacionesReales, JOIN_CASO_REAL } from "./scope";
 
 export interface ChatResumen {
   id: string;
