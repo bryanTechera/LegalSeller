@@ -9,6 +9,7 @@ const CONTENT: Partial<Record<AgentId, string>> = {
   laboral: PERSONALIDAD,
   familia: PERSONALIDAD,
   transito: PERSONALIDAD,
+  "arrendamiento-desalojo": PERSONALIDAD,
   "relaciones-consumo": PERSONALIDAD,
 };
 

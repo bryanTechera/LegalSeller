@@ -6,10 +6,12 @@
  * Datasets:
  * - Receptor classification (spec §9): golden set → asignar-clasificacion
  *   matcher. Extended 2026-07-22 with familia items (second enabled
- *   category, procesamiento familia).
+ *   category, procesamiento familia) and 2026-07-31 with arrendamiento items
+ *   (tercera categoría, procesamiento arrendamientos).
  * - Citación por agente de categoría (laboral 2026-07-19, familia
- *   2026-07-22): substantive questions must trigger buscar-documentos
- *   before answering — the tool-level half of "SIEMPRE fundar en el corpus".
+ *   2026-07-22, arrendamiento 2026-07-31): substantive questions must
+ *   trigger buscar-documentos before answering — the tool-level half of
+ *   "SIEMPRE fundar en el corpus".
  * - Voz-fuentes por agente de categoría (revisión feedback legal
  *   2026-07-22): responses must not surface internal corpus mechanics
  *   (document titles, "documento", "corpus", "PDF") and, when asked about
@@ -31,6 +33,7 @@ import { fileURLToPath } from "node:url";
 
 import { RequestContext } from "@mastra/core/request-context";
 
+import { arrendamientoDesalojoAgent } from "../mastra/dominios/arrendamiento-desalojo/index.js";
 import { familiaAgent } from "../mastra/dominios/familia/index.js";
 import { laboralAgent } from "../mastra/dominios/laboral/index.js";
 import { recepcionAgent } from "../mastra/dominios/recepcion/index.js";
@@ -102,7 +105,7 @@ const REFERENCIAS_INTERNAS: readonly RegExp[] = [
   /base de (datos|documentos|conocimiento)/i,
   /\bPDF\b/i,
   /\b(el|del) documento\b/i,
-  /(Despido|Rubros laborales|Laboral|Familia|Tr[aá]nsito|Relaciones de consumo) —/,
+  /(Despido|Rubros laborales|Laboral|Familia|Tr[aá]nsito|Arrendamiento|Relaciones de consumo) —/,
 ];
 
 interface ToolCallInfo {
@@ -361,6 +364,22 @@ const EVALS: readonly { nombre: string; run: () => Promise<number> }[] = [
   { nombre: "transito-citacion", run: () => evalCitacion(transitoAgent, "transito", "Tránsito") },
   { nombre: "transito-voz-fuentes", run: () => evalVozFuentes(transitoAgent, "transito", "Tránsito") },
   { nombre: "transito-captacion", run: () => evalCaptacion(transitoAgent, "transito", "Tránsito") },
+  {
+    nombre: "arrendamiento-citacion",
+    run: () => evalCitacion(arrendamientoDesalojoAgent, "arrendamiento-desalojo", "Arrendamiento"),
+  },
+  {
+    nombre: "arrendamiento-voz-fuentes",
+    run: () => evalVozFuentes(arrendamientoDesalojoAgent, "arrendamiento-desalojo", "Arrendamiento"),
+  },
+  {
+    nombre: "arrendamiento-captacion",
+    run: () => evalCaptacion(arrendamientoDesalojoAgent, "arrendamiento-desalojo", "Arrendamiento"),
+  },
+  {
+    nombre: "arrendamiento-fidelidad",
+    run: () => evalFidelidad(arrendamientoDesalojoAgent, "arrendamiento-desalojo", "Arrendamiento"),
+  },
   {
     nombre: "consumo-citacion",
     run: () => evalCitacion(relacionesConsumoAgent, "relaciones-consumo", "Consumo"),

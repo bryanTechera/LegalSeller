@@ -1,4 +1,6 @@
 import { ActivationRegistry, type RegistryItem } from "../common/activation-registry.js";
+import { conductaArrendamientoRule } from "../dominios/arrendamiento-desalojo/rules/conducta-arrendamiento.js";
+import { rolEspecialistaArrendamientoRule } from "../dominios/arrendamiento-desalojo/rules/rol-especialista-arrendamiento.js";
 import { captacionCasoRule } from "../dominios/comunes/rules/captacion-caso.js";
 import { identidadJurcoRule } from "../dominios/comunes/rules/identidad-jurco.js";
 import { conductaFamiliaRule } from "../dominios/familia/rules/conducta-familia.js";
@@ -29,6 +31,8 @@ const RULES: readonly RegistryItem[] = [
   { id: "conducta-familia", fn: conductaFamiliaRule, critical: true },
   { id: "rol-especialista-transito", fn: rolEspecialistaTransitoRule },
   { id: "conducta-transito", fn: conductaTransitoRule, critical: true },
+  { id: "rol-especialista-arrendamiento", fn: rolEspecialistaArrendamientoRule },
+  { id: "conducta-arrendamiento", fn: conductaArrendamientoRule, critical: true },
   { id: "rol-especialista-consumo", fn: rolEspecialistaConsumoRule },
   { id: "conducta-consumo", fn: conductaConsumoRule, critical: true },
   { id: "captacion-caso", fn: captacionCasoRule, posicion: "final" },

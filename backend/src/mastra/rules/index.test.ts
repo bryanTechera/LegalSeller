@@ -52,6 +52,18 @@ describe("rulesRegistry", () => {
     expect(result.inicio).not.toContain("<caso_sensible>");
   });
 
+  it("arrendamiento-desalojo activa identidad, rol, conducta y captación (final)", () => {
+    const result = rulesRegistry.execute(null, "arrendamiento-desalojo");
+    expect(result.activatedIds).toEqual([
+      "identidad-jurco",
+      "rol-especialista-arrendamiento",
+      "conducta-arrendamiento",
+      "captacion-caso",
+    ]);
+    expect(result.final).toContain("<captacion>");
+    expect(result.inicio).not.toContain("<caso_sensible>"); // sin protocolo diferencial definido por el equipo legal
+  });
+
   it("relaciones-consumo activa identidad, rol, conducta y captación (final), sin caso sensible propio", () => {
     const result = rulesRegistry.execute(null, "relaciones-consumo");
     expect(result.activatedIds).toEqual([
@@ -71,6 +83,7 @@ describe("rulesRegistry", () => {
       "conducta-laboral",
       "conducta-familia",
       "conducta-transito",
+      "conducta-arrendamiento",
       "conducta-consumo",
     ]);
   });

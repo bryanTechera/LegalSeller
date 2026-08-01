@@ -1,4 +1,6 @@
 import { ActivationRegistry, type RegistryItem } from "../common/activation-registry.js";
+import { dimensionarArrendamientoSkill } from "../dominios/arrendamiento-desalojo/static-skills/dimensionar-arrendamiento.js";
+import { subcategoriasArrendamientoSkill } from "../dominios/arrendamiento-desalojo/static-skills/subcategorias-arrendamiento.js";
 import { dimensionarFamiliaSkill } from "../dominios/familia/static-skills/dimensionar-familia.js";
 import { subcategoriasFamiliaSkill } from "../dominios/familia/static-skills/subcategorias-familia.js";
 import { dimensionarDespidoSkill } from "../dominios/laboral/static-skills/dimensionar-despido.js";
@@ -19,6 +21,8 @@ const STATIC_SKILLS: readonly RegistryItem[] = [
   { id: "subcategorias-familia", fn: subcategoriasFamiliaSkill },
   { id: "dimensionar-familia", fn: dimensionarFamiliaSkill },
   { id: "dimensionar-transito", fn: dimensionarTransitoSkill },
+  { id: "subcategorias-arrendamiento", fn: subcategoriasArrendamientoSkill },
+  { id: "dimensionar-arrendamiento", fn: dimensionarArrendamientoSkill },
   { id: "subcategorias-consumo", fn: subcategoriasConsumoSkill },
   { id: "dimensionar-consumo", fn: dimensionarConsumoSkill },
 ];

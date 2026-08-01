@@ -45,17 +45,32 @@ describe("staticSkillsRegistry", () => {
     expect(result.inicio).not.toContain("<subcategorias>");
   });
 
+  it("arrendamiento-desalojo recibe sus subcategorías habilitadas y la guía de dimensionamiento", () => {
+    const result = staticSkillsRegistry.execute(null, "arrendamiento-desalojo");
+    expect(result.activatedIds).toEqual(["subcategorias-arrendamiento", "dimensionar-arrendamiento"]);
+    expect(result.inicio).toContain("<subcategorias>");
+    expect(result.inicio).toContain("contrato-de-alquiler");
+    expect(result.inicio).toContain("desalojo-ley-19889");
+    expect(result.inicio).toContain("<dimensionar_arrendamiento>");
+    expect(result.inicio).toContain("buscar-documentos");
+  });
+
   it("recepcion no recibe las guías de dimensionamiento de las categorías", () => {
     const result = staticSkillsRegistry.execute(null, "recepcion");
     expect(result.activatedIds).not.toContain("dimensionar-despido");
     expect(result.activatedIds).not.toContain("dimensionar-rubros");
     expect(result.activatedIds).not.toContain("dimensionar-familia");
     expect(result.activatedIds).not.toContain("dimensionar-transito");
+    expect(result.activatedIds).not.toContain("dimensionar-arrendamiento");
   });
 
   it("laboral no recibe las skills de familia ni al revés", () => {
     expect(staticSkillsRegistry.execute(null, "laboral").activatedIds).not.toContain("subcategorias-familia");
     expect(staticSkillsRegistry.execute(null, "familia").activatedIds).not.toContain("subcategorias-laboral");
     expect(staticSkillsRegistry.execute(null, "transito").activatedIds).not.toContain("subcategorias-laboral");
+    expect(staticSkillsRegistry.execute(null, "arrendamiento-desalojo").activatedIds).not.toContain(
+      "subcategorias-laboral",
+    );
+    expect(staticSkillsRegistry.execute(null, "laboral").activatedIds).not.toContain("subcategorias-arrendamiento");
   });
 });

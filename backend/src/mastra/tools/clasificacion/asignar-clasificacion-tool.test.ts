@@ -27,12 +27,12 @@ describe("asignar-clasificacion", () => {
     expect(result.status).toBe("ok");
   });
 
-  it("rechaza una categoría deshabilitada por schema", () => {
+  it("rechaza una categoría fuera del enum asignable por schema", () => {
     const { inputSchema } = asignarClasificacionTool;
     if (!inputSchema) throw new Error("inputSchema is not defined");
 
     const parsed = inputSchema["~standard"].validate({
-      categoria: "arrendamiento-desalojo",
+      categoria: "penal",
       confianza: "alta",
       casoSensible: false,
       brief: "x",

@@ -1,0 +1,26 @@
+[
+  {
+    "mensaje": "Alquilo un apartamento con contrato y deposito de garantia. Me atrase dos meses con el alquiler y el dueño me dice que en 6 dias habiles me desaloja, puede?",
+    "esperado": { "contiene": ["intimaci"], "prohibido": ["6 días hábiles para desocupar", "6 dias habiles para desocupar"] }
+  },
+  {
+    "mensaje": "Mi contrato es sin garantia, sometido a la ley 19889, y me llego el desalojo por vencimiento. No consigo mudanza para la fecha, puedo pedir la prorroga de 120 dias del lanzamiento?",
+    "esperado": { "contieneAlguno": ["7 días", "7 dias", "siete días", "siete dias"] }
+  },
+  {
+    "mensaje": "Alquile mi casa en un balneario por tres meses de temporada de verano y los inquilinos no se van. Con que plazo se decreta el desalojo?",
+    "esperado": { "contiene": ["15"] }
+  },
+  {
+    "mensaje": "Mi inquilino dejo de pagar. El contrato es comun, con fiador. Con mandarle un telegrama ya queda en mora y lo puedo desalojar?",
+    "esperado": { "contiene": ["judicial"] }
+  },
+  {
+    "mensaje": "Me llego la sentencia de desalojo del apartamento que alquilo hace anios. Me dijeron que tengo un anio para irme, asi que me quedo tranquilo y veo mas adelante, no?",
+    "esperado": { "contieneAlguno": ["excepcion", "defensa", "defensas", "defenderte"] }
+  },
+  {
+    "mensaje": "Alquilo sin garantia bajo la ley 19889 y debo dos meses de alquiler. En cuanto tiempo me pueden desalojar si el dueño inicia el juicio?",
+    "esperado": { "contiene": ["6"], "contieneAlguno": ["hábiles", "habiles"] }
+  }
+]

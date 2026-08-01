@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { arrendamientoDesalojoClasificacion } from "./arrendamiento-desalojo/clasificacion.js";
 import { familiaClasificacion } from "./familia/clasificacion.js";
 import { laboralClasificacion } from "./laboral/clasificacion.js";
 import { relacionesConsumoClasificacion } from "./relaciones-consumo/clasificacion.js";
@@ -36,20 +37,7 @@ export const CATEGORIAS: readonly CategoriaDef[] = [
   laboralClasificacion,
   familiaClasificacion,
   transitoClasificacion,
-  {
-    id: "arrendamiento-desalojo",
-    nombre: "Arrendamiento y desalojo",
-    descripcion: "Contratos de alquiler, desalojos (leyes 8153, 14219, 19980), cobro de alquileres.",
-    seniales: ["Menciona alquiler, inquilino, propietario, desalojo o garantía"],
-    habilitada: false,
-    subcategorias: [
-      { id: "contrato-de-alquiler", nombre: "Contrato de alquiler", descripcion: "", habilitada: false },
-      { id: "desalojo-ley-8153", nombre: "Desalojo ley 8153", descripcion: "", habilitada: false },
-      { id: "desalojo-ley-14219", nombre: "Desalojo ley 14219", descripcion: "", habilitada: false },
-      { id: "desalojo-ley-19980", nombre: "Desalojo ley 19980", descripcion: "", habilitada: false },
-      { id: "cobro-alquileres", nombre: "Cobro alquileres", descripcion: "", habilitada: false },
-    ],
-  },
+  arrendamientoDesalojoClasificacion,
   relacionesConsumoClasificacion,
 ];
 
