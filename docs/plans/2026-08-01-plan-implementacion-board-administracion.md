@@ -2803,7 +2803,7 @@ import type { FiltrosChats } from "@/lib/validations/board";
 import { prisma } from "@/lib/prisma";
 
 import { fechaDesde } from "./rango";
-import { casosReales, conversacionesReales, JOIN_CASO_REAL } from "./scope";
+import { conversacionesReales } from "./scope";
 
 export interface ChatResumen {
   id: string;
