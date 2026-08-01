@@ -443,7 +443,18 @@ export function LoginForm({ errorInicial }: { errorInicial: string | null }) {
     setError(null);
     setEnviando(true);
     try {
-      await signIn("resend", { email: limpio, redirect: false, callbackUrl: "/board" });
+      // signIn con redirect:false NO tira ante un rechazo de auth: resuelve con
+      // { error }. Y el server devuelve 200 aun con AccessDenied (el cliente manda
+      // X-Auth-Return-Redirect: 1). Si no se inspecciona el resultado, un email
+      // fuera de la allowlist y un fallo de Resend se muestran como éxito.
+      const resultado = await signIn("resend", { email: limpio, redirect: false, callbackUrl: "/board" });
+      if (resultado?.error) {
+        // Mismo mensaje para "no autorizado" y "no existe": el form no es un
+        // oráculo de la allowlist.
+        setError("No pudimos iniciar sesión con ese email.");
+        setEnviando(false);
+        return;
+      }
       router.push("/login/check-email");
     } catch {
       setError("No pudimos enviar el enlace. Intentá de nuevo.");
