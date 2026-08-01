@@ -9,13 +9,17 @@ import { arrendamientoDesalojoAgent } from "./dominios/arrendamiento-desalojo/in
 import { familiaAgent } from "./dominios/familia/index.js";
 import { laboralAgent } from "./dominios/laboral/index.js";
 import { recepcionAgent } from "./dominios/recepcion/index.js";
+import { relacionesConsumoAgent } from "./dominios/relaciones-consumo/index.js";
+import { transitoAgent } from "./dominios/transito/index.js";
 
 export const mastra = new Mastra({
   agents: {
     recepcionAgent,
     laboralAgent,
     familiaAgent,
+    transitoAgent,
     arrendamientoDesalojoAgent,
+    relacionesConsumoAgent,
   },
   storage: postgresStore,
   observability: new Observability({

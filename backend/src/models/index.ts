@@ -18,4 +18,10 @@ export interface ReadOnlyState {
   pedidoContactoHecho?: boolean;
 }
 
-export type AgentId = "recepcion" | "laboral" | "familia" | "arrendamiento-desalojo";
+export type AgentId =
+  | "recepcion"
+  | "laboral"
+  | "familia"
+  | "transito"
+  | "arrendamiento-desalojo"
+  | "relaciones-consumo";

@@ -29,6 +29,11 @@ describe("payload de /api/dominios", () => {
           ],
         },
         {
+          id: "transito",
+          nombre: "Tránsito",
+          subcategoriasHabilitadas: [],
+        },
+        {
           id: "arrendamiento-desalojo",
           nombre: "Arrendamiento y desalojo",
           subcategoriasHabilitadas: [
@@ -38,6 +43,11 @@ describe("payload de /api/dominios", () => {
             "desalojo-ley-19889",
             "cobro-alquileres",
           ],
+        },
+        {
+          id: "relaciones-consumo",
+          nombre: "Relaciones de consumo",
+          subcategoriasHabilitadas: ["derechos-del-consumidor", "procedimiento-mef-judicial"],
         },
       ],
     });

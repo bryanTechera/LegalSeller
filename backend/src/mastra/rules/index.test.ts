@@ -40,6 +40,18 @@ describe("rulesRegistry", () => {
     expect(result.inicio).not.toContain("asignar-clasificacion"); // la versión del especialista no clasifica
   });
 
+  it("transito activa identidad, rol, conducta y captación (final) — sin protocolo sensible propio", () => {
+    const result = rulesRegistry.execute(null, "transito");
+    expect(result.activatedIds).toEqual([
+      "identidad-jurco",
+      "rol-especialista-transito",
+      "conducta-transito",
+      "captacion-caso",
+    ]);
+    expect(result.final).toContain("<captacion>");
+    expect(result.inicio).not.toContain("<caso_sensible>");
+  });
+
   it("arrendamiento-desalojo activa identidad, rol, conducta y captación (final)", () => {
     const result = rulesRegistry.execute(null, "arrendamiento-desalojo");
     expect(result.activatedIds).toEqual([
@@ -52,13 +64,27 @@ describe("rulesRegistry", () => {
     expect(result.inicio).not.toContain("<caso_sensible>"); // sin protocolo diferencial definido por el equipo legal
   });
 
+  it("relaciones-consumo activa identidad, rol, conducta y captación (final), sin caso sensible propio", () => {
+    const result = rulesRegistry.execute(null, "relaciones-consumo");
+    expect(result.activatedIds).toEqual([
+      "identidad-jurco",
+      "rol-especialista-consumo",
+      "conducta-consumo",
+      "captacion-caso",
+    ]);
+    expect(result.final).toContain("<captacion>");
+    expect(result.inicio).not.toContain("<caso_sensible>"); // el protocolo sensible queda en el receptor
+  });
+
   it("las rules críticas son las del spec", () => {
     expect(CRITICAL_RULE_IDS).toEqual([
       "identidad-jurco",
       "caso-sensible",
       "conducta-laboral",
       "conducta-familia",
+      "conducta-transito",
       "conducta-arrendamiento",
+      "conducta-consumo",
     ]);
   });
 });

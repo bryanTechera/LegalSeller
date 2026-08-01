@@ -1,0 +1,18 @@
+[
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "me chocaron hace dos semanas y estuve internado tres dias, el otro auto tenia seguro" },
+      { "rol": "asistente", "texto": "Qué situación difícil, me alegro de que estés recuperándote. Como tercero lesionado podés reclamar directamente a la aseguradora del vehículo que te chocó: el seguro obligatorio cubre las lesiones sin que tengas que probar la culpa del otro conductor. Si querés, dejame tu nombre y un teléfono así un abogado de nuestra red revisa tu caso y te acompaña con el reclamo." },
+      { "rol": "usuario", "texto": "y que papeles necesito para hacer ese reclamo?" }
+    ],
+    "esperado": { "sinNuevoPedidoContacto": true }
+  },
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "el seguro de mi auto me rechazo el siniestro y no entiendo por que" },
+      { "rol": "asistente", "texto": "Entiendo la frustración. La aseguradora tiene plazos y cargas legales concretas: debe comunicar el rechazo en plazo y, si invoca una exclusión, la carga de probarla es suya. ¿Me dejás un teléfono o un correo para que un abogado de nuestra red analice la respuesta que te dieron?" },
+      { "rol": "usuario", "texto": "y cuanto tiempo tengo para reclamarles judicialmente?" }
+    ],
+    "esperado": { "sinNuevoPedidoContacto": true }
+  }
+]

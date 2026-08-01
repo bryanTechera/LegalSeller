@@ -11,9 +11,11 @@
 
 ## 1. Universo completo de consultas
 
-El sistema completo atiende **4 categorías** (áreas del derecho), cada una con sus
+El sistema completo atiende **5 categorías** (áreas del derecho), cada una con sus
 subcategorías (tipos de consulta). Delante de todas hay un **router** que recibe la
-consulta del usuario y la dirige a la categoría correspondiente.
+consulta del usuario y la dirige a la categoría correspondiente. (El universo
+original era de 4 categorías; **Tránsito** se sumó el 2026-07-31 con el material
+normativo enviado por el equipo legal.)
 
 ```
                           Usuario
@@ -21,10 +23,10 @@ consulta del usuario y la dirige a la categoría correspondiente.
                         ┌────▼────┐
                         │ ROUTER  │
                         └────┬────┘
-      ┌──────────────┬───────┴──────────┬────────────────────┐
-      ▼              ▼                  ▼                    ▼
-   LABORAL        FAMILIA        ARRENDAMIENTO         RELACIONES DE
-                                  Y DESALOJO             CONSUMO
+      ┌──────────────┬───────┼──────────────┬───────────────────┐
+      ▼              ▼       ▼              ▼                   ▼
+   LABORAL        FAMILIA  TRÁNSITO   ARRENDAMIENTO       RELACIONES DE
+                                       Y DESALOJO           CONSUMO
 ```
 
 ### Laboral
@@ -48,6 +50,14 @@ consulta del usuario y la dirige a la categoría correspondiente.
 
 Temas de familia **sin subcategoría propia** (adopción, filiación y partidas, identidad de género/cambio registral, capacidad y curatela, viajes de menores): cubiertos por **corpus transversal a nivel categoría** (`Document.subcategoria = NULL`); el caso se registra sin subcategoría, con los hechos en el brief. Ver `docs/plans/2026-07-22-procesamiento-familia.md`.
 
+### Tránsito
+
+| Subcategoría | Estado |
+|---|---|
+| *(sin subcategorías en v1)* | ✅ **Categoría habilitada 2026-07-31** (Ley 18.191 de tránsito y seguridad vial, Ley 19.824, Ley 18.412 SOA + Decretos 381/009, 361/010 y 285/016, Ley 19.678 de contrato de seguro — selección —, Reglamento Nacional de Circulación Vial). Corpus entero a **nivel categoría** (`Document.subcategoria = NULL`); los hechos del caso van al brief. Partición en subcategorías (siniestros/SOA · infracciones y licencia · seguros del vehículo) **propuesta al equipo legal** en `docs/preguntas-legales/2026-07-31-transito.md` |
+
+Cobertura de la categoría: siniestros con lesiones y reclamo al seguro obligatorio (SOA, incluidas coberturas especiales por vehículo no identificado/sin seguro/hurtado), infracciones, multas y permiso por puntos, alcoholemia y controles, licencia de conducir, y la relación con la aseguradora del vehículo (Ley 19.678). Fuera del material: la vía penal del siniestro (lesiones/homicidio culposo), la responsabilidad civil por daños materiales entre particulares y el detalle reglamentario del permiso por puntos (Decreto 181/025, pedido al equipo legal). Ver `docs/plans/2026-07-31-procesamiento-transito.md`.
+
 ### Arrendamiento y desalojo
 | Subcategoría | Estado |
 |---|---|
@@ -62,8 +72,10 @@ El conocimiento que aplica a toda la categoría (mapa de regímenes y encuadre, 
 ### Relaciones de consumo
 | Subcategoría | Estado |
 |---|---|
-| Derechos del consumidor | Pendiente |
-| Procedimiento ante MEF y poder judicial | Pendiente |
+| Derechos del consumidor | ✅ **habilitada 2026-07-31** (Ley 17.250 consolidada + Decreto 244/000: información y precios, retracto en compras a distancia, prácticas y cláusulas abusivas, garantía, publicidad, incumplimiento y opciones del consumidor, responsabilidad, presupuesto, salud y seguridad) |
+| Procedimiento ante MEF y poder judicial | ✅ **habilitada 2026-07-31** (vía administrativa ante el Área Defensa del Consumidor —audiencia de conciliación y trámite en línea del MEF—, infracciones y sanciones, y proceso judicial de pequeñas causas de la Ley 18.507) |
+
+Los conceptos que atraviesan ambas subcategorías (relación de consumo y su prueba, derechos básicos, plazos de caducidad y prescripción) van como **corpus transversal a nivel categoría** (`Document.subcategoria = NULL`). Ver `docs/plans/2026-07-31-procesamiento-relaciones-consumo.md`.
 
 ## 2. Roadmap de habilitación
 
@@ -91,7 +103,7 @@ decisión formalizada en `docs/plans/2026-07-19-arquitectura-agentes-clasificaci
   `readOnly`), único clasificador de todo el universo — no uno por categoría.
   Mecanismo completo en `guia-arquitectura.md` §2.1/§3.2 y en el spec §2-§3.
 - **Categoría = agente principal (FE-invisible)**: cada área del derecho habilitada
-  (Laboral, Familia, Arrendamiento y Desalojo, Relaciones de Consumo) se corresponde
+  (Laboral, Familia, Tránsito, Arrendamiento y Desalojo, Relaciones de Consumo) se corresponde
   con un agente principal con identidad fija, dueño de la conversación completa y del
   funnel de venta (spec §4, §6) — nunca los sub-agentes.
 - **Subcategoría = dato acumulativo del caso, no estado de ruteo**: se registra en

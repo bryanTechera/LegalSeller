@@ -3,6 +3,8 @@ import { z } from "zod";
 import { arrendamientoDesalojoClasificacion } from "./arrendamiento-desalojo/clasificacion.js";
 import { familiaClasificacion } from "./familia/clasificacion.js";
 import { laboralClasificacion } from "./laboral/clasificacion.js";
+import { relacionesConsumoClasificacion } from "./relaciones-consumo/clasificacion.js";
+import { transitoClasificacion } from "./transito/clasificacion.js";
 
 /**
  * Single source of truth for the domain taxonomy wiring (spec
@@ -10,7 +12,7 @@ import { laboralClasificacion } from "./laboral/clasificacion.js";
  * Enabling a subcategory = its folder + an entry here. Disabled categories
  * keep their data inline until they gain an agent folder.
  */
-export type CategoriaId = "laboral" | "familia" | "arrendamiento-desalojo" | "relaciones-consumo";
+export type CategoriaId = "laboral" | "familia" | "transito" | "arrendamiento-desalojo" | "relaciones-consumo";
 export type ClasificacionEscape = "fuera-de-universo" | "categoria-no-habilitada";
 
 export interface SubcategoriaDef {
@@ -34,18 +36,9 @@ export const CLASIFICACION_ESCAPES = ["fuera-de-universo", "categoria-no-habilit
 export const CATEGORIAS: readonly CategoriaDef[] = [
   laboralClasificacion,
   familiaClasificacion,
+  transitoClasificacion,
   arrendamientoDesalojoClasificacion,
-  {
-    id: "relaciones-consumo",
-    nombre: "Relaciones de consumo",
-    descripcion: "Derechos del consumidor, reclamos ante el MEF y el poder judicial.",
-    seniales: ["Menciona una compra, un servicio contratado, una garantía o un reclamo a una empresa"],
-    habilitada: false,
-    subcategorias: [
-      { id: "derechos-del-consumidor", nombre: "Derechos del consumidor", descripcion: "", habilitada: false },
-      { id: "procedimiento-mef-judicial", nombre: "Procedimiento ante MEF y poder judicial", descripcion: "", habilitada: false },
-    ],
-  },
+  relacionesConsumoClasificacion,
 ];
 
 export function categoriasHabilitadas(): CategoriaDef[] {

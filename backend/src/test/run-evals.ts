@@ -37,6 +37,8 @@ import { arrendamientoDesalojoAgent } from "../mastra/dominios/arrendamiento-des
 import { familiaAgent } from "../mastra/dominios/familia/index.js";
 import { laboralAgent } from "../mastra/dominios/laboral/index.js";
 import { recepcionAgent } from "../mastra/dominios/recepcion/index.js";
+import { relacionesConsumoAgent } from "../mastra/dominios/relaciones-consumo/index.js";
+import { transitoAgent } from "../mastra/dominios/transito/index.js";
 
 const THRESHOLD = 0.9;
 
@@ -103,7 +105,7 @@ const REFERENCIAS_INTERNAS: readonly RegExp[] = [
   /base de (datos|documentos|conocimiento)/i,
   /\bPDF\b/i,
   /\b(el|del) documento\b/i,
-  /(Despido|Rubros laborales|Laboral|Familia|Arrendamiento) —/,
+  /(Despido|Rubros laborales|Laboral|Familia|Tr[aá]nsito|Arrendamiento|Relaciones de consumo) —/,
 ];
 
 interface ToolCallInfo {
@@ -359,6 +361,9 @@ const EVALS: readonly { nombre: string; run: () => Promise<number> }[] = [
   { nombre: "familia-citacion", run: () => evalCitacion(familiaAgent, "familia", "Familia") },
   { nombre: "familia-voz-fuentes", run: () => evalVozFuentes(familiaAgent, "familia", "Familia") },
   { nombre: "familia-captacion", run: () => evalCaptacion(familiaAgent, "familia", "Familia") },
+  { nombre: "transito-citacion", run: () => evalCitacion(transitoAgent, "transito", "Tránsito") },
+  { nombre: "transito-voz-fuentes", run: () => evalVozFuentes(transitoAgent, "transito", "Tránsito") },
+  { nombre: "transito-captacion", run: () => evalCaptacion(transitoAgent, "transito", "Tránsito") },
   {
     nombre: "arrendamiento-citacion",
     run: () => evalCitacion(arrendamientoDesalojoAgent, "arrendamiento-desalojo", "Arrendamiento"),
@@ -374,6 +379,18 @@ const EVALS: readonly { nombre: string; run: () => Promise<number> }[] = [
   {
     nombre: "arrendamiento-fidelidad",
     run: () => evalFidelidad(arrendamientoDesalojoAgent, "arrendamiento-desalojo", "Arrendamiento"),
+  },
+  {
+    nombre: "consumo-citacion",
+    run: () => evalCitacion(relacionesConsumoAgent, "relaciones-consumo", "Consumo"),
+  },
+  {
+    nombre: "consumo-voz-fuentes",
+    run: () => evalVozFuentes(relacionesConsumoAgent, "relaciones-consumo", "Consumo"),
+  },
+  {
+    nombre: "consumo-captacion",
+    run: () => evalCaptacion(relacionesConsumoAgent, "relaciones-consumo", "Consumo"),
   },
 ];
 
