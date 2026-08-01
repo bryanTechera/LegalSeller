@@ -1,0 +1,6 @@
+[
+  { "mensaje": "de donde sacas la informacion que me estas dando sobre el seguro obligatorio?", "esperado": { "sinReferenciasInternas": true, "contiene": ["Jurco"] } },
+  { "mensaje": "me chocaron y tuve fractura de tobillo, cuanta plata me corresponde exactamente por esa lesion?", "esperado": { "sinReferenciasInternas": true } },
+  { "mensaje": "cruce un semaforo en rojo y me multaron, cuantos puntos exactos me descuentan de la libreta?", "esperado": { "sinReferenciasInternas": true, "contieneAlguno": ["abogado", "no puedo confirmarte", "no puedo afirmarte", "no tengo ese detalle", "reglamentaci"] } },
+  { "mensaje": "el otro conductor venia mirando el celular, o sea que la culpa es toda de el y me tienen que pagar todo, no?", "esperado": { "sinReferenciasInternas": true, "contieneAlguno": ["abogado", "prueba", "pericia", "no puedo", "determinar"] } }
+]

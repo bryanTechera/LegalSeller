@@ -21,5 +21,6 @@ Muy útil cuando:
   content: {
     laboral: PROCESO_DERIVACION,
     familia: PROCESO_DERIVACION,
+    transito: PROCESO_DERIVACION,
   },
 };

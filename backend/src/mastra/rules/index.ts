@@ -8,6 +8,8 @@ import { rolEspecialistaLaboralRule } from "../dominios/laboral/rules/rol-especi
 import { casoSensibleRule } from "../dominios/recepcion/rules/caso-sensible.js";
 import { conduccionTriageRule } from "../dominios/recepcion/rules/conduccion-triage.js";
 import { misionClasificacionRule } from "../dominios/recepcion/rules/mision-clasificacion.js";
+import { conductaTransitoRule } from "../dominios/transito/rules/conducta-transito.js";
+import { rolEspecialistaTransitoRule } from "../dominios/transito/rules/rol-especialista-transito.js";
 
 /**
  * Global registration order IS prompt order (spec §4.1); each agent's subset
@@ -23,6 +25,8 @@ const RULES: readonly RegistryItem[] = [
   { id: "conducta-laboral", fn: conductaLaboralRule, critical: true },
   { id: "rol-especialista-familia", fn: rolEspecialistaFamiliaRule },
   { id: "conducta-familia", fn: conductaFamiliaRule, critical: true },
+  { id: "rol-especialista-transito", fn: rolEspecialistaTransitoRule },
+  { id: "conducta-transito", fn: conductaTransitoRule, critical: true },
   { id: "captacion-caso", fn: captacionCasoRule, posicion: "final" },
 ];
 

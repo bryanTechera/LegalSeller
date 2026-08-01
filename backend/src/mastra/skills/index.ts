@@ -6,6 +6,7 @@ import { dimensionarRubrosSkill } from "../dominios/laboral/static-skills/dimens
 import { regimenesEspecialesSkill } from "../dominios/laboral/static-skills/regimenes-especiales.js";
 import { subcategoriasLaboralSkill } from "../dominios/laboral/static-skills/subcategorias-laboral.js";
 import { universoCategoriasSkill } from "../dominios/recepcion/static-skills/universo-categorias.js";
+import { dimensionarTransitoSkill } from "../dominios/transito/static-skills/dimensionar-transito.js";
 
 const STATIC_SKILLS: readonly RegistryItem[] = [
   { id: "universo-categorias", fn: universoCategoriasSkill },
@@ -15,6 +16,7 @@ const STATIC_SKILLS: readonly RegistryItem[] = [
   { id: "regimenes-especiales", fn: regimenesEspecialesSkill },
   { id: "subcategorias-familia", fn: subcategoriasFamiliaSkill },
   { id: "dimensionar-familia", fn: dimensionarFamiliaSkill },
+  { id: "dimensionar-transito", fn: dimensionarTransitoSkill },
 ];
 
 export const staticSkillsRegistry = new ActivationRegistry("static-skills", STATIC_SKILLS);

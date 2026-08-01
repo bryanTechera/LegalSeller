@@ -1,0 +1,10 @@
+[
+  { "mensaje": "me chocaron ayer y me fracture el brazo, el seguro del otro auto tiene que pagarme algo?", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "el auto que me atropello se fue y no se quien era, puedo reclamar igual?", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "hace mas de un mes que le presente el reclamo a la aseguradora y no me responden nada", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "me hicieron una espirometria y di positivo, me sacaron la libreta, cuanto tiempo la pierdo?", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "me llego una multa por radar de un dia que yo no manejaba el auto, la tengo que pagar igual?", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "choque con mi auto y mi seguro me rechazo el siniestro porque dicen que denuncie tarde", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "iba de acompanante en el auto de un amigo y terminamos chocando, yo me lastime, puedo reclamarle al seguro de el?", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "me pararon en un control y el auto no tenia el seguro obligatorio al dia, que me puede pasar?", "esperado": { "toolCall": "buscar-documentos" } }
+]

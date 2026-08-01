@@ -40,7 +40,25 @@ describe("rulesRegistry", () => {
     expect(result.inicio).not.toContain("asignar-clasificacion"); // la versión del especialista no clasifica
   });
 
+  it("transito activa identidad, rol, conducta y captación (final) — sin protocolo sensible propio", () => {
+    const result = rulesRegistry.execute(null, "transito");
+    expect(result.activatedIds).toEqual([
+      "identidad-jurco",
+      "rol-especialista-transito",
+      "conducta-transito",
+      "captacion-caso",
+    ]);
+    expect(result.final).toContain("<captacion>");
+    expect(result.inicio).not.toContain("<caso_sensible>");
+  });
+
   it("las rules críticas son las del spec", () => {
-    expect(CRITICAL_RULE_IDS).toEqual(["identidad-jurco", "caso-sensible", "conducta-laboral", "conducta-familia"]);
+    expect(CRITICAL_RULE_IDS).toEqual([
+      "identidad-jurco",
+      "caso-sensible",
+      "conducta-laboral",
+      "conducta-familia",
+      "conducta-transito",
+    ]);
   });
 });

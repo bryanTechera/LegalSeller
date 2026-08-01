@@ -37,15 +37,25 @@ describe("staticSkillsRegistry", () => {
     expect(result.inicio).toContain("buscar-documentos");
   });
 
+  it("transito recibe su guía de dimensionamiento (sin subcategorías en v1)", () => {
+    const result = staticSkillsRegistry.execute(null, "transito");
+    expect(result.activatedIds).toEqual(["dimensionar-transito"]);
+    expect(result.inicio).toContain("<dimensionar_transito>");
+    expect(result.inicio).toContain("buscar-documentos");
+    expect(result.inicio).not.toContain("<subcategorias>");
+  });
+
   it("recepcion no recibe las guías de dimensionamiento de las categorías", () => {
     const result = staticSkillsRegistry.execute(null, "recepcion");
     expect(result.activatedIds).not.toContain("dimensionar-despido");
     expect(result.activatedIds).not.toContain("dimensionar-rubros");
     expect(result.activatedIds).not.toContain("dimensionar-familia");
+    expect(result.activatedIds).not.toContain("dimensionar-transito");
   });
 
   it("laboral no recibe las skills de familia ni al revés", () => {
     expect(staticSkillsRegistry.execute(null, "laboral").activatedIds).not.toContain("subcategorias-familia");
     expect(staticSkillsRegistry.execute(null, "familia").activatedIds).not.toContain("subcategorias-laboral");
+    expect(staticSkillsRegistry.execute(null, "transito").activatedIds).not.toContain("subcategorias-laboral");
   });
 });

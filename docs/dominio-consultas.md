@@ -11,9 +11,11 @@
 
 ## 1. Universo completo de consultas
 
-El sistema completo atiende **4 categorías** (áreas del derecho), cada una con sus
+El sistema completo atiende **5 categorías** (áreas del derecho), cada una con sus
 subcategorías (tipos de consulta). Delante de todas hay un **router** que recibe la
-consulta del usuario y la dirige a la categoría correspondiente.
+consulta del usuario y la dirige a la categoría correspondiente. (El universo
+original era de 4 categorías; **Tránsito** se sumó el 2026-07-31 con el material
+normativo enviado por el equipo legal.)
 
 ```
                           Usuario
@@ -21,10 +23,10 @@ consulta del usuario y la dirige a la categoría correspondiente.
                         ┌────▼────┐
                         │ ROUTER  │
                         └────┬────┘
-      ┌──────────────┬───────┴──────────┬────────────────────┐
-      ▼              ▼                  ▼                    ▼
-   LABORAL        FAMILIA        ARRENDAMIENTO         RELACIONES DE
-                                  Y DESALOJO             CONSUMO
+      ┌──────────────┬───────┼──────────────┬───────────────────┐
+      ▼              ▼       ▼              ▼                   ▼
+   LABORAL        FAMILIA  TRÁNSITO   ARRENDAMIENTO       RELACIONES DE
+                                       Y DESALOJO           CONSUMO
 ```
 
 ### Laboral
@@ -47,6 +49,14 @@ consulta del usuario y la dirige a la categoría correspondiente.
 | Violencia de género | ✅ **habilitada 2026-07-22** con tratamiento diferencial (ver §4) |
 
 Temas de familia **sin subcategoría propia** (adopción, filiación y partidas, identidad de género/cambio registral, capacidad y curatela, viajes de menores): cubiertos por **corpus transversal a nivel categoría** (`Document.subcategoria = NULL`); el caso se registra sin subcategoría, con los hechos en el brief. Ver `docs/plans/2026-07-22-procesamiento-familia.md`.
+
+### Tránsito
+
+| Subcategoría | Estado |
+|---|---|
+| *(sin subcategorías en v1)* | ✅ **Categoría habilitada 2026-07-31** (Ley 18.191 de tránsito y seguridad vial, Ley 19.824, Ley 18.412 SOA + Decretos 381/009, 361/010 y 285/016, Ley 19.678 de contrato de seguro — selección —, Reglamento Nacional de Circulación Vial). Corpus entero a **nivel categoría** (`Document.subcategoria = NULL`); los hechos del caso van al brief. Partición en subcategorías (siniestros/SOA · infracciones y licencia · seguros del vehículo) **propuesta al equipo legal** en `docs/preguntas-legales/2026-07-31-transito.md` |
+
+Cobertura de la categoría: siniestros con lesiones y reclamo al seguro obligatorio (SOA, incluidas coberturas especiales por vehículo no identificado/sin seguro/hurtado), infracciones, multas y permiso por puntos, alcoholemia y controles, licencia de conducir, y la relación con la aseguradora del vehículo (Ley 19.678). Fuera del material: la vía penal del siniestro (lesiones/homicidio culposo), la responsabilidad civil por daños materiales entre particulares y el detalle reglamentario del permiso por puntos (Decreto 181/025, pedido al equipo legal). Ver `docs/plans/2026-07-31-procesamiento-transito.md`.
 
 ### Arrendamiento y desalojo
 | Subcategoría | Estado |

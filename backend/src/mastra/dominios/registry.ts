@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { familiaClasificacion } from "./familia/clasificacion.js";
 import { laboralClasificacion } from "./laboral/clasificacion.js";
+import { transitoClasificacion } from "./transito/clasificacion.js";
 
 /**
  * Single source of truth for the domain taxonomy wiring (spec
@@ -9,7 +10,7 @@ import { laboralClasificacion } from "./laboral/clasificacion.js";
  * Enabling a subcategory = its folder + an entry here. Disabled categories
  * keep their data inline until they gain an agent folder.
  */
-export type CategoriaId = "laboral" | "familia" | "arrendamiento-desalojo" | "relaciones-consumo";
+export type CategoriaId = "laboral" | "familia" | "transito" | "arrendamiento-desalojo" | "relaciones-consumo";
 export type ClasificacionEscape = "fuera-de-universo" | "categoria-no-habilitada";
 
 export interface SubcategoriaDef {
@@ -33,6 +34,7 @@ export const CLASIFICACION_ESCAPES = ["fuera-de-universo", "categoria-no-habilit
 export const CATEGORIAS: readonly CategoriaDef[] = [
   laboralClasificacion,
   familiaClasificacion,
+  transitoClasificacion,
   {
     id: "arrendamiento-desalojo",
     nombre: "Arrendamiento y desalojo",

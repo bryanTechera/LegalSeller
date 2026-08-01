@@ -22,6 +22,11 @@ describe("payload de /api/dominios", () => {
             "violencia-de-genero",
           ],
         },
+        {
+          id: "transito",
+          nombre: "Tránsito",
+          subcategoriasHabilitadas: [],
+        },
       ],
     });
   });

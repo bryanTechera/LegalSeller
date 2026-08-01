@@ -9,17 +9,18 @@ import {
 } from "./registry.js";
 
 describe("registry de dominios", () => {
-  it("tiene las 4 categorías del universo", () => {
+  it("tiene las 5 categorías del universo", () => {
     expect(CATEGORIAS.map((c) => c.id)).toEqual([
       "laboral",
       "familia",
+      "transito",
       "arrendamiento-desalojo",
       "relaciones-consumo",
     ]);
   });
 
-  it("laboral y familia habilitadas, con sus subcategorías habilitadas", () => {
-    expect(categoriasHabilitadas().map((c) => c.id)).toEqual(["laboral", "familia"]);
+  it("laboral, familia y transito habilitadas, con sus subcategorías habilitadas", () => {
+    expect(categoriasHabilitadas().map((c) => c.id)).toEqual(["laboral", "familia", "transito"]);
     expect(subcategoriasHabilitadas("laboral").map((s) => s.id)).toEqual([
       "despido",
       "rubros-laborales",
@@ -33,18 +34,21 @@ describe("registry de dominios", () => {
       "union-concubinaria",
       "violencia-de-genero",
     ]);
+    expect(subcategoriasHabilitadas("transito")).toEqual([]);
     expect(subcategoriasHabilitadas("arrendamiento-desalojo")).toEqual([]);
   });
 
   it("el cortocircuito de subcategoría única devuelve null cuando no hay exactamente una", () => {
     expect(subcategoriaUnicaHabilitada("laboral")).toBeNull();
     expect(subcategoriaUnicaHabilitada("familia")).toBeNull();
+    expect(subcategoriaUnicaHabilitada("transito")).toBeNull();
   });
 
   it("el enum asignable incluye habilitadas y escapes, nunca deshabilitadas", () => {
     const values = categoriaAsignableSchema.options;
     expect(values).toContain("laboral");
     expect(values).toContain("familia");
+    expect(values).toContain("transito");
     expect(values).toContain("fuera-de-universo");
     expect(values).toContain("categoria-no-habilitada");
     expect(values).not.toContain("arrendamiento-desalojo");
