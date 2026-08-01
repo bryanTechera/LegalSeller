@@ -31,6 +31,7 @@
   --surface-muted: #eef2f6;
   --on-navy: #ffffff;
   --on-navy-muted: #b9c7d4;
+  --overlay-on-navy: rgb(255 255 255 / 8%);
 
   /* Acento (azul acero de la referencia) */
   --accent: #3185c9;
