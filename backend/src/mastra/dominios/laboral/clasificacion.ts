@@ -13,6 +13,7 @@ export const laboralClasificacion = {
     "Relata un accidente o enfermedad vinculada al trabajo",
     "Trabaja en el campo, una estancia, un tambo o una chacra (peón, capataz, trabajador rural)",
     "Es operador o teleoperador de un call center o centro de atención telefónica",
+    "Pide días o le descontaron días por estudio o exámenes, casamiento, duelo, nacimiento de un hijo o cuidado de un familiar con discapacidad o enfermedad",
   ],
   habilitada: true,
   subcategorias: [
@@ -43,7 +44,13 @@ export const laboralClasificacion = {
         "Régimen especial de los operadores de centros de atención telefónica (call centers): jornada de 39 horas semanales y 6 h 30 diarias, pausas, condiciones de ambiente y ergonomía, y derechos ante la escucha de auditoría.",
       habilitada: true,
     },
-    { id: "licencias-especiales", nombre: "Licencias especiales", descripcion: "Licencias por estudio, maternidad/paternidad, enfermedad.", habilitada: false },
+    {
+      id: "licencias-especiales",
+      nombre: "Licencias especiales",
+      descripcion:
+        "Licencias especiales pagas del trabajador privado: estudio, paternidad y adopción, matrimonio, duelo, hijos con discapacidad y familiares a cargo con discapacidad o enfermedad terminal. La licencia anual común y el salario vacacional van por rubros-laborales.",
+      habilitada: true,
+    },
     { id: "accidentes-laborales", nombre: "Accidentes laborales", descripcion: "Accidentes de trabajo y enfermedades profesionales.", habilitada: false },
   ],
 };

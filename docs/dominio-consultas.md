@@ -34,7 +34,7 @@ consulta del usuario y la dirige a la categoría correspondiente.
 | **Rubros laborales** | ✅ **habilitada 2026-07-19** (material del equipo legal: jornada/horas extras, descansos/licencia/salario vacacional/aguinaldo, salario, trabajo nocturno) |
 | **Trabajador rural** | ✅ **habilitada 2026-07-28** (régimen especial: Decreto-Ley 14.785 + Decreto 216/012 — salario, vivienda/alimentación, jornada, licencia, feriados, seguridad y despido rural). Subcategoría **particionada**: su corpus no contamina el régimen general (rule `conducta-laboral`) |
 | **Call center** | ✅ **habilitada 2026-07-28** (régimen especial de operadores de centros de atención telefónica: Decreto 147/012 — jornada 39 h semanales, pausas, ambiente/ergonomía, escucha de auditoría). Subcategoría particionada |
-| Licencias especiales | Pendiente |
+| **Licencias especiales** | ✅ **habilitada 2026-07-31** (guía IMPO sobre Leyes 18.345 y 18.458: estudio, paternidad y adopción, matrimonio, duelo, hijos con discapacidad, familiares a cargo con discapacidad o enfermedad terminal). Subcategoría NO particionada (aplica a todo trabajador privado). Maternidad y licencia por enfermedad quedan fuera (pregunta legal 2026-07-31 pendiente) |
 | Accidentes laborales | Pendiente |
 
 ### Familia
@@ -51,11 +51,13 @@ Temas de familia **sin subcategoría propia** (adopción, filiación y partidas,
 ### Arrendamiento y desalojo
 | Subcategoría | Estado |
 |---|---|
-| Contrato de alquiler | Pendiente |
-| Desalojo ley 8153 | Pendiente |
-| Desalojo ley 14219 | Pendiente |
-| Desalojo ley 19980 | Pendiente |
-| Cobro alquileres | Pendiente |
+| Contrato de alquiler | ✅ **habilitada 2026-07-31** (síntesis de arrendamientos urbanos y desalojo del equipo legal) |
+| Desalojo ley 8153 | ✅ **habilitada 2026-07-31** (libre contratación: vencimiento 6 meses/1 año; incluye destinos no habitacionales en libre contratación desde 2026 por Ley 20.446) |
+| Desalojo ley 14219 | ✅ **habilitada 2026-07-31** (estatuto: buen/mal pagador, temporada, comodato/precario, vivienda de empleo, ex concubino, finca ruinosa) |
+| Desalojo ley 19889 | ✅ **habilitada 2026-07-31** (régimen sin garantía: art. 421, plazos abreviados, clausura +60%, prórrogas 7/5). El diagrama original decía "ley 19980" — corregido a **19.889** según el material del experto (confirmación pedida en `docs/preguntas-legales/2026-07-31-arrendamientos.md`) |
+| Cobro alquileres | ✅ **habilitada 2026-07-31** (proceso ejecutivo, acumulación con el desalojo, deuda tras la entrega) |
+
+El conocimiento que aplica a toda la categoría (mapa de regímenes y encuadre, tenencia/comodato/precario, estructura general del proceso de desalojo, lanzamiento y prórrogas, controles tributarios) vive como **corpus transversal** (`Document.subcategoria = NULL`). El agente **no** tiene versión especialista de `caso-sensible` (el material no define protocolo diferencial); la urgencia procesal (notificación judicial, lanzamiento) se maneja en la rule `conducta-arrendamiento` y la skill `dimensionar-arrendamiento`. Ver `docs/plans/2026-07-31-procesamiento-arrendamientos.md`.
 
 ### Relaciones de consumo
 | Subcategoría | Estado |

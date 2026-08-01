@@ -1,0 +1,10 @@
+[
+  { "mensaje": "me llego un cedulon de desalojo del apartamento que alquilo, me tengo que ir ya?", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "mi contrato de alquiler sin garantia vencio, cuantos dias tengo para irme?", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "mi inquilino hace tres meses que no paga el alquiler, que tengo que hacer para desalojarlo?", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "el dueño me quiere aumentar el alquiler en dolares, puede hacerlo?", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "le preste mi casa a un conocido, no paga nada y ahora no se quiere ir, como la recupero?", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "vendieron el apartamento que alquilo, el nuevo dueño me puede echar?", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "se rompio el calefon del apartamento que alquilo, lo tengo que pagar yo o el dueño?", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "alquile mi casa del balneario por la temporada y los inquilinos no se fueron, que hago?", "esperado": { "toolCall": "buscar-documentos" } }
+]

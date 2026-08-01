@@ -8,9 +8,10 @@ describe("instrucciones del receptor global", () => {
   it("solo ofrece las categorías habilitadas y los escapes", () => {
     expect(prompt).toContain("laboral");
     expect(prompt).toContain("familia:");
+    expect(prompt).toContain("arrendamiento-desalojo:");
     expect(prompt).toContain("fuera-de-universo");
     expect(prompt).toContain("categoria-no-habilitada");
-    expect(prompt).not.toContain("arrendamiento-desalojo:"); // disabled categories are not offered as options
+    expect(prompt).not.toContain("relaciones-consumo:"); // disabled categories are not offered as options
   });
 
   it("fija el presupuesto de preguntas y el fast-path", () => {

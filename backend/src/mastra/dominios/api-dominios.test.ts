@@ -9,7 +9,13 @@ describe("payload de /api/dominios", () => {
         {
           id: "laboral",
           nombre: "Laboral",
-          subcategoriasHabilitadas: ["despido", "rubros-laborales", "trabajador-rural", "call-center"],
+          subcategoriasHabilitadas: [
+            "despido",
+            "rubros-laborales",
+            "trabajador-rural",
+            "call-center",
+            "licencias-especiales",
+          ],
         },
         {
           id: "familia",
@@ -20,6 +26,17 @@ describe("payload de /api/dominios", () => {
             "sucesiones",
             "union-concubinaria",
             "violencia-de-genero",
+          ],
+        },
+        {
+          id: "arrendamiento-desalojo",
+          nombre: "Arrendamiento y desalojo",
+          subcategoriasHabilitadas: [
+            "contrato-de-alquiler",
+            "desalojo-ley-8153",
+            "desalojo-ley-14219",
+            "desalojo-ley-19889",
+            "cobro-alquileres",
           ],
         },
       ],

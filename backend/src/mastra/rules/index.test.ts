@@ -40,7 +40,25 @@ describe("rulesRegistry", () => {
     expect(result.inicio).not.toContain("asignar-clasificacion"); // la versión del especialista no clasifica
   });
 
+  it("arrendamiento-desalojo activa identidad, rol, conducta y captación (final)", () => {
+    const result = rulesRegistry.execute(null, "arrendamiento-desalojo");
+    expect(result.activatedIds).toEqual([
+      "identidad-jurco",
+      "rol-especialista-arrendamiento",
+      "conducta-arrendamiento",
+      "captacion-caso",
+    ]);
+    expect(result.final).toContain("<captacion>");
+    expect(result.inicio).not.toContain("<caso_sensible>"); // sin protocolo diferencial definido por el equipo legal
+  });
+
   it("las rules críticas son las del spec", () => {
-    expect(CRITICAL_RULE_IDS).toEqual(["identidad-jurco", "caso-sensible", "conducta-laboral", "conducta-familia"]);
+    expect(CRITICAL_RULE_IDS).toEqual([
+      "identidad-jurco",
+      "caso-sensible",
+      "conducta-laboral",
+      "conducta-familia",
+      "conducta-arrendamiento",
+    ]);
   });
 });

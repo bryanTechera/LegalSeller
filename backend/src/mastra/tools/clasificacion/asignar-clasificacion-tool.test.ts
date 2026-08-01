@@ -32,7 +32,7 @@ describe("asignar-clasificacion", () => {
     if (!inputSchema) throw new Error("inputSchema is not defined");
 
     const parsed = inputSchema["~standard"].validate({
-      categoria: "arrendamiento-desalojo",
+      categoria: "relaciones-consumo",
       confianza: "alta",
       casoSensible: false,
       brief: "x",

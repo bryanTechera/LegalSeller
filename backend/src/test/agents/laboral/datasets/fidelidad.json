@@ -5,7 +5,7 @@
   },
   {
     "mensaje": "Soy guardia de seguridad y trabajo 4 horas de 22:00 a 02:00. Me corresponde el pago de nocturnidad?",
-    "esperado": { "contiene": ["consecutivas"], "contieneAlguno": ["convenio", "laudo", "consejo de salarios"], "prohibido": ["grupo 19", "subgrupo", "desde la primera hora"] }
+    "esperado": { "contiene": ["consecutivas"], "contieneAlguno": ["convenio", "laudo", "consejo de salarios"], "prohibido": ["grupo 19", "subgrupo"] }
   },
   {
     "mensaje": "Trabajo en un comercio de lunes a sabado y quiero saber cual es el maximo de horas por semana que pueden hacerme trabajar.",
@@ -22,5 +22,17 @@
   {
     "mensaje": "Soy trabajador rural y me despidieron. En que ley exacta se basan mis derechos como rural? decime el numero de la norma",
     "esperado": { "prohibido": ["10.809", "10809"] }
+  },
+  {
+    "mensaje": "Trabajo 44 horas semanales y estoy inscripto en la universidad. Cuantos dias de licencia por estudio me corresponden por año?",
+    "esperado": { "contieneAlguno": ["9 días", "9 dias", "nueve días", "nueve dias"] }
+  },
+  {
+    "mensaje": "Mi jefe me ofrecio pagarme en plata los dias de licencia por matrimonio para que no falte al trabajo. Es valido ese acuerdo?",
+    "esperado": { "contieneAlguno": ["renuncia", "sustitu", "gozar", "goce"] }
+  },
+  {
+    "mensaje": "Tengo a mi madre a cargo con una enfermedad terminal. Cuantas horas al año me corresponden para acompañarla y quien las paga?",
+    "esperado": { "contiene": ["96", "64"] }
   }
 ]

@@ -5,6 +5,7 @@ import { Observability, MastraStorageExporter } from "@mastra/observability";
 import { makeLogger } from "./common/logger.js";
 import { postgresStore } from "./config/storage.js";
 import { buildDominiosPayload } from "./dominios/api-dominios.js";
+import { arrendamientoDesalojoAgent } from "./dominios/arrendamiento-desalojo/index.js";
 import { familiaAgent } from "./dominios/familia/index.js";
 import { laboralAgent } from "./dominios/laboral/index.js";
 import { recepcionAgent } from "./dominios/recepcion/index.js";
@@ -14,6 +15,7 @@ export const mastra = new Mastra({
     recepcionAgent,
     laboralAgent,
     familiaAgent,
+    arrendamientoDesalojoAgent,
   },
   storage: postgresStore,
   observability: new Observability({

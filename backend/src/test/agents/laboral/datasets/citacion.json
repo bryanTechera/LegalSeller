@@ -72,6 +72,14 @@
     "esperado": { "toolCall": "buscar-documentos" }
   },
   {
+    "mensaje": "estoy cursando en la universidad, tengo derecho a dias pagos en el trabajo para rendir examenes?",
+    "esperado": { "toolCall": "buscar-documentos" }
+  },
+  {
+    "mensaje": "me caso el mes que viene, me corresponden dias de licencia por casamiento y cuantos?",
+    "esperado": { "toolCall": "buscar-documentos" }
+  },
+  {
     "mensajes": [
       { "rol": "usuario", "texto": "me despidieron a los 15 dias de reintegrarme de una certificacion del BSE" },
       { "rol": "asistente", "texto": "Tenés una protección importante: tras reintegrarte de una certificación del BSE, la empresa debe conservarte el empleo durante 180 días corridos; si rompen ese período sin una causa grave, corresponde la indemnización común más los salarios que faltaban para completarlo. Para dimensionarlo, ¿hace cuánto trabajabas ahí y cuál era tu sueldo?" },

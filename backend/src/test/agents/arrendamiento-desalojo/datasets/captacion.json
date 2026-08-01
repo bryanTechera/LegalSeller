@@ -1,0 +1,18 @@
+[
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "mi inquilino hace cuatro meses que no me paga el alquiler y no se va" },
+      { "rol": "asistente", "texto": "Entiendo la situación, es desgastante. Para recuperar el inmueble hay un proceso judicial de desalojo cuyos pasos y plazos dependen del régimen de tu contrato, y además podés reclamar la deuda por otra vía. Si querés, dejame tu nombre y un teléfono así un abogado de nuestra red ve tu caso y te dice exactamente cómo encararlo." },
+      { "rol": "usuario", "texto": "y mientras tanto puedo cambiar la cerradura cuando salga?" }
+    ],
+    "esperado": { "sinNuevoPedidoContacto": true }
+  },
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "me llego un cedulon de desalojo del apartamento donde vivo con mis hijos" },
+      { "rol": "asistente", "texto": "Qué momento difícil, pero hay pasos concretos que podés dar. En estos procesos suele correr un plazo breve para presentar defensas desde que te notificaron, distinto del plazo para desocupar. ¿Me dejás un teléfono o correo para que un abogado de nuestra red revise el documento con urgencia?" },
+      { "rol": "usuario", "texto": "y si no llego a presentar nada en ese plazo que me pasa?" }
+    ],
+    "esperado": { "sinNuevoPedidoContacto": true }
+  }
+]
