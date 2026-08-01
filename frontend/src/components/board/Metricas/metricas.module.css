@@ -1,0 +1,114 @@
+.encabezado {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-6);
+}
+
+.titulo {
+  font-family: var(--font-family-display);
+  font-size: var(--text-2xl);
+  color: var(--ink-900);
+}
+
+.subtitulo {
+  font-family: var(--font-family-display);
+  font-size: var(--text-lg);
+  color: var(--ink-900);
+  margin-bottom: var(--space-2);
+}
+
+.rangos {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.rango {
+  font: inherit;
+  font-size: var(--text-sm);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--ink-100);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink-700);
+  cursor: pointer;
+}
+
+.rangoActivo {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-navy);
+}
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.kpi {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--ink-100);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-soft);
+}
+
+.kpiEtiqueta {
+  font-size: var(--text-sm);
+  color: var(--ink-500);
+}
+
+.kpiValor {
+  font-family: var(--font-family-display);
+  font-size: var(--text-2xl);
+  color: var(--navy);
+}
+
+.bloque {
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+  background: var(--surface);
+  border: 1px solid var(--ink-100);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-soft);
+}
+
+.ayuda {
+  font-size: var(--text-sm);
+  color: var(--ink-500);
+}
+
+.lista {
+  list-style: none;
+  margin-top: var(--space-4);
+  display: grid;
+  gap: var(--space-2);
+}
+
+.item {
+  display: grid;
+  grid-template-columns: 6rem 1fr;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--ink-700);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--ink-100);
+}
+
+.fecha {
+  color: var(--ink-500);
+}
+
+.cargando {
+  color: var(--ink-500);
+}
+
+.error {
+  color: var(--state-error);
+}

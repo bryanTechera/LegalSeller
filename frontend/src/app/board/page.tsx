@@ -1,4 +1,5 @@
-// Stub provisorio — lo reemplaza la Tarea 7.
+import { MetricasPanel } from "@/components/board/Metricas/MetricasPanel";
+
 export default function BoardPage() {
-  return <main>Board</main>;
+  return <MetricasPanel />;
 }
