@@ -6,6 +6,8 @@ import { dimensionarRubrosSkill } from "../dominios/laboral/static-skills/dimens
 import { regimenesEspecialesSkill } from "../dominios/laboral/static-skills/regimenes-especiales.js";
 import { subcategoriasLaboralSkill } from "../dominios/laboral/static-skills/subcategorias-laboral.js";
 import { universoCategoriasSkill } from "../dominios/recepcion/static-skills/universo-categorias.js";
+import { dimensionarConsumoSkill } from "../dominios/relaciones-consumo/static-skills/dimensionar-consumo.js";
+import { subcategoriasConsumoSkill } from "../dominios/relaciones-consumo/static-skills/subcategorias-consumo.js";
 
 const STATIC_SKILLS: readonly RegistryItem[] = [
   { id: "universo-categorias", fn: universoCategoriasSkill },
@@ -15,6 +17,8 @@ const STATIC_SKILLS: readonly RegistryItem[] = [
   { id: "regimenes-especiales", fn: regimenesEspecialesSkill },
   { id: "subcategorias-familia", fn: subcategoriasFamiliaSkill },
   { id: "dimensionar-familia", fn: dimensionarFamiliaSkill },
+  { id: "subcategorias-consumo", fn: subcategoriasConsumoSkill },
+  { id: "dimensionar-consumo", fn: dimensionarConsumoSkill },
 ];
 
 export const staticSkillsRegistry = new ActivationRegistry("static-skills", STATIC_SKILLS);
