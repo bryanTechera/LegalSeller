@@ -130,7 +130,7 @@ Los handlers de `/api/revision/*` pasan de `getExperto()` a `getIdentidadBoard()
 | `next-auth` | `^5.0.0-beta.32` | peer `next: ^16.0.0` — soporta Next 16 |
 | `@auth/prisma-adapter` | `^2.11.3` | peer `@prisma/client: >=6` |
 | `resend` | `^6.18.1` | — |
-| `recharts` | `^3.10.1` | **v3 es obligatoria**: recharts 2.x declara peer React `^18` hasta 2.15, y el proyecto corre React 19 |
+| `recharts` | `^3.10.1` | recharts declara peer React `^19` recién desde 2.15.0; se elige la v3 por ser la línea actual, no porque la 2.x sea incompatible |
 
 Recharts entra únicamente en el bundle de `/board`, que Next code-splitea por ruta; el chat público no lo carga.
 

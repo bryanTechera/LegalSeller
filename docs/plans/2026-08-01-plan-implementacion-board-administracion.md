@@ -22,7 +22,7 @@ Copiadas del spec y de `CLAUDE.md`. **Aplican a todas las tareas.**
 - **Toda query de métricas excluye conversaciones de revisión** (`esRevision = false`), vía el helper de la Tarea 5. Sin excepción.
 - Naming: **código en inglés camelCase**; identificadores de dominio, archivos y prosa en **español rioplatense**.
 - Sin emojis en código, prompts ni UI.
-- Versiones exactas: `next-auth@^5.0.0-beta.32`, `@auth/prisma-adapter@^2.11.3`, `resend@^6.18.1`, `recharts@^3.10.1` (v3 obligatoria: v2 no soporta React 19).
+- Versiones exactas: `next-auth@^5.0.0-beta.32`, `@auth/prisma-adapter@^2.11.3`, `resend@^6.18.1`, `recharts@^3.10.1` (recharts 2.x recién declara React 19 desde 2.15.0; se usa la v3 por ser la línea actual).
 - El archivo de middleware en Next 16 es **`src/proxy.ts`**, nunca `src/middleware.ts` (no falla: simplemente no se ejecuta).
 - Conventional commits. Antes de cada commit: `pnpm lint && pnpm typecheck`.
 - Tests unitarios junto al código (`*.test.ts`); E2E en `tests/*.spec.ts`.
