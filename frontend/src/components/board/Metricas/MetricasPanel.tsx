@@ -29,9 +29,31 @@ function porcentaje(parte: number, total: number): string {
   return `${Math.round((parte / total) * 100)}%`;
 }
 
+function segundos(ms: number): string {
+  if (ms === 0) return "—";
+  return `${(ms / 1000).toFixed(1)} s`;
+}
+
+/**
+ * Suma el costo de los modelos conocidos. Un modelo sin precio en la tabla
+ * aporta `null`, y eso se marca como total parcial en vez de esconderse: un
+ * costo que parece completo pero omite un modelo miente más que uno marcado.
+ */
+function costoTotal(modelos: Metricas["agente"]["modelos"]): string {
+  if (modelos.length === 0) return "—";
+  const conocidos = modelos.filter((modelo) => modelo.costoUsd !== null);
+  const total = conocidos.reduce((suma, modelo) => suma + (modelo.costoUsd ?? 0), 0);
+  const parcial = conocidos.length < modelos.length ? " (parcial)" : "";
+  return `USD ${total.toFixed(2)}${parcial}`;
+}
+
+function miles(n: number): string {
+  return new Intl.NumberFormat("es-UY").format(Math.round(n));
+}
+
 export function MetricasPanel() {
   const [rango, setRango] = useState<Rango>("30d");
-  const { data, error, isLoading } = useSWR(`/api/board/metricas?rango=${rango}`, traer, {
+  const { data, error } = useSWR(`/api/board/metricas?rango=${rango}`, traer, {
     dedupingInterval: 30_000,
   });
 
@@ -54,8 +76,11 @@ export function MetricasPanel() {
         </div>
       </header>
 
-      {error ? <p role="alert" className={styles.error}>No pudimos cargar las métricas.</p> : null}
-      {isLoading || !data ? <p className={styles.cargando}>Cargando…</p> : (
+      {error ? (
+        <p role="alert" className={styles.error}>No pudimos cargar las métricas.</p>
+      ) : !data ? (
+        <p className={styles.cargando}>Cargando…</p>
+      ) : (
         <>
           <div className={styles.kpis}>
             <TarjetaKpi etiqueta="Conversaciones" valor={String(data.funnel.iniciadas)} />
@@ -67,6 +92,17 @@ export function MetricasPanel() {
             <TarjetaKpi
               etiqueta="Fuera de cobertura"
               valor={String(data.funnel.fueraDeCobertura)}
+            />
+            <TarjetaKpi etiqueta="Costo del período" valor={costoTotal(data.agente.modelos)} />
+            <TarjetaKpi etiqueta="Latencia mediana" valor={segundos(data.agente.latencia.p50Ms)} />
+            <TarjetaKpi etiqueta="Latencia p95" valor={segundos(data.agente.latencia.p95Ms)} />
+            <TarjetaKpi
+              etiqueta="Mensajes por conversación"
+              valor={data.volumen.mensajesPorConversacion.toFixed(1)}
+            />
+            <TarjetaKpi
+              etiqueta="Tasa de abandono"
+              valor={porcentaje(data.volumen.tasaAbandono * 100, 100)}
             />
           </div>
 
@@ -94,6 +130,14 @@ export function MetricasPanel() {
           />
 
           <GraficoBarras
+            titulo="Demanda por subcategoría"
+            datos={data.demanda.subcategorias.map((fila) => ({
+              nombre: fila.subcategoria,
+              valor: fila.casos,
+            }))}
+          />
+
+          <GraficoBarras
             titulo="Uso de herramientas"
             datos={data.agente.tools.map((fila) => ({ nombre: fila.tool, valor: fila.llamadas }))}
           />
@@ -105,6 +149,35 @@ export function MetricasPanel() {
               valor: franja.conversaciones,
             }))}
           />
+
+          <section className={styles.bloque}>
+            <h2 className={styles.subtitulo}>Consumo por modelo</h2>
+            {data.agente.modelos.length === 0 ? (
+              <p className={styles.ayuda}>Sin datos en este rango.</p>
+            ) : (
+              <table className={styles.tabla}>
+                <thead>
+                  <tr>
+                    <th scope="col">Modelo</th>
+                    <th scope="col">Tokens de entrada</th>
+                    <th scope="col">Tokens de salida</th>
+                    <th scope="col">Costo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.agente.modelos.map((modelo) => (
+                    <tr key={modelo.modelo}>
+                      <td>{modelo.modelo}</td>
+                      <td>{miles(modelo.tokensEntrada)}</td>
+                      <td>{miles(modelo.tokensSalida)}</td>
+                      {/* null = modelo sin precio en la tabla, no costo cero. */}
+                      <td>{modelo.costoUsd === null ? "sin dato" : `USD ${modelo.costoUsd.toFixed(2)}`}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </section>
 
           <section className={styles.bloque}>
             <h2 className={styles.subtitulo}>Pedidos fuera de cobertura</h2>
