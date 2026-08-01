@@ -6,7 +6,9 @@ import { z } from "zod";
 import type { FiltrosChats } from "@/lib/validations/board";
 import { prisma } from "@/lib/prisma";
 
-import { extraerTexto } from "@/lib/revision/timeline";
+import { listarNotasDeSesion, type NotaConRespuestas } from "@/lib/revision/notas";
+import { getCasoDeSesion, type CasoSnapshot } from "@/lib/revision/sesiones";
+import { construirTimeline, extraerTexto, type ItemTimeline } from "@/lib/revision/timeline";
 
 import { fechaDesde } from "./rango";
 import { conversacionesReales } from "./scope";
@@ -130,4 +132,43 @@ export async function listarConversaciones(filtros: FiltrosChats): Promise<Pagin
 function recortar(crudo: string): string {
   const limpio = extraerTexto(crudo).replace(/\s+/g, " ").trim();
   return limpio.length > LARGO_PREVIEW ? `${limpio.slice(0, LARGO_PREVIEW)}…` : limpio;
+}
+
+export interface DetalleConversacion {
+  id: string;
+  threadId: string;
+  categoria: string | null;
+  fecha: string;
+  timeline: ItemTimeline[];
+  caso: CasoSnapshot | null;
+  notas: NotaConRespuestas[];
+}
+
+/**
+ * Detalle de un chat de consultante real. El filtro de conversacionesReales
+ * no es cosmético: evita que el detalle del board sirva sesiones de prueba
+ * como si fueran conversaciones de producción.
+ */
+export async function obtenerConversacion(id: string): Promise<DetalleConversacion | null> {
+  const conversacion = await prisma.conversation.findFirst({
+    where: { id, ...conversacionesReales(null) },
+    select: { id: true, threadId: true, categoria: true, createdAt: true },
+  });
+  if (!conversacion) return null;
+
+  const [timeline, caso, notas] = await Promise.all([
+    construirTimeline(conversacion.threadId, { conSpans: true }),
+    getCasoDeSesion(conversacion.id),
+    listarNotasDeSesion(conversacion.id),
+  ]);
+
+  return {
+    id: conversacion.id,
+    threadId: conversacion.threadId,
+    categoria: conversacion.categoria,
+    fecha: conversacion.createdAt.toISOString(),
+    timeline,
+    caso,
+    notas,
+  };
 }

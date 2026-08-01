@@ -57,11 +57,22 @@ export async function crearNota(params: {
   texto: string;
   messageId?: string;
   citaTexto?: string;
+  /**
+   * Qué conversaciones acepta. "revision" (default) preserva el aislamiento
+   * original del sistema de revisión: los seis call sites de /api/revision/*
+   * no cambian de comportamiento. "chat-real" lo habilita solo para el board,
+   * que anota conversaciones de consultantes reales (spec §5.2).
+   */
+  alcance?: "revision" | "chat-real";
 }): Promise<{ id: string } | null> {
-  // Blindaje esRevision a nivel lib: ninguna nota puede colgarse de una
-  // conversación real de consultante, venga de la ruta o de un script.
+  // Blindaje a nivel lib: por defecto una nota solo puede colgarse de una
+  // sesión de revisión. El board pasa alcance "chat-real" explícitamente para
+  // anotar conversaciones de consultantes; ninguna otra ruta lo hace.
   const conversation = await prisma.conversation.findFirst({
-    where: { id: params.conversationId, esRevision: true },
+    where: {
+      id: params.conversationId,
+      ...(params.alcance === "chat-real" ? {} : { esRevision: true }),
+    },
     select: { id: true },
   });
   if (!conversation) return null;
