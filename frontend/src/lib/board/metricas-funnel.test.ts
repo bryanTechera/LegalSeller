@@ -95,4 +95,24 @@ describe("calcularDemanda", () => {
       },
     ]);
   });
+
+  // Mismo guard que el del funnel: la demanda también es métrica de negocio.
+  it("las queries de Prisma filtran por esRevision:false", async () => {
+    await calcularDemanda(DESDE);
+    expect(prismaMock.prisma.conversation.groupBy.mock.calls[0][0].where).toMatchObject({
+      esRevision: false,
+    });
+    expect(prismaMock.prisma.caso.findMany.mock.calls[0][0].where.conversation).toMatchObject({
+      esRevision: false,
+    });
+  });
+
+  // El SQL crudo no lo ejecuta ningún test (Prisma está mockeado), así que al
+  // menos se asegura que el fragmento con el join scopeado esté presente: sin
+  // esto, borrar el JOIN_CASO_REAL no rompería nada visible.
+  it("el SQL de subcategorías usa el join scopeado", async () => {
+    await calcularDemanda(DESDE);
+    const sql = JSON.stringify(prismaMock.prisma.$queryRaw.mock.calls[0]);
+    expect(sql).toContain("esRevision");
+  });
 });

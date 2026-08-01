@@ -1,11 +1,10 @@
 import "server-only";
 
-import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
 
-import { conversacionesReales } from "./scope";
+import { casosReales, conversacionesReales, JOIN_CASO_REAL } from "./scope";
 
 export interface Funnel {
   iniciadas: number;
@@ -39,14 +38,6 @@ export interface Demanda {
 
 const LIMITE_FUERA_DE_COBERTURA = 50;
 
-/** Estados verificados en lib/clasificacion.ts. */
-function casoReal(desde: Date | null): Prisma.CasoWhereInput {
-  return {
-    conversation: { esRevision: false },
-    ...(desde ? { createdAt: { gte: desde } } : {}),
-  };
-}
-
 export async function calcularFunnel(desde: Date | null): Promise<Funnel> {
   const [iniciadas, clasificadas, conCaso, captadas, fueraDeCobertura] = await Promise.all([
     prisma.conversation.count({ where: conversacionesReales(desde) }),
@@ -54,8 +45,8 @@ export async function calcularFunnel(desde: Date | null): Promise<Funnel> {
       where: { ...conversacionesReales(desde), categoria: { not: null } },
     }),
     prisma.conversation.count({ where: { ...conversacionesReales(desde), caso: { isNot: null } } }),
-    prisma.caso.count({ where: { ...casoReal(desde), estado: "CAPTADO" } }),
-    prisma.caso.count({ where: { ...casoReal(desde), estado: "FUERA_DE_COBERTURA" } }),
+    prisma.caso.count({ where: { ...casosReales(desde), estado: "CAPTADO" } }),
+    prisma.caso.count({ where: { ...casosReales(desde), estado: "FUERA_DE_COBERTURA" } }),
   ]);
 
   return { iniciadas, clasificadas, conCaso, captadas, fueraDeCobertura };
@@ -86,14 +77,13 @@ export async function calcularDemanda(desde: Date | null): Promise<Demanda> {
     prisma.$queryRaw`
       SELECT sub AS subcategoria, COUNT(*)::float8 AS casos
       FROM "Caso" caso
-      JOIN "Conversation" conv ON conv.id = caso."conversationId"
+      ${JOIN_CASO_REAL}
       CROSS JOIN LATERAL unnest(caso.subcategorias) AS sub
-      WHERE conv."esRevision" = false
-        AND (${desde}::timestamptz IS NULL OR caso."createdAt" >= ${desde}::timestamptz)
+      WHERE (${desde}::timestamptz IS NULL OR caso."createdAt" >= ${desde}::timestamptz)
       GROUP BY sub
       ORDER BY casos DESC`,
     prisma.caso.findMany({
-      where: { ...casoReal(desde), estado: "FUERA_DE_COBERTURA" },
+      where: { ...casosReales(desde), estado: "FUERA_DE_COBERTURA" },
       select: { conversationId: true, createdAt: true, resumen: true },
       orderBy: { createdAt: "desc" },
       take: LIMITE_FUERA_DE_COBERTURA,
