@@ -45,3 +45,14 @@ export const JOIN_CASO_REAL = Prisma.sql`
     ON conv.id = caso."conversationId"
    AND conv."esRevision" = false
 `;
+
+/**
+ * Alcance para SQL crudo donde `Conversation` ya es la tabla base (alias
+ * `c`) — sin join, a diferencia de JOIN_REALES (arranca desde spans/mensajes)
+ * o JOIN_CASO_REAL (arranca desde Caso). Va en el WHERE, no en un JOIN:
+ * como filtra por una columna de `c` (la tabla base, o el lado izquierdo de
+ * un LEFT JOIN opcional hacia `mastra`), no corre el riesgo de convertir un
+ * LEFT JOIN en INNER — ese riesgo solo existe al filtrar por el lado
+ * outer-joined.
+ */
+export const WHERE_REALES = Prisma.sql`c."esRevision" = false`;
