@@ -225,7 +225,9 @@ Sección por defecto. Tarjetas de KPI arriba (conversaciones, tasa de captación
 
 2. **`scripts/feedback-pull.ts` filtra `esRevision: true`.** Sin tocarlo, una nota sobre un chat real nunca llegaría al equipo dev y el loop nota → fix → eval quedaría cortado justo para las fallas de producción, que es lo que el board viene a habilitar. El script pasa a traer ambos orígenes, marcando cuál es cuál en el export.
 
-El aislamiento del sistema de revisión no se debilita: las rutas `/api/revision/*` siguen exigiendo `esRevision: true` vía `getSesionRevision()`. Las notas sobre chats reales entran por una ruta propia del board (`/api/board/conversaciones/[id]/notas`).
+Las notas sobre chats reales entran por una ruta propia del board (`/api/board/conversaciones/[id]/notas`), y las rutas que operan **por sesión** (`/api/revision/sesiones/*`) siguen exigiendo `esRevision: true` vía `getSesionRevision()`.
+
+**Matiz encontrado en el review final:** las dos rutas que operan **por nota** (`/api/revision/notas/[notaId]` y `.../respuestas`) resuelven la nota por su id y nunca pasaron por `getSesionRevision()`. Era inocuo mientras toda nota colgaba de una sesión de revisión; ahora existe una segunda población. Un portador de `REVISION_CLAVE` —credencial de servicio, no de la allowlist— podría marcar como `RESUELTA` una nota sobre una conversación real y esconderla de `feedback:pull`. Requiere adivinar un cuid, así que es defensa en profundidad y no una puerta abierta; queda como follow-up, no como bloqueante.
 
 ### 5.3 Revisión (`/board/revision`)
 
