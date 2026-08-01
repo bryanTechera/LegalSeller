@@ -24,7 +24,12 @@ export function LoginForm({ errorInicial }: { errorInicial: string | null }) {
     setError(null);
     setEnviando(true);
     try {
-      await signIn("resend", { email: limpio, redirect: false, callbackUrl: "/board" });
+      const resultado = await signIn("resend", { email: limpio, redirect: false, callbackUrl: "/board" });
+      if (resultado?.error) {
+        setError("No pudimos iniciar sesión con ese email.");
+        setEnviando(false);
+        return;
+      }
       router.push("/login/check-email");
     } catch {
       setError("No pudimos enviar el enlace. Intentá de nuevo.");
