@@ -1964,7 +1964,11 @@ Expected: FAIL — "Failed to resolve import ./metricas-agente"
 
 - [ ] **Paso 7: Implementar las métricas del agente**
 
-Crear `frontend/src/lib/board/metricas-agente.ts`. **Gotcha:** `SUM()` sobre un entero en Postgres devuelve `bigint`, y Prisma lo mapea a `BigInt` de JS, que hace explotar `JSON.stringify`. Todo agregado numérico va casteado a `::float8`.
+Crear `frontend/src/lib/board/metricas-agente.ts`.
+
+**Gotcha 1:** `SUM()` sobre un entero en Postgres devuelve `bigint`, y Prisma lo mapea a `BigInt` de JS, que hace explotar `JSON.stringify`. Todo agregado numérico va casteado a `::float8`.
+
+**Gotcha 2 — zona horaria.** `Conversation.createdAt` es `timestamp without time zone` guardando hora UTC, y la sesión de Postgres corre en `Etc/UTC`. Agrupar sobre la columna cruda deja las series **corridas 3 horas**: el gráfico "consultas por hora del día" mentiría sistemáticamente, y toda conversación entre las 21:00 y las 23:59 de Uruguay caería en el día siguiente. Por eso el bucketing convierte con `(c."createdAt" AT TIME ZONE 'UTC') AT TIME ZONE 'America/Montevideo'`. La conversión va solo en el `SELECT`/`GROUP BY`, nunca en el `WHERE`: ahí impediría usar el índice `[esRevision, createdAt]`, y un corrimiento de 3 horas en el borde de una ventana de 7 o 30 días no cambia nada.
 
 ```typescript
 import "server-only";
@@ -2075,14 +2079,20 @@ export async function calcularAgente(
 export async function calcularVolumen(desde: Date | null): Promise<Volumen> {
   const [porDiaRaw, porHoraRaw, agregadosRaw] = await Promise.all([
     prisma.$queryRaw`
-      SELECT to_char(c."createdAt", 'YYYY-MM-DD') AS fecha, COUNT(*)::float8 AS valor
+      SELECT to_char(
+               (c."createdAt" AT TIME ZONE 'UTC') AT TIME ZONE 'America/Montevideo',
+               'YYYY-MM-DD'
+             ) AS fecha,
+             COUNT(*)::float8 AS valor
       FROM "Conversation" c
       WHERE c."esRevision" = false
         AND (${desde}::timestamptz IS NULL OR c."createdAt" >= ${desde}::timestamptz)
       GROUP BY 1
       ORDER BY 1 ASC`,
     prisma.$queryRaw`
-      SELECT EXTRACT(HOUR FROM c."createdAt")::float8 AS hora,
+      SELECT EXTRACT(
+               HOUR FROM (c."createdAt" AT TIME ZONE 'UTC') AT TIME ZONE 'America/Montevideo'
+             )::float8 AS hora,
              COUNT(*)::float8 AS conversaciones
       FROM "Conversation" c
       WHERE c."esRevision" = false
