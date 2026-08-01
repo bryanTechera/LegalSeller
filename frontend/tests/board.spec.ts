@@ -13,8 +13,13 @@ test("el board lista chats y abre el detalle", async ({ page }) => {
   await page.goto("/board/chats");
   await expect(page.getByRole("heading", { name: "Chats" })).toBeVisible();
 
+  // La tabla la llena SWR después del fetch: contar antes de que resuelva da
+  // siempre 0 y hace que el test se saltee solo con un motivo falso.
   const filas = page.locator("tbody tr");
-  if ((await filas.count()) === 0) {
+  const vacio = page.getByText("No hay conversaciones en este rango.");
+  await expect(filas.first().or(vacio)).toBeVisible({ timeout: 30_000 });
+
+  if (await vacio.isVisible()) {
     test.skip(true, "Sin conversaciones reales en la base de prueba");
   }
 
