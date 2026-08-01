@@ -67,7 +67,10 @@ describe("crearNota", () => {
       alcance: "chat-real",
     });
     expect(nota).toEqual({ id: "n1" });
-    expect(tx.conversation.findFirst.mock.calls[0][0].where).toEqual({ id: "c1" });
+    expect(tx.conversation.findFirst.mock.calls[0][0].where).toEqual({
+      id: "c1",
+      esRevision: false,
+    });
   });
 });
 

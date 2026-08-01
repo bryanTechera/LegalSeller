@@ -31,42 +31,58 @@ export function DetalleChat({ id }: { id: string }) {
     null,
   );
 
+  // try/catch como en SesionView: sin él, una excepción de red (conexión
+  // cortada, no un status !== 2xx) sube sin manejar hasta NotaComposer y el
+  // `setEnviando(false)` de abajo nunca corre — el botón queda deshabilitado
+  // para siempre y el texto tipeado se pierde al recargar.
   const guardarNota = async (texto: string): Promise<boolean> => {
-    const response = await fetch(`/api/board/conversaciones/${id}/notas`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        texto,
-        ...(anotando?.messageId ? { messageId: anotando.messageId } : {}),
-        ...(anotando?.cita ? { citaTexto: anotando.cita } : {}),
-      }),
-    });
-    if (!response.ok) return false;
-    setAnotando(null);
-    await mutate();
-    return true;
+    try {
+      const response = await fetch(`/api/board/conversaciones/${id}/notas`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          texto,
+          ...(anotando?.messageId ? { messageId: anotando.messageId } : {}),
+          ...(anotando?.cita ? { citaTexto: anotando.cita } : {}),
+        }),
+      });
+      if (!response.ok) return false;
+      setAnotando(null);
+      await mutate();
+      return true;
+    } catch {
+      return false;
+    }
   };
 
   const responderNota = async (notaId: string, texto: string): Promise<boolean> => {
-    const response = await fetch(`/api/revision/notas/${notaId}/respuestas`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ texto }),
-    });
-    if (!response.ok) return false;
-    await mutate();
-    return true;
+    try {
+      const response = await fetch(`/api/revision/notas/${notaId}/respuestas`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ texto }),
+      });
+      if (!response.ok) return false;
+      await mutate();
+      return true;
+    } catch {
+      return false;
+    }
   };
 
   const resolverNota = async (notaId: string): Promise<boolean> => {
-    const response = await fetch(`/api/revision/notas/${notaId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ estado: "RESUELTA" }),
-    });
-    if (!response.ok) return false;
-    await mutate();
-    return true;
+    try {
+      const response = await fetch(`/api/revision/notas/${notaId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ estado: "RESUELTA" }),
+      });
+      if (!response.ok) return false;
+      await mutate();
+      return true;
+    } catch {
+      return false;
+    }
   };
 
   if (error) return <p role="alert" className={styles.error}>No pudimos cargar la conversación.</p>;

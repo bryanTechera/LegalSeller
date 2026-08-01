@@ -58,20 +58,25 @@ export async function crearNota(params: {
   messageId?: string;
   citaTexto?: string;
   /**
-   * Qué conversaciones acepta. "revision" (default) preserva el aislamiento
-   * original del sistema de revisión: los seis call sites de /api/revision/*
-   * no cambian de comportamiento. "chat-real" lo habilita solo para el board,
-   * que anota conversaciones de consultantes reales (spec §5.2).
+   * Qué conversaciones acepta. "revision" (default) no cambia nada: de las
+   * rutas bajo /api/revision/*, solo sesiones/[id]/notas llama a crearNota
+   * (las demás responden o resuelven, sin pasar por este guard); el script
+   * feedback:respond también crea notas con este default. "chat-real" lo
+   * habilita solo para el board, que anota conversaciones de consultantes
+   * reales (spec §5.2).
    */
   alcance?: "revision" | "chat-real";
 }): Promise<{ id: string } | null> {
-  // Blindaje a nivel lib: por defecto una nota solo puede colgarse de una
-  // sesión de revisión. El board pasa alcance "chat-real" explícitamente para
-  // anotar conversaciones de consultantes; ninguna otra ruta lo hace.
+  // Blindaje a nivel lib: cada alcance AFIRMA qué tipo de conversación
+  // acepta, en vez de que "chat-real" solo saque el filtro. "chat-real" no
+  // significa "cualquiera": una nota marcada como chat real colgada de una
+  // sesión de revisión sería una mentira silenciosa en el export al equipo
+  // legal. Así el guard se sostiene solo, sin depender de que el llamador
+  // pre-valide.
   const conversation = await prisma.conversation.findFirst({
     where: {
       id: params.conversationId,
-      ...(params.alcance === "chat-real" ? {} : { esRevision: true }),
+      esRevision: params.alcance !== "chat-real",
     },
     select: { id: true },
   });
