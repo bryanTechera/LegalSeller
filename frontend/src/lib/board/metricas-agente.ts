@@ -104,16 +104,28 @@ export async function calcularAgente(
 }
 
 export async function calcularVolumen(desde: Date | null): Promise<Volumen> {
+  // "Conversation.createdAt" es timestamp sin zona guardando UTC (sesión de
+  // Postgres en Etc/UTC): bucketear la columna cruda deja porDia/porHora
+  // corridos 3 horas y migra a otro día toda conversación de 21:00-23:59
+  // uruguayas. La conversión AT TIME ZONE va solo en SELECT/GROUP BY — en el
+  // WHERE rompería el índice [esRevision, createdAt], y un corrimiento de 3h
+  // en el borde de una ventana de 7/30 días no cambia el resultado.
   const [porDiaRaw, porHoraRaw, agregadosRaw] = await Promise.all([
     prisma.$queryRaw`
-      SELECT to_char(c."createdAt", 'YYYY-MM-DD') AS fecha, COUNT(*)::float8 AS valor
+      SELECT to_char(
+               (c."createdAt" AT TIME ZONE 'UTC') AT TIME ZONE 'America/Montevideo',
+               'YYYY-MM-DD'
+             ) AS fecha,
+             COUNT(*)::float8 AS valor
       FROM "Conversation" c
       WHERE ${WHERE_REALES}
         AND (${desde}::timestamptz IS NULL OR c."createdAt" >= ${desde}::timestamptz)
       GROUP BY 1
       ORDER BY 1 ASC`,
     prisma.$queryRaw`
-      SELECT EXTRACT(HOUR FROM c."createdAt")::float8 AS hora,
+      SELECT EXTRACT(
+               HOUR FROM (c."createdAt" AT TIME ZONE 'UTC') AT TIME ZONE 'America/Montevideo'
+             )::float8 AS hora,
              COUNT(*)::float8 AS conversaciones
       FROM "Conversation" c
       WHERE ${WHERE_REALES}
