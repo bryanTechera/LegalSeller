@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 
-import { getExperto } from "@/lib/revision/experto-cookie";
+import { getIdentidadBoard } from "@/lib/board/identidad";
 import { resolverNota } from "@/lib/revision/notas";
 import { parseRequestBody, resolverNotaSchema } from "@/lib/validations";
 import { logger } from "@/utils/logger";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ notaId: string }> }) {
   try {
-    const experto = await getExperto();
+    const experto = await getIdentidadBoard();
     if (!experto) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
     const { notaId } = await params;

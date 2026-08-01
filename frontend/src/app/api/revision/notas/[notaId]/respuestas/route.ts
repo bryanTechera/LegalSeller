@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { getExperto } from "@/lib/revision/experto-cookie";
+import { getIdentidadBoard } from "@/lib/board/identidad";
 import { responderNota } from "@/lib/revision/notas";
 import { parseRequestBody, responderNotaSchema } from "@/lib/validations";
 import { logger } from "@/utils/logger";
@@ -8,7 +8,7 @@ import { logger } from "@/utils/logger";
 /** Respuesta del EXPERTO en el hilo (el lado dev responde vía scripts). */
 export async function POST(request: Request, { params }: { params: Promise<{ notaId: string }> }) {
   try {
-    const experto = await getExperto();
+    const experto = await getIdentidadBoard();
     if (!experto) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
     const { notaId } = await params;

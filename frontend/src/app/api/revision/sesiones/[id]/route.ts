@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { getExperto } from "@/lib/revision/experto-cookie";
+import { getIdentidadBoard } from "@/lib/board/identidad";
 import { listarNotasDeSesion } from "@/lib/revision/notas";
 import { getCasoDeSesion, getSesionRevision, publicarSesionRevision } from "@/lib/revision/sesiones";
 import { construirTimeline } from "@/lib/revision/timeline";
@@ -10,7 +10,7 @@ import { logger } from "@/utils/logger";
 /** Detalle para la UI del experto: transcript con IDs persistidos + notas. */
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const experto = await getExperto();
+    const experto = await getIdentidadBoard();
     if (!experto) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
     const { id } = await params;
@@ -43,7 +43,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 /** Publicar una corrida autónoma (borrador → listado compartido). */
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const experto = await getExperto();
+    const experto = await getIdentidadBoard();
     if (!experto) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
     const { id } = await params;

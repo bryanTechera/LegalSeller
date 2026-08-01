@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const expertoMock = vi.hoisted(() => ({ getExperto: vi.fn() }));
-vi.mock("@/lib/revision/experto-cookie", () => expertoMock);
+const identidadMock = vi.hoisted(() => ({ getIdentidadBoard: vi.fn() }));
+vi.mock("@/lib/board/identidad", () => identidadMock);
 
 const sesionesMock = vi.hoisted(() => ({
   crearSesionRevision: vi.fn(),
@@ -22,13 +22,13 @@ function postRequest(body: unknown): Request {
 describe("/api/revision/sesiones", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    expertoMock.getExperto.mockResolvedValue({ nombre: "Dra. García" });
+    identidadMock.getIdentidadBoard.mockResolvedValue({ nombre: "Dra. García", tipo: "humano" });
     sesionesMock.listarSesionesRevision.mockResolvedValue([]);
     sesionesMock.crearSesionRevision.mockResolvedValue({ id: "s1", threadId: "t1" });
   });
 
   it("GET sin auth → 401", async () => {
-    expertoMock.getExperto.mockResolvedValue(null);
+    identidadMock.getIdentidadBoard.mockResolvedValue(null);
     const response = await GET(new Request("http://localhost/api/revision/sesiones"));
     expect(response.status).toBe(401);
   });
