@@ -1277,19 +1277,55 @@ test.skip(!CLAVE, "REVISION_CLAVE no seteada — E2E de revisión deshabilitado"
 test("ciclo de revisión: sesión → chat → nota inline → responder → resolver", async ({ page }) => {
   test.setTimeout(120_000);
 
-  // El E2E entra con la credencial de runner (la misma que usa `pnpm escenario`),
-  // que no requiere completar un magic link desde el navegador.
-  // Va por `page.request`, NO por el fixture `request`: este último es un
-  // APIRequestContext aislado y su cookie no viaja a la navegación de `page`.
-  await page.request.post("/api/revision/acceso", {
-    data: { nombre: "Dra. E2E", clave: CLAVE },
-  });
+  await iniciarSesionBoard(page);
   await page.goto("/board/revision");
 
   await expect(page.getByRole("heading", { name: "Sesiones de revisión" })).toBeVisible();
 ```
 
-**Nota:** la cookie tiene que viajar a la navegación de `page`, y por eso el login va por **`page.request`** y no por el fixture `request`. El fixture `request` de Playwright es un `APIRequestContext` **aislado**: su cookie jar no es el del browser context, así que un `request.post` de login deja a `page.goto` sin sesión y el test falla con un 401 desconcertante. `page.request` comparte las cookies de la página, que es lo que hace falta acá.
+y agregar el import del helper arriba: `import { iniciarSesionBoard } from "./helpers/sesion-board";`
+
+**Por qué un helper y no la credencial del runner.** `/board/*` está detrás del proxy, que exige una **sesión NextAuth**. La cookie `ls_experto` del runner solo la entienden los handlers de `/api/revision/*` — y eso es correcto por diseño: `pnpm escenario` habla con la API, nunca carga páginas. Pero este E2E sí maneja el browser, así que necesita una sesión de verdad. La acuña directo con `encode` de `next-auth/jwt`, que es el patrón estándar para testear apps protegidas con Auth.js.
+
+Crear `frontend/tests/helpers/sesion-board.ts`:
+
+```typescript
+import type { Page } from "@playwright/test";
+import { encode } from "next-auth/jwt";
+
+/** El salt de Auth.js v5 ES el nombre de la cookie. Sin prefijo __Secure en HTTP local. */
+const COOKIE_SESION = "authjs.session-token";
+
+/**
+ * Deja a `page` con una sesión del board ya iniciada, sin pasar por el magic
+ * link (que necesitaría un inbox). Requiere que AUTH_SECRET sea el mismo que
+ * usa el dev server — Playwright lo levanta con `pnpm dev`, que lee el mismo
+ * `.env`, así que coinciden.
+ */
+export async function iniciarSesionBoard(page: Page, email = "e2e@jurco.uy"): Promise<void> {
+  const secret = process.env.AUTH_SECRET;
+  if (!secret) throw new Error("AUTH_SECRET no está seteada — el helper no puede acuñar la sesión");
+
+  const token = await encode({
+    token: { email, name: "Dra. E2E" },
+    secret,
+    salt: COOKIE_SESION,
+  });
+
+  await page.context().addCookies([
+    { name: COOKIE_SESION, value: token, domain: "localhost", path: "/", httpOnly: true, sameSite: "Lax" },
+  ]);
+}
+```
+
+El `test.skip` de arriba del archivo pasa a cubrir las dos env que el test necesita:
+
+```typescript
+const CLAVE = process.env.REVISION_CLAVE ?? "";
+const SECRETO = process.env.AUTH_SECRET ?? "";
+
+test.skip(!CLAVE || !SECRETO, "Faltan REVISION_CLAVE o AUTH_SECRET — E2E de revisión deshabilitado");
+```
 
 - [ ] **Paso 7: Correr los E2E**
 
@@ -3780,15 +3816,15 @@ Crear `frontend/tests/board.spec.ts`:
 ```typescript
 import { expect, test } from "@playwright/test";
 
-const CLAVE = process.env.REVISION_CLAVE ?? "";
+import { iniciarSesionBoard } from "./helpers/sesion-board";
 
-test.skip(!CLAVE, "REVISION_CLAVE no seteada — E2E del board deshabilitado");
+const SECRETO = process.env.AUTH_SECRET ?? "";
+
+test.skip(!SECRETO, "AUTH_SECRET no seteada — E2E del board deshabilitado");
 
 test("el board lista chats y abre el detalle", async ({ page }) => {
   test.setTimeout(120_000);
-  // page.request, no el fixture `request`: ese es un APIRequestContext aislado
-  // y su cookie no llegaría a la navegación de abajo.
-  await page.request.post("/api/revision/acceso", { data: { nombre: "Dra. E2E", clave: CLAVE } });
+  await iniciarSesionBoard(page);
 
   await page.goto("/board/chats");
   await expect(page.getByRole("heading", { name: "Chats" })).toBeVisible();
