@@ -34,13 +34,33 @@ const filaResumenSchema = z.object({
   preview: z.string(),
 });
 
+const filaThreadSchema = z.object({ threadId: z.string() });
+
 export async function listarConversaciones(filtros: FiltrosChats): Promise<PaginaChats> {
   const desde = fechaDesde(filtros.rango);
+
+  // La búsqueda acota el conjunto ANTES de paginar. Filtrando después, un
+  // término solo se encontraría entre las 30 conversaciones más recientes y
+  // el resto quedaría afuera sin aviso — una búsqueda que omite en silencio
+  // es peor que no tenerla. Además deja `mensajes` y `preview` correctos:
+  // salen de la conversación entera, no de las filas que matchearon.
+  let threadsCoincidentes: string[] | null = null;
+  if (filtros.busqueda) {
+    const filasCoincidentes = filaThreadSchema.array().parse(
+      await prisma.$queryRaw`
+        SELECT DISTINCT m.thread_id AS "threadId"
+        FROM mastra.mastra_messages m
+        WHERE m.content::text ILIKE ${`%${filtros.busqueda}%`}`,
+    );
+    threadsCoincidentes = filasCoincidentes.map((fila) => fila.threadId);
+    if (threadsCoincidentes.length === 0) return { chats: [], cursor: null };
+  }
 
   const where: Prisma.ConversationWhereInput = {
     ...conversacionesReales(desde),
     ...(filtros.categoria ? { categoria: filtros.categoria } : {}),
     ...(filtros.estado ? { caso: { estado: filtros.estado } } : {}),
+    ...(threadsCoincidentes ? { threadId: { in: threadsCoincidentes } } : {}),
   };
 
   const filas = await prisma.conversation.findMany({
@@ -73,26 +93,23 @@ export async function listarConversaciones(filtros: FiltrosChats): Promise<Pagin
                    ) AS preview
             FROM mastra.mastra_messages m
             WHERE m.thread_id IN (${Prisma.join(threadIds)})
-              ${filtros.busqueda ? Prisma.sql`AND m.content::text ILIKE ${`%${filtros.busqueda}%`}` : Prisma.empty}
             GROUP BY m.thread_id`,
         );
 
   const porThread = new Map(resumenes.map((resumen) => [resumen.threadId, resumen]));
 
-  const chats = filas
-    .filter((fila) => !filtros.busqueda || porThread.has(fila.threadId))
-    .map((fila) => {
-      const resumen = porThread.get(fila.threadId);
-      return {
-        id: fila.id,
-        fecha: fila.createdAt.toISOString(),
-        categoria: fila.categoria,
-        estadoCaso: fila.caso?.estado ?? null,
-        mensajes: resumen?.mensajes ?? 0,
-        preview: recortar(resumen?.preview ?? ""),
-        notas: fila._count.notas,
-      };
-    });
+  const chats = filas.map((fila) => {
+    const resumen = porThread.get(fila.threadId);
+    return {
+      id: fila.id,
+      fecha: fila.createdAt.toISOString(),
+      categoria: fila.categoria,
+      estadoCaso: fila.caso?.estado ?? null,
+      mensajes: resumen?.mensajes ?? 0,
+      preview: recortar(resumen?.preview ?? ""),
+      notas: fila._count.notas,
+    };
+  });
 
   return {
     chats,

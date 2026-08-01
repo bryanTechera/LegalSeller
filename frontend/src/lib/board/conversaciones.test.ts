@@ -64,4 +64,28 @@ describe("listarConversaciones", () => {
     const resultado = await listarConversaciones({ rango: "30d" });
     expect(resultado.cursor).toBeNull();
   });
+
+  // La búsqueda tiene que acotar ANTES de paginar: si filtrara después, un
+  // match fuera de las 30 más recientes no aparecería nunca.
+  it("con búsqueda restringe el findMany a los threads que matchean", async () => {
+    prismaMock.prisma.$queryRaw
+      .mockResolvedValueOnce([{ threadId: "chat-c9" }])
+      .mockResolvedValueOnce([{ threadId: "chat-c9", mensajes: 4, preview: "Me despidieron" }]);
+    prismaMock.prisma.conversation.findMany.mockResolvedValue([filaConversacion("c9")]);
+
+    await listarConversaciones({ rango: "30d", busqueda: "despido" });
+
+    const where = prismaMock.prisma.conversation.findMany.mock.calls[0][0].where;
+    expect(where.threadId).toEqual({ in: ["chat-c9"] });
+  });
+
+  it("búsqueda sin coincidencias devuelve vacío sin consultar conversaciones", async () => {
+    prismaMock.prisma.$queryRaw.mockResolvedValueOnce([]);
+    prismaMock.prisma.conversation.findMany.mockClear();
+
+    const resultado = await listarConversaciones({ rango: "30d", busqueda: "inexistente" });
+
+    expect(resultado).toEqual({ chats: [], cursor: null });
+    expect(prismaMock.prisma.conversation.findMany).not.toHaveBeenCalled();
+  });
 });
