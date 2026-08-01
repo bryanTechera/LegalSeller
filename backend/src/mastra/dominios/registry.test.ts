@@ -19,8 +19,8 @@ describe("registry de dominios", () => {
     ]);
   });
 
-  it("laboral, familia y transito habilitadas, con sus subcategorías habilitadas", () => {
-    expect(categoriasHabilitadas().map((c) => c.id)).toEqual(["laboral", "familia", "transito"]);
+  it("laboral, familia, transito y relaciones-consumo habilitadas, con sus subcategorías habilitadas", () => {
+    expect(categoriasHabilitadas().map((c) => c.id)).toEqual(["laboral", "familia", "transito", "relaciones-consumo"]);
     expect(subcategoriasHabilitadas("laboral").map((s) => s.id)).toEqual([
       "despido",
       "rubros-laborales",
@@ -35,6 +35,10 @@ describe("registry de dominios", () => {
       "violencia-de-genero",
     ]);
     expect(subcategoriasHabilitadas("transito")).toEqual([]);
+    expect(subcategoriasHabilitadas("relaciones-consumo").map((s) => s.id)).toEqual([
+      "derechos-del-consumidor",
+      "procedimiento-mef-judicial",
+    ]);
     expect(subcategoriasHabilitadas("arrendamiento-desalojo")).toEqual([]);
   });
 
@@ -42,6 +46,7 @@ describe("registry de dominios", () => {
     expect(subcategoriaUnicaHabilitada("laboral")).toBeNull();
     expect(subcategoriaUnicaHabilitada("familia")).toBeNull();
     expect(subcategoriaUnicaHabilitada("transito")).toBeNull();
+    expect(subcategoriaUnicaHabilitada("relaciones-consumo")).toBeNull();
   });
 
   it("el enum asignable incluye habilitadas y escapes, nunca deshabilitadas", () => {

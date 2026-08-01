@@ -9,6 +9,7 @@ const CONTENT: Partial<Record<AgentId, string>> = {
   laboral: PERSONALIDAD,
   familia: PERSONALIDAD,
   transito: PERSONALIDAD,
+  "relaciones-consumo": PERSONALIDAD,
 };
 
 export function identidadJurcoRule(_readOnly: ReadOnlyState | null, agentId: AgentId): string | null {

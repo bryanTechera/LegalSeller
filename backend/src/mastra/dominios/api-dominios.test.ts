@@ -27,6 +27,11 @@ describe("payload de /api/dominios", () => {
           nombre: "Tránsito",
           subcategoriasHabilitadas: [],
         },
+        {
+          id: "relaciones-consumo",
+          nombre: "Relaciones de consumo",
+          subcategoriasHabilitadas: ["derechos-del-consumidor", "procedimiento-mef-judicial"],
+        },
       ],
     });
   });

@@ -8,6 +8,8 @@ import { rolEspecialistaLaboralRule } from "../dominios/laboral/rules/rol-especi
 import { casoSensibleRule } from "../dominios/recepcion/rules/caso-sensible.js";
 import { conduccionTriageRule } from "../dominios/recepcion/rules/conduccion-triage.js";
 import { misionClasificacionRule } from "../dominios/recepcion/rules/mision-clasificacion.js";
+import { conductaConsumoRule } from "../dominios/relaciones-consumo/rules/conducta-consumo.js";
+import { rolEspecialistaConsumoRule } from "../dominios/relaciones-consumo/rules/rol-especialista-consumo.js";
 import { conductaTransitoRule } from "../dominios/transito/rules/conducta-transito.js";
 import { rolEspecialistaTransitoRule } from "../dominios/transito/rules/rol-especialista-transito.js";
 
@@ -27,6 +29,8 @@ const RULES: readonly RegistryItem[] = [
   { id: "conducta-familia", fn: conductaFamiliaRule, critical: true },
   { id: "rol-especialista-transito", fn: rolEspecialistaTransitoRule },
   { id: "conducta-transito", fn: conductaTransitoRule, critical: true },
+  { id: "rol-especialista-consumo", fn: rolEspecialistaConsumoRule },
+  { id: "conducta-consumo", fn: conductaConsumoRule, critical: true },
   { id: "captacion-caso", fn: captacionCasoRule, posicion: "final" },
 ];
 

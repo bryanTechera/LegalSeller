@@ -70,8 +70,10 @@ Cobertura de la categoría: siniestros con lesiones y reclamo al seguro obligato
 ### Relaciones de consumo
 | Subcategoría | Estado |
 |---|---|
-| Derechos del consumidor | Pendiente |
-| Procedimiento ante MEF y poder judicial | Pendiente |
+| Derechos del consumidor | ✅ **habilitada 2026-07-31** (Ley 17.250 consolidada + Decreto 244/000: información y precios, retracto en compras a distancia, prácticas y cláusulas abusivas, garantía, publicidad, incumplimiento y opciones del consumidor, responsabilidad, presupuesto, salud y seguridad) |
+| Procedimiento ante MEF y poder judicial | ✅ **habilitada 2026-07-31** (vía administrativa ante el Área Defensa del Consumidor —audiencia de conciliación y trámite en línea del MEF—, infracciones y sanciones, y proceso judicial de pequeñas causas de la Ley 18.507) |
+
+Los conceptos que atraviesan ambas subcategorías (relación de consumo y su prueba, derechos básicos, plazos de caducidad y prescripción) van como **corpus transversal a nivel categoría** (`Document.subcategoria = NULL`). Ver `docs/plans/2026-07-31-procesamiento-relaciones-consumo.md`.
 
 ## 2. Roadmap de habilitación
 
