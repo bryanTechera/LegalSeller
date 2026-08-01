@@ -2382,7 +2382,7 @@ function miles(n: number): string {
 
 export function MetricasPanel() {
   const [rango, setRango] = useState<Rango>("30d");
-  const { data, error, isLoading } = useSWR(`/api/board/metricas?rango=${rango}`, traer, {
+  const { data, error } = useSWR(`/api/board/metricas?rango=${rango}`, traer, {
     dedupingInterval: 30_000,
   });
 
