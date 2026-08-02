@@ -12,15 +12,29 @@ import styles from "./ChatPanel.module.css";
 const MAX_MESSAGE_LENGTH = 4000;
 
 /**
- * Preguntas de ejemplo dentro del alcance habilitado de v1 (solo
- * Laboral → Despido, ver docs/dominio-consultas.md §2). El eyebrow es el
- * subtema del despido; al habilitar más categorías vuelve a ser la categoría.
+ * Una pregunta por categoría habilitada (ver docs/dominio-consultas.md §2).
+ * La tarjeta muestra solo la pregunta —no el nombre del rubro—: un caso concreto
+ * representa el área mejor que su etiqueta y da un punto de entrada real a la
+ * conversación (criterio del equipo legal, revisión del 2026-08-01). El `area`
+ * documenta qué categoría representa cada una; no se renderiza.
  */
 const SUGGESTED_QUESTIONS = [
-  { topic: "Indemnización", question: "¿Cuánto me corresponde si me despiden sin causa?" },
-  { topic: "Certificación médica", question: "¿Me pueden despedir estando certificado?" },
-  { topic: "Embarazo", question: "¿Pueden despedirme estando embarazada?" },
-  { topic: "Plazos", question: "¿Cuánto tiempo tengo para reclamar un despido?" },
+  {
+    area: "laboral",
+    question:
+      "Me despidieron en el período de prueba pero estando certificado por BSE. ¿Me tienen que pagar algo?",
+  },
+  { area: "familia", question: "¿Hasta qué edad se puede tramitar la investigación de paternidad?" },
+  {
+    area: "arrendamiento",
+    question:
+      "¿Qué requisitos debe reunir un contrato para acceder al régimen de arrendamiento sin garantía de la LUC?",
+  },
+  {
+    area: "transito",
+    question:
+      "Un automóvil me chocó y me lesionó, pero yo tenía alcohol en sangre. ¿Igual me corresponde indemnización?",
+  },
 ];
 
 export function ChatPanel() {
@@ -71,12 +85,11 @@ export function ChatPanel() {
           <h2 className={styles.heroTitle}>¿Qué necesitás resolver hoy?</h2>
           <p className={styles.heroSubtitle}>Orientación legal en segundos, siempre con la fuente citada.</p>
           {composer(true)}
-          <p className={styles.suggestionsLabel}>Resolvé tus dudas sobre despidos</p>
+          <p className={styles.suggestionsLabel}>Resolvé tus dudas</p>
           <ul className={styles.suggestions}>
-            {SUGGESTED_QUESTIONS.map(({ topic, question }) => (
-              <li key={topic}>
+            {SUGGESTED_QUESTIONS.map(({ area, question }) => (
+              <li key={area}>
                 <button type="button" className={styles.suggestion} onClick={() => void sendMessage(question)}>
-                  <span className={styles.suggestionCategory}>{topic}</span>
                   <span className={styles.suggestionText}>{question}</span>
                 </button>
               </li>
