@@ -1,5 +1,6 @@
 import { crearAgente } from "../../common/crear-agente.js";
 import { subagentMemory } from "../../common/memory/index.js";
+import { MODELO_RECEPCION } from "../../config/modelos.js";
 import { registrarCasoTool } from "../../tools/casos/registrar-caso-tool.js";
 import { asignarClasificacionTool } from "../../tools/clasificacion/asignar-clasificacion-tool.js";
 
@@ -19,6 +20,7 @@ export const recepcionAgent = crearAgente({
     [asignarClasificacionTool.id]: asignarClasificacionTool,
     [registrarCasoTool.id]: registrarCasoTool,
   }),
+  model: MODELO_RECEPCION,
   memory: subagentMemory,
   maxSteps: 5,
 });

@@ -1,5 +1,6 @@
 import { crearAgente } from "../../common/crear-agente.js";
 import { sharedMemory } from "../../common/memory/index.js";
+import { MODELO_ESPECIALISTA } from "../../config/modelos.js";
 import { crearSkillTools } from "../../skills/tool-skills/index.js";
 import { registrarCasoTool } from "../../tools/casos/registrar-caso-tool.js";
 import { corregirClasificacionTool } from "../../tools/clasificacion/corregir-clasificacion-tool.js";
@@ -19,5 +20,6 @@ export const laboralAgent = crearAgente({
     [corregirClasificacionTool.id]: corregirClasificacionTool,
     ...crearSkillTools("laboral", readOnly),
   }),
+  model: MODELO_ESPECIALISTA,
   memory: sharedMemory,
 });
