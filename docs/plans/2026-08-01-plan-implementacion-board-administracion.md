@@ -4286,3 +4286,31 @@ d. Correr `pnpm escenario listar` contra producción para confirmar que el runne
 - **Guards que se abren a propósito.** La Tarea 9 modifica dos protecciones existentes: el `esRevision: true` de `crearNota` y el filtro equivalente de `feedback-pull`. Las dos son intencionales y están justificadas en el spec §5.2. Se abren con un parámetro con nombre, nunca borrando el chequeo — si en la revisión ves un `crearNota` sin `alcance` explícito apuntando a una conversación real, es un bug.
 - **Firmas de `lib/revision/*` verificadas** contra el código actual: `construirTimeline(threadId, { conSpans })`, `getCasoDeSesion(conversationId)`, `listarNotasDeSesion(conversationId)`, `NotaThread({ nota, onResponder, onResolver })`, `NotaComposer({ cita, onCancelar, onGuardar })`. Lo único sin verificar es el **método HTTP** del handler que resuelve una nota — el paso 13 de la Tarea 9 lo chequea antes de dar la tarea por buena.
 - **Verificación antes de afirmar.** Ninguna tarea se reporta completa sin la salida del comando de test correspondiente pegada en el reporte.
+
+---
+
+## Follow-ups conocidos (triage del review final de la rama)
+
+Todo lo de abajo se evaluó y se decidió **no bloquear el merge**. Queda registrado para que nadie lo redescubra.
+
+**Vale la pena hacer pronto**
+
+- `/api/revision/notas/[notaId]` y `.../respuestas` resuelven la nota por id y nunca pasaron por `getSesionRevision()`. Era inocuo cuando toda nota colgaba de una sesión de revisión; ahora hay dos poblaciones. Un portador de `REVISION_CLAVE` podría marcar `RESUELTA` una nota sobre un chat real y esconderla de `feedback:pull`. Requiere adivinar un cuid — defensa en profundidad, no puerta abierta.
+- El rango temporal y los filtros viven en `useState`, no en la URL (el spec §4.6 prometía reflejarlos). Ninguna vista del board es compartible por link.
+- El gráfico "Funnel de captación" no es monótono: un `Caso` con estado `FUERA_DE_COBERTURA` se crea antes de que `asignarClasificacion` escriba `Conversation.categoria`, así que cuenta en "Con caso" y no en "Clasificadas". Es correcto por diseño y se ve como un dashboard roto. O sale del funnel a su propio contador, o va una aclaración.
+- `await mutate()` está dentro del `try` en los tres handlers de `DetalleChat` y en `SesionView`: si falla la revalidación de SWR se devuelve `false` aunque la escritura ya funcionó, y un reintento duplica la nota. Los dos archivos comparten el patrón — se arreglan juntos o ninguno.
+
+**Menores, cuando se toque el archivo**
+
+- `estadoCaso` se muestra como "en conversacion", sin tilde.
+- `mailer.ts` no tiene tests de sus caminos de error, e interpola `${url}` en el `href` sin escapar `&`.
+- Los tests del endpoint de métricas no assertan el happy path (200 + body), solo el argumento con que se llamó.
+- El handler de métricas loguea `error.message` sin `error.stack`.
+- Falta un test que meta un modelo desconocido en `calcularAgente` y confirme que `costoUsd: null` sobrevive el `.map()`.
+- `paginasExtra` en `ListadoChats` solo appendea: las páginas de filtros viejos se filtran del render pero no se podan del estado.
+- El select de categoría deriva sus opciones del resultado actual, así que se angosta con cualquier filtro activo. "Todas" siempre está, así que es fricción y no una trampa.
+
+**Deuda de escala (hoy irrelevante, con 43 conversaciones)**
+
+- La búsqueda arma un `IN` sin `LIMIT` con todos los `thread_id` que matchean; a volumen choca contra el techo de 65535 parámetros de Postgres. Va junto con la nota del spec §5.2 sobre migrar a un índice GIN.
+- `calcularAgente` filtra por `startedAt` del span mientras el funnel y el volumen filtran por `Conversation.createdAt`. Para una conversación en el borde de la ventana, su costo cuenta y la conversación no.
