@@ -38,10 +38,14 @@ function segundos(ms: number): string {
  * Suma el costo de los modelos conocidos. Un modelo sin precio en la tabla
  * aporta `null`, y eso se marca como total parcial en vez de esconderse: un
  * costo que parece completo pero omite un modelo miente más que uno marcado.
+ * Si NINGÚN modelo del rango tiene precio, la suma de ese conjunto vacío es
+ * 0 — y "USD 0.00 (parcial)" se lee como gasto real, no como "no tenemos
+ * precio para nada de lo que corrió". Ese caso corta antes a "sin dato".
  */
-function costoTotal(modelos: Metricas["agente"]["modelos"]): string {
+export function costoTotal(modelos: Metricas["agente"]["modelos"]): string {
   if (modelos.length === 0) return "—";
   const conocidos = modelos.filter((modelo) => modelo.costoUsd !== null);
+  if (conocidos.length === 0) return "sin dato";
   const total = conocidos.reduce((suma, modelo) => suma + (modelo.costoUsd ?? 0), 0);
   const parcial = conocidos.length < modelos.length ? " (parcial)" : "";
   return `USD ${total.toFixed(2)}${parcial}`;
