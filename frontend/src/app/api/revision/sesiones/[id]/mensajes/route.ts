@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { orchestrateChatTurn } from "@/lib/chat-orchestrator";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { getExperto } from "@/lib/revision/experto-cookie";
+import { getIdentidadBoard } from "@/lib/board/identidad";
 import { getSesionRevision } from "@/lib/revision/sesiones";
 import { mensajeRevisionSchema, parseRequestBody } from "@/lib/validations";
 import { logger } from "@/utils/logger";
@@ -15,7 +15,7 @@ import { logger } from "@/utils/logger";
  */
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const experto = await getExperto();
+    const experto = await getIdentidadBoard();
     if (!experto) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
     const { id } = await params;

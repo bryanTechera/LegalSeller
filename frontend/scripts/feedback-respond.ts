@@ -30,8 +30,21 @@ async function main(): Promise<void> {
 
   if (values.sesion) {
     if (!texto) throw new Error(`--sesion requiere --texto o --archivo\n${USO}`);
-    const nota = await crearNota({ conversationId: values.sesion, origen: "DEV", autor: AUTOR_DEV, texto });
-    if (!nota) throw new Error(`La sesión ${values.sesion} no existe o no es una sesión de revisión.`);
+
+    // crearNota afirma qué tipo de conversación acepta según `alcance`
+    // ("revision" default exige esRevision:true; "chat-real" exige false) —
+    // hay que resolverlo acá, no asumir "revision": un chat real de
+    // consultante es exactamente el caso de uso que el board existe para
+    // cubrir, y antes de este fix ese branch quedaba cerrado sin excepción.
+    const conversacion = await prisma.conversation.findUnique({
+      where: { id: values.sesion },
+      select: { esRevision: true },
+    });
+    if (!conversacion) throw new Error(`La sesión ${values.sesion} no existe.`);
+    const alcance = conversacion.esRevision ? "revision" : "chat-real";
+
+    const nota = await crearNota({ conversationId: values.sesion, origen: "DEV", autor: AUTOR_DEV, texto, alcance });
+    if (!nota) throw new Error(`No se pudo crear la nota en la sesión ${values.sesion}.`);
     process.stdout.write(`Nota ${nota.id} creada (RESPONDIDA) en la sesión ${values.sesion}\n`);
     return;
   }

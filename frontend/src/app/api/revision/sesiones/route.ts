@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 
-import { getExperto } from "@/lib/revision/experto-cookie";
+import { getIdentidadBoard } from "@/lib/board/identidad";
 import { crearSesionRevision, listarSesionesRevision } from "@/lib/revision/sesiones";
 import { crearSesionSchema, parseRequestBody } from "@/lib/validations";
 import { logger } from "@/utils/logger";
 
 export async function GET(request: Request) {
   try {
-    const experto = await getExperto();
+    const experto = await getIdentidadBoard();
     if (!experto) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     const incluirBorradores = new URL(request.url).searchParams.get("borradores") === "1";
     return NextResponse.json({ sesiones: await listarSesionesRevision({ incluirBorradores }) });
@@ -19,7 +19,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const experto = await getExperto();
+    const experto = await getIdentidadBoard();
     if (!experto) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
     const validation = await parseRequestBody(request, crearSesionSchema);

@@ -1,3 +1,8 @@
+// Playwright no hereda el .env que sí carga el dev server que levanta:
+// sin esto, los specs que dependen de AUTH_SECRET o REVISION_CLAVE se
+// saltean solos y `pnpm test` reporta verde sin haber corrido nada.
+import "dotenv/config";
+
 import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({

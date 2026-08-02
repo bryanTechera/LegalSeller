@@ -13,14 +13,19 @@ import { construirTimeline } from "../src/lib/revision/timeline";
 const DESTINO = path.resolve(process.cwd(), "../tmp/feedback-legal");
 
 async function main(): Promise<void> {
+  // Incluye sesiones de revisión Y chats reales anotados desde el board: las
+  // fallas de producción son el material más valioso del loop nota -> fix -> eval.
+  // El browser es siempre el lado experto (acá y en /revision) y el CLI
+  // (feedback:respond) es siempre el lado dev, así que el mismo criterio
+  // ABIERTA vale para los dos orígenes de conversación sin distinción.
   const sesiones = await prisma.conversation.findMany({
-    where: { esRevision: true, notas: { some: { estado: "ABIERTA" } } },
-    select: { id: true, threadId: true, titulo: true, creadaPor: true },
+    where: { notas: { some: { estado: "ABIERTA" } } },
+    select: { id: true, threadId: true, titulo: true, creadaPor: true, esRevision: true },
     orderBy: { updatedAt: "desc" },
   });
 
   if (sesiones.length === 0) {
-    process.stdout.write("No hay sesiones de revisión con notas abiertas.\n");
+    process.stdout.write("No hay conversaciones con notas abiertas.\n");
     return;
   }
 
@@ -31,7 +36,13 @@ async function main(): Promise<void> {
       listarNotasDeSesion(sesion.id),
     ]);
     const archivo = path.join(DESTINO, `${sesion.id}.md`);
-    writeFileSync(archivo, formatearSesionMarkdown({ sesion, timeline, notas }), "utf8");
+    const etiquetada = {
+      id: sesion.id,
+      threadId: sesion.threadId,
+      titulo: sesion.esRevision ? sesion.titulo : `[chat real] ${sesion.titulo ?? sesion.id}`,
+      creadaPor: sesion.creadaPor,
+    };
+    writeFileSync(archivo, formatearSesionMarkdown({ sesion: etiquetada, timeline, notas }), "utf8");
     const abiertas = notas.filter((nota) => nota.estado === "ABIERTA").length;
     process.stdout.write(`${archivo} — ${String(abiertas)} nota(s) abiertas\n`);
   }

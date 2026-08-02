@@ -1,0 +1,67 @@
+.shell {
+  display: grid;
+  grid-template-columns: 15rem 1fr;
+  min-height: 100dvh;
+  background: var(--paper);
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-6) var(--space-4);
+  background: var(--navy);
+  color: var(--on-navy);
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-family-display);
+  letter-spacing: var(--tracking-display);
+  text-transform: uppercase;
+}
+
+.nav {
+  display: grid;
+  gap: var(--space-1);
+  list-style: none;
+}
+
+.link {
+  display: block;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--on-navy-muted);
+  text-decoration: none;
+  font-size: var(--text-sm);
+}
+
+.link:hover {
+  background: var(--overlay-on-navy);
+  color: var(--on-navy);
+}
+
+.linkActivo {
+  background: var(--accent);
+  color: var(--on-navy);
+}
+
+.usuario {
+  margin-top: auto;
+  font-size: var(--text-xs);
+  color: var(--on-navy-muted);
+  word-break: break-all;
+}
+
+.contenido {
+  padding: var(--space-8);
+  overflow-x: auto;
+}
+
+@media (width <= 48rem) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+}

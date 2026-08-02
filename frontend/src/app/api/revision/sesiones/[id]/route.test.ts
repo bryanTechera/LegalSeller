@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const expertoMock = vi.hoisted(() => ({ getExperto: vi.fn() }));
-vi.mock("@/lib/revision/experto-cookie", () => expertoMock);
+const identidadMock = vi.hoisted(() => ({ getIdentidadBoard: vi.fn() }));
+vi.mock("@/lib/board/identidad", () => identidadMock);
 
 const sesionesMock = vi.hoisted(() => ({
   getSesionRevision: vi.fn(),
@@ -31,7 +31,7 @@ function patchRequest(body: unknown): Request {
 describe("/api/revision/sesiones/:id", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    expertoMock.getExperto.mockResolvedValue({ nombre: "Dra. García" });
+    identidadMock.getIdentidadBoard.mockResolvedValue({ nombre: "Dra. García", tipo: "humano" });
     sesionesMock.getSesionRevision.mockResolvedValue({
       id: "s1",
       sessionId: "ss1",
@@ -78,7 +78,7 @@ describe("/api/revision/sesiones/:id", () => {
   });
 
   it("PATCH sin auth → 401", async () => {
-    expertoMock.getExperto.mockResolvedValue(null);
+    identidadMock.getIdentidadBoard.mockResolvedValue(null);
     const response = await PATCH(patchRequest({ borrador: false }), params);
     expect(response.status).toBe(401);
   });

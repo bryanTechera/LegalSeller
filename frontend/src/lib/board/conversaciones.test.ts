@@ -1,0 +1,175 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const prismaMock = vi.hoisted(() => ({
+  prisma: { conversation: { findMany: vi.fn(), findFirst: vi.fn() }, $queryRaw: vi.fn() },
+}));
+vi.mock("@/lib/prisma", () => prismaMock);
+
+// conversaciones.ts también usa extraerTexto (de este mismo módulo) para el
+// preview de listarConversaciones — un mock que reemplaza el módulo entero
+// rompe esas 8 pruebas existentes. importOriginal conserva extraerTexto real
+// y solo intercepta construirTimeline, que es lo nuevo que necesita este test.
+const timelineMock = vi.hoisted(() => ({ construirTimeline: vi.fn() }));
+vi.mock("@/lib/revision/timeline", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/revision/timeline")>();
+  return { ...actual, construirTimeline: timelineMock.construirTimeline };
+});
+
+const sesionesMock = vi.hoisted(() => ({ getCasoDeSesion: vi.fn() }));
+vi.mock("@/lib/revision/sesiones", () => sesionesMock);
+
+const notasMock = vi.hoisted(() => ({ listarNotasDeSesion: vi.fn() }));
+vi.mock("@/lib/revision/notas", () => notasMock);
+
+import { listarConversaciones, obtenerConversacion } from "./conversaciones";
+
+function filaConversacion(id: string) {
+  return {
+    id,
+    threadId: `chat-${id}`,
+    categoria: "laboral",
+    createdAt: new Date("2026-07-30T10:00:00.000Z"),
+    caso: { estado: "CAPTADO" },
+    _count: { notas: 2 },
+  };
+}
+
+describe("listarConversaciones", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    prismaMock.prisma.conversation.findMany.mockResolvedValue([filaConversacion("c1")]);
+    prismaMock.prisma.$queryRaw.mockResolvedValue([
+      { threadId: "chat-c1", mensajes: 6, preview: "Me despidieron sin causa" },
+    ]);
+  });
+
+  it("filtra siempre por conversaciones reales", async () => {
+    await listarConversaciones({ rango: "30d" });
+    const where = prismaMock.prisma.conversation.findMany.mock.calls[0][0].where;
+    expect(where).toMatchObject({ esRevision: false });
+  });
+
+  it("combina la fila de negocio con el conteo y el preview de mensajes", async () => {
+    const resultado = await listarConversaciones({ rango: "30d" });
+    expect(resultado.chats).toEqual([
+      {
+        id: "c1",
+        fecha: "2026-07-30T10:00:00.000Z",
+        categoria: "laboral",
+        estadoCaso: "CAPTADO",
+        mensajes: 6,
+        preview: "Me despidieron sin causa",
+        notas: 2,
+      },
+    ]);
+  });
+
+  it("una conversación sin mensajes persistidos no rompe el listado", async () => {
+    prismaMock.prisma.$queryRaw.mockResolvedValue([]);
+    const resultado = await listarConversaciones({ rango: "30d" });
+    expect(resultado.chats[0]).toMatchObject({ mensajes: 0, preview: "" });
+  });
+
+  it("el filtro de estado se aplica sobre el caso", async () => {
+    await listarConversaciones({ rango: "30d", estado: "CAPTADO" });
+    const where = prismaMock.prisma.conversation.findMany.mock.calls[0][0].where;
+    expect(where.caso).toMatchObject({ estado: "CAPTADO" });
+  });
+
+  it("devuelve cursor null cuando la página no está llena", async () => {
+    const resultado = await listarConversaciones({ rango: "30d" });
+    expect(resultado.cursor).toBeNull();
+  });
+
+  // La búsqueda tiene que acotar ANTES de paginar: si filtrara después, un
+  // match fuera de las 30 más recientes no aparecería nunca.
+  it("con búsqueda restringe el findMany a los threads que matchean", async () => {
+    prismaMock.prisma.$queryRaw
+      .mockResolvedValueOnce([{ threadId: "chat-c9" }])
+      .mockResolvedValueOnce([{ threadId: "chat-c9", mensajes: 4, preview: "Me despidieron" }]);
+    prismaMock.prisma.conversation.findMany.mockResolvedValue([filaConversacion("c9")]);
+
+    await listarConversaciones({ rango: "30d", busqueda: "despido" });
+
+    const where = prismaMock.prisma.conversation.findMany.mock.calls[0][0].where;
+    expect(where.threadId).toEqual({ in: ["chat-c9"] });
+  });
+
+  it("búsqueda sin coincidencias devuelve vacío sin consultar conversaciones", async () => {
+    prismaMock.prisma.$queryRaw.mockResolvedValueOnce([]);
+    prismaMock.prisma.conversation.findMany.mockClear();
+
+    const resultado = await listarConversaciones({ rango: "30d", busqueda: "inexistente" });
+
+    expect(resultado).toEqual({ chats: [], cursor: null });
+    expect(prismaMock.prisma.conversation.findMany).not.toHaveBeenCalled();
+  });
+
+  // Regression guard: una regex que borra "format"/"parts"/"type"/"text" como
+  // ruido JSON también se come esas palabras cuando las escribe el consultante.
+  it("el preview conserva palabras como 'text' que no son claves JSON", async () => {
+    prismaMock.prisma.$queryRaw.mockResolvedValue([
+      { threadId: "chat-c1", mensajes: 3, preview: "le mande un text a mi jefe avisando que renunciaba" },
+    ]);
+
+    const resultado = await listarConversaciones({ rango: "30d" });
+
+    expect(resultado.chats[0]?.preview).toBe("le mande un text a mi jefe avisando que renunciaba");
+  });
+
+  it("el preview de un mensaje v2 con parts devuelve solo el texto", async () => {
+    prismaMock.prisma.$queryRaw.mockResolvedValue([
+      {
+        threadId: "chat-c1",
+        mensajes: 3,
+        preview: JSON.stringify({ format: 2, parts: [{ type: "text", text: "Hola, tengo una consulta" }] }),
+      },
+    ]);
+
+    const resultado = await listarConversaciones({ rango: "30d" });
+
+    expect(resultado.chats[0]?.preview).toBe("Hola, tengo una consulta");
+  });
+});
+
+describe("obtenerConversacion", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    prismaMock.prisma.conversation.findFirst.mockResolvedValue({
+      id: "c1",
+      threadId: "chat-c1",
+      categoria: "laboral",
+      createdAt: new Date("2026-07-30T10:00:00.000Z"),
+    });
+    timelineMock.construirTimeline.mockResolvedValue([{ tipo: "mensaje", id: "m1" }]);
+    sesionesMock.getCasoDeSesion.mockResolvedValue({ estado: "CAPTADO" });
+    notasMock.listarNotasDeSesion.mockResolvedValue([]);
+  });
+
+  it("arma el detalle con timeline, caso y notas", async () => {
+    const detalle = await obtenerConversacion("c1");
+    expect(detalle).toMatchObject({
+      id: "c1",
+      threadId: "chat-c1",
+      categoria: "laboral",
+      timeline: [{ tipo: "mensaje", id: "m1" }],
+      caso: { estado: "CAPTADO" },
+      notas: [],
+    });
+  });
+
+  it("pide la timeline con spans", async () => {
+    await obtenerConversacion("c1");
+    expect(timelineMock.construirTimeline).toHaveBeenCalledWith("chat-c1", { conSpans: true });
+  });
+
+  // Una sesión de revisión no es un chat de consultante: no se sirve por acá.
+  it("una conversación de revisión no se encuentra", async () => {
+    prismaMock.prisma.conversation.findFirst.mockResolvedValue(null);
+    expect(await obtenerConversacion("s1")).toBeNull();
+    expect(prismaMock.prisma.conversation.findFirst.mock.calls[0][0].where).toMatchObject({
+      id: "s1",
+      esRevision: false,
+    });
+  });
+});

@@ -1,16 +1,20 @@
 import { expect, test } from "@playwright/test";
 
+import { iniciarSesionBoard } from "./helpers/sesion-board";
+
 const CLAVE = process.env.REVISION_CLAVE ?? "";
+const SECRETO = process.env.AUTH_SECRET ?? "";
 
-test.skip(!CLAVE, "REVISION_CLAVE no seteada — E2E de revisión deshabilitado");
+test.skip(!CLAVE || !SECRETO, "Faltan REVISION_CLAVE o AUTH_SECRET — E2E de revisión deshabilitado");
 
-test("ciclo de revisión: acceso → sesión → chat → nota inline → responder → resolver", async ({ page }) => {
-  test.setTimeout(120_000);
-  await page.goto("/revision");
+test("ciclo de revisión: sesión → chat → nota inline → responder → resolver", async ({ page }) => {
+  // 240s: el turno real de agente solo (sin board-auth.spec.ts compitiendo por
+  // el mismo backend, ver commit b6cf691) ronda 108s — 120s dejaba un margen
+  // demasiado fino y fallaba en el primer intento, pasando recién en el retry.
+  test.setTimeout(240_000);
 
-  await page.getByLabel("Tu nombre").fill("Dra. E2E");
-  await page.getByLabel("Clave de acceso").fill(CLAVE);
-  await page.getByRole("button", { name: "Entrar" }).click();
+  await iniciarSesionBoard(page);
+  await page.goto("/board/revision");
 
   await expect(page.getByRole("heading", { name: "Sesiones de revisión" })).toBeVisible();
   await page.getByLabel("Título de la nueva sesión").fill("E2E despido");

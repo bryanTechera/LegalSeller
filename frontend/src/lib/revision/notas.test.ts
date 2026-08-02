@@ -38,6 +38,40 @@ describe("crearNota", () => {
     expect(result).toBeNull();
     expect(tx.notaRevision.create).not.toHaveBeenCalled();
   });
+
+  it("por defecto sigue rechazando una conversación real", async () => {
+    tx.conversation.findFirst.mockResolvedValue(null);
+    const nota = await crearNota({
+      conversationId: "c1",
+      origen: "EXPERTO",
+      autor: "Dra. García",
+      texto: "Nota",
+    });
+    expect(nota).toBeNull();
+    expect(tx.conversation.findFirst.mock.calls[0][0].where).toMatchObject({
+      id: "c1",
+      esRevision: true,
+    });
+  });
+
+  // El board anota chats de consultantes reales: es el caso de uso que le da
+  // sentido al loop nota -> fix -> eval sobre fallas de producción.
+  it("con alcance chat-real acepta una conversación no-revisión", async () => {
+    tx.conversation.findFirst.mockResolvedValue({ id: "c1" });
+    tx.notaRevision.create.mockResolvedValue({ id: "n1" });
+    const nota = await crearNota({
+      conversationId: "c1",
+      origen: "DEV",
+      autor: "ana@jurco.uy",
+      texto: "Afirmó un plazo sin pasar por buscar-documentos",
+      alcance: "chat-real",
+    });
+    expect(nota).toEqual({ id: "n1" });
+    expect(tx.conversation.findFirst.mock.calls[0][0].where).toEqual({
+      id: "c1",
+      esRevision: false,
+    });
+  });
 });
 
 describe("responderNota", () => {
