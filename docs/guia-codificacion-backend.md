@@ -52,9 +52,9 @@ export const consultasAgent = new Agent({
   instructions: dynamicInstructions,   // (ctx) => string; tolera requestContext undefined
   memory: sharedMemory,
   tools: dynamicTools,                 // (ctx) => buildTools(readOnly)
-  model: gateway("google/gemini-3.6-flash"),
+  model: gateway(MODELO_ESPECIALISTA), // config/modelos.ts — un modelo por ROL
   maxRetries: 3,                       // main = 3, sub-agentes = 2
-  defaultOptions: dynamicOptions,      // maxSteps, modelSettings, providerOptions
+  defaultOptions: dynamicOptions,      // maxSteps + opcionesDeModelo(model)
   agents: subAgents,                   // patrón Networks: delegación a expertos
 });
 ```
@@ -62,13 +62,22 @@ export const consultasAgent = new Agent({
 Gotchas de producción (aprendidos, no negociables):
 
 - **`maxSteps` NO va en el constructor** (Mastra v1 lo dropea): va en `defaultOptions.maxSteps`.
-- **`temperature: 1` explícito** con Gemini vía gateway: el gateway aplica 0 por default y Gemini 3 con temperature 0 entra en loops.
-- Razonamiento: Gemini 3 usa `thinkingLevel`; Gemini 2.5 usa `thinkingBudget`. Con tools, Gemini 2.5 ignora `thinkingBudget: 0`.
+- **`temperature: 1` explícito** con Gemini vía gateway: el gateway aplica 0 por default y Gemini 3 con temperature 0 entra en loops. **Es un knob de Gemini, no universal** — en un modelo de razonamiento de OpenAI el equivalente es `providerOptions.openai.reasoningEffort`, y pinear `gateway.order: ["google","vertex"]` sobre un modelo `openai/` nombra proveedores que no lo sirven. Por eso `crearAgente` resuelve estas opciones por familia en `opcionesDeModelo(model)` en vez de hardcodearlas: agregar un modelo de una familia nueva es agregar una rama ahí, no tocar cada agente.
+- Razonamiento: Gemini 3 usa `thinkingLevel`; Gemini 2.5 usa `thinkingBudget`. Con tools, Gemini 2.5 ignora `thinkingBudget: 0`. En la serie GPT-5.6 el effort arranca en `none` y sus tokens de razonamiento **se facturan como salida** — subirlo mueve el costo y el time-to-first-token a la vez.
 - Agentes principales pinean `gateway.order: ["google", "vertex"]` para que funcione el implicit caching de Gemini.
 - `.network()` está deprecado — usar `.stream()` con `maxSteps`.
 - **`server.apiRoutes` (custom routes vía `registerApiRoute`) no pueden empezar con el `apiPrefix` built-in (default `/api`)** — Mastra lo valida al boot y tira `Error: Custom API route "..." must not start with "/api"` (comportamiento intencional desde ~1.29, no un bug). Las rutas custom van sin el prefijo (ej. `/dominios`, no `/api/dominios`); solo se puede recuperar el prefijo `/api` para rutas custom si se reconfigura `server.apiPrefix` a otro valor, pero eso mueve también las rutas built-in (`/api/agents`, etc.) — no vale la pena para un solo endpoint.
 
-Model stack de referencia (calibrar con evals): agentes principales → modelo mid-tier rápido (`gemini-3.6-flash`); sub-agentes expertos y generadores → tier lite; jueces de evals → el lite más barato; retrieval web (si se necesita) → `perplexity/sonar` con `tools: {}` obligatorio.
+Model stack vigente (un modelo por ROL, declarado en `src/mastra/config/modelos.ts`):
+
+| Rol | Modelo | Por qué |
+|---|---|---|
+| Receptor (`recepcion`) | `google/gemini-3.5-flash-lite` | Su generación entera es tiempo muerto — el orquestador la bufferea completa para leer el tool-call de `asignar-clasificacion` y recién ahí encadena al agente de categoría. El criterio es throughput, no inteligencia, y el tier lite no hace thinking extendido por default, así que la latencia no tiene cola larga. |
+| Agentes de categoría | `openai/gpt-5.6-luna` con `reasoningEffort: "low"` | Fidelidad al texto recuperado bajo un prompt largo (donde vive el modo de falla principal: afirmar lo que el corpus no trae) y encadenado de tools dentro del turno. La respuesta se streamea, así que solo se percibe el TTFT. |
+| Jueces de evals (cuando existan) | tier lite de Google | Con los agentes de categoría en OpenAI, el juez Gemini queda **cross-family** — ver `eval-design.md`. |
+| Retrieval web (si se necesita) | `perplexity/sonar` | `tools: {}` obligatorio. |
+
+Calibrar con `pnpm evals` ante cualquier cambio. Los precios que consume el board viven en `frontend/src/lib/board/costos.ts` y se mueven junto con este stack.
 
 ## 4. Tools
 

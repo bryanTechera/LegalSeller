@@ -40,13 +40,14 @@ Cuando un LLM evalúa la salida de otro LLM (LLM-as-judge), el judge introduce s
 
 **5. Scoring inflation / overconfidence.** El pointwise scoring tiende a comprimirse hacia el extremo alto del rango (sobreuso de scores 0.8-1.0). *Mitigación:* pairwise > pointwise para criterios subjetivos; en pointwise, definir anchor levels específicos por valor.
 
-### Advertencia: family bias si el judge es Gemini
+### Family bias: el stack quedó mixto (2026-08-02)
 
-Los agentes de LegalSeller corren `google/gemini-3.6-flash` (`crearAgente`). **Si el primer scorer LLM-as-judge se implementa con un juez Gemini** (ej. el "lite más barato" que sugiere `guia-codificacion-backend.md § 9`, que es Gemini), el setup queda **same-family** y aparece family bias tipo libro de texto:
+Desde la migración a un modelo por rol (`config/modelos.ts`), los agentes **no comparten familia**: el receptor corre `google/gemini-3.5-flash-lite` y los cinco agentes de categoría corren `openai/gpt-5.6-luna`. Eso parte la advertencia en dos:
 
-- Los scores absolutos de ese scorer estarán **inflados** respecto a un setup cross-family.
-- Comparar dos versiones de un prompt (ambas Gemini) es semi-confiable porque el sesgo aplica parejo a ambas — el **delta** sobrevive aunque el absoluto esté inflado.
-- Si algún día se prueba un agente de otra familia (`anthropic/claude-*`, `openai/*`), sus scores bajarían 10-30pp por la mera salida del family bias, **no** por degradación real. No leas ese delta como regresión.
+- **Scorers sobre agentes de categoría** (calidad de respuesta, fidelidad al corpus, voz) con un juez Gemini quedan **cross-family**: es el setup que esta guía recomendaba y no hace falta mitigar nada. Es la razón por la que el juez sigue siendo el lite de Google.
+- **Scorers sobre el receptor** (si alguno juzga la calidad del brief, no solo el match de tool-call) con un juez Gemini quedan **same-family**: ahí sí los absolutos vienen inflados. El delta entre dos versiones del prompt sobrevive porque el sesgo aplica parejo; el número absoluto, no.
+
+Corolario para leer el histórico: los scores de agentes de categoría anteriores al 2026-08-02 se midieron same-family. Una caída de 10-30pp que cruce esa fecha es la salida del family bias, **no** una regresión del prompt.
 
 ### Mitigaciones priorizadas
 

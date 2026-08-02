@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildDynamicInstructions, crearAgente } from "./crear-agente.js";
+import { buildDynamicInstructions, crearAgente, opcionesDeModelo } from "./crear-agente.js";
 
 const params = {
   id: "prueba",
@@ -29,5 +29,32 @@ describe("crearAgente", () => {
     // Startup/listing path: no request context — must not throw.
     const instructions = dynamicInstructions({ requestContext: undefined });
     expect(instructions).toBe("");
+  });
+});
+
+describe("opcionesDeModelo", () => {
+  it("Gemini: temperature explícita y provider order de Google", () => {
+    expect(opcionesDeModelo("google/gemini-3.5-flash-lite")).toEqual({
+      modelSettings: { temperature: 1 },
+      providerOptions: { gateway: { order: ["google", "vertex"] } },
+    });
+  });
+
+  it("OpenAI: effort de razonamiento, sin temperature ni proveedores de Google", () => {
+    // `temperature` es el knob de Gemini; en un modelo de razonamiento de
+    // OpenAI el equivalente es el effort. Y pinear ["google","vertex"] sobre
+    // un modelo `openai/` nombra proveedores que no lo sirven.
+    expect(opcionesDeModelo("openai/gpt-5.6-luna")).toEqual({
+      providerOptions: {
+        openai: { reasoningEffort: "low" },
+        gateway: { only: ["openai"] },
+      },
+    });
+  });
+
+  it("mantiene el effort en `low`: arriba de ahí el TTFT rompe el chat", () => {
+    const opciones = opcionesDeModelo("openai/gpt-5.6-luna");
+    const providerOptions = opciones.providerOptions as { openai: { reasoningEffort: string } };
+    expect(["none", "low"]).toContain(providerOptions.openai.reasoningEffort);
   });
 });

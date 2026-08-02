@@ -11,11 +11,16 @@
  * costo histórico en "sin dato".
  */
 const PRECIOS_POR_MILLON: Record<string, { entrada: number; salida: number }> = {
-  // Vigente desde 2026-08-02. Precio de lista de Google, confirmado también en
-  // OpenRouter; el caching implícito (provider order pineado en `crearAgente`)
-  // hace que el gasto real quede por debajo de esta estimación, nunca encima.
+  // Vigentes desde 2026-08-02 (stack por rol, ver `backend/src/mastra/config/modelos.ts`).
+  // El receptor corre el tier lite de Google; los agentes de categoría, el
+  // modelo de razonamiento barato de OpenAI. En Luna los tokens de
+  // razonamiento se facturan como salida, así que la columna de salida sube
+  // con el effort — con `low` el margen es chico, pero si alguien lo sube esta
+  // estimación se queda corta y el board lo va a mostrar bajo.
+  "gpt-5.6-luna": { entrada: 0.2, salida: 1.2 },
+  "gemini-3.5-flash-lite": { entrada: 0.3, salida: 2.5 },
+  // En uso hasta 2026-08-02. Se conservan por el costo histórico.
   "gemini-3.6-flash": { entrada: 1.5, salida: 7.5 },
-  // En uso hasta 2026-08-02. Se conserva por el costo histórico.
   "gemini-3-flash": { entrada: 0.3, salida: 2.5 },
   "gemini-embedding-001": { entrada: 0.15, salida: 0 },
 };

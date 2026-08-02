@@ -282,17 +282,27 @@ demostraste entender el caso — el momento lo decidís vos según cómo fluye l
 
 ## Thinking Configuration
 
-Los agentes corren `google/gemini-3.6-flash` vía `@ai-sdk/gateway`. La config está centralizada en `crearAgente` (`common/crear-agente.ts`) y hoy es deliberadamente mínima:
+El stack tiene **dos familias**, una por rol (`config/modelos.ts`), y las dos van vía `@ai-sdk/gateway`. La config está centralizada en `crearAgente` (`common/crear-agente.ts`), que resuelve las opciones por familia en `opcionesDeModelo(model)` — no toques modelo ni opciones agente por agente.
 
-- **`temperature: 1` explícito.** Requerido con gateway+Gemini; bajarlo puede causar looping en Gemini 3. No lo toques por agente.
+**Receptor — `google/gemini-3.5-flash-lite`:**
+
+- **`temperature: 1` explícito.** Requerido con gateway+Gemini; bajarlo puede causar looping en Gemini 3.
 - **Provider order pineado** (`providerOptions.gateway.order = ["google", "vertex"]`) para caching implícito.
-- **Sin `thinkingLevel` declarado.** Los agentes usan el default dinámico de Gemini 3 (razonamiento profundo cuando la query lo amerita). No declaramos `thinkingConfig` en ningún agente — es lo correcto para agentes conversacionales que integran contexto, clasifican y redactan.
+- **Sin `thinkingLevel` declarado.** Ojo con lo que eso significa en el tier lite: su default es `minimal`, o sea que el receptor **no hace thinking extendido**. El prompt carga solo con el trabajo que en un mid-tier se repartía con el razonamiento del modelo — las heurísticas de clasificación tienen que estar explícitas, no insinuadas.
 
-**Notas de comportamiento Gemini 3** (relevantes porque es nuestro modelo):
+**Agentes de categoría — `openai/gpt-5.6-luna`:**
+
+- **`reasoningEffort: "low"`.** La serie GPT-5.6 arranca en `none`. `low` es el techo para un turno de chat streameado: alcanza para que una cadena de tools no termine antes de tiempo, y los tokens de razonamiento (que se facturan como salida) no mueven la factura. De `high` para arriba el time-to-first-token se va a decenas de segundos.
+- **Sin `temperature`.** No es el knob de un modelo de razonamiento; el effort lo reemplaza.
+- **Sin `reasoningSummary`.** Declararlo hace llegar eventos `reasoning-delta` al stream, que el parser SSE del frontend no espera.
+
+**Notas de comportamiento Gemini 3** (aplican al receptor):
 
 - Instrucciones más cortas rinden mejor — podá agresivo; una idea = una vez.
 - No mezcles XML y Markdown pesado en un mismo bloque; el proyecto usa tags XML.
 - Prompts afinados para modelos anteriores producen **output inflado** en Gemini 3. Si migrás contenido de otro modelo, releé y podá el scaffolding que el modelo nuevo ya hace por default.
+
+**Consecuencia para las rules y skills:** todo el contenido inyectado se escribió y verificó contra Gemini. Los agentes de categoría ya no corren Gemini, así que las notas de arriba ("podá agresivo", "output inflado") describen al receptor, no a ellos. Ante una regresión de voz o formato en una categoría, la causa candidata número uno es esa: prompt calibrado para una familia, corriendo en otra. El gate es `pnpm evals` (datasets `voz-fuentes` y `fidelidad`).
 
 **Si en el futuro se agrega** un agente de routing puro (que solo delega) o un workflow en Gemini 2.5 (donde `thinkingBudget: 0` + `tools: {}` importan), la tabla extendida por tipo de agente — con `thinkingLevel`, `thinkingBudget` e `includeThoughts` — vive en la guía homóloga del proyecto colar (`agent-prompting.md § Thinking Configuration`). Hoy no aplica.
 
