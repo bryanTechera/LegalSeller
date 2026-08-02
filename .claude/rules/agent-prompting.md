@@ -282,13 +282,13 @@ demostraste entender el caso — el momento lo decidís vos según cómo fluye l
 
 ## Thinking Configuration
 
-Los agentes corren `google/gemini-3.6-flash` vía `@ai-sdk/gateway`. La config está centralizada en `crearAgente` (`common/crear-agente.ts`) y hoy es deliberadamente mínima:
+Los agentes corren `google/gemini-3.5-flash-lite` vía `@ai-sdk/gateway`. La config está centralizada en `crearAgente` (`common/crear-agente.ts`) y hoy es deliberadamente mínima:
 
 - **`temperature: 1` explícito.** Requerido con gateway+Gemini; bajarlo puede causar looping en Gemini 3. No lo toques por agente.
 - **Provider order pineado** (`providerOptions.gateway.order = ["google", "vertex"]`) para caching implícito.
-- **Sin `thinkingLevel` declarado.** Los agentes usan el default dinámico de Gemini 3 (razonamiento profundo cuando la query lo amerita). No declaramos `thinkingConfig` en ningún agente — es lo correcto para agentes conversacionales que integran contexto, clasifican y redactan.
+- **Sin `thinkingLevel` declarado.** No declaramos `thinkingConfig` en ningún agente. Ojo con lo que eso significa en el tier *lite*: medido el 2026-08-02 sobre el mismo prompt trivial, `gemini-3.6-flash` gastó 146 tokens de razonamiento y `gemini-3.5-flash-lite` gastó **0**. El lite no hace thinking extendido por default, así que el prompt carga solo con el trabajo que antes se repartía con el razonamiento del modelo — las heurísticas tienen que ser explícitas, no insinuadas.
 
-**Notas de comportamiento Gemini 3** (relevantes porque es nuestro modelo):
+**Notas de comportamiento Gemini 3** (relevantes porque es nuestra familia de modelos):
 
 - Instrucciones más cortas rinden mejor — podá agresivo; una idea = una vez.
 - No mezcles XML y Markdown pesado en un mismo bloque; el proyecto usa tags XML.

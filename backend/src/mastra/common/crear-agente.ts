@@ -61,7 +61,7 @@ export function crearAgente(params: CrearAgenteParams): Agent {
     buildInstructions,
     buildTools,
     memory,
-    model = "google/gemini-3.6-flash",
+    model = "google/gemini-3.5-flash-lite",
     maxSteps = 10,
     maxRetries = 3,
   } = params;

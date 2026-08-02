@@ -17,7 +17,7 @@ describe("calcularAgente", () => {
     vi.resetAllMocks();
     prismaMock.prisma.$queryRaw
       .mockResolvedValueOnce([
-        { modelo: "google/gemini-3-flash", tokensEntrada: 2_000_000, tokensSalida: 500_000 },
+        { modelo: "google/gemini-3.5-flash-lite", tokensEntrada: 2_000_000, tokensSalida: 500_000 },
       ])
       .mockResolvedValueOnce([{ tool: "buscar-documentos", llamadas: 120 }])
       .mockResolvedValueOnce([{ p50Ms: 1800, p95Ms: 7400 }]);
@@ -26,7 +26,7 @@ describe("calcularAgente", () => {
   it("adjunta el costo estimado a cada modelo", async () => {
     const agente = await calcularAgente(DESDE);
     expect(agente.modelos[0]).toEqual({
-      modelo: "google/gemini-3-flash",
+      modelo: "google/gemini-3.5-flash-lite",
       tokensEntrada: 2_000_000,
       tokensSalida: 500_000,
       costoUsd: 0.3 * 2 + 2.5 * 0.5,
