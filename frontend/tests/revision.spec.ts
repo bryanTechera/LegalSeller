@@ -8,7 +8,10 @@ const SECRETO = process.env.AUTH_SECRET ?? "";
 test.skip(!CLAVE || !SECRETO, "Faltan REVISION_CLAVE o AUTH_SECRET — E2E de revisión deshabilitado");
 
 test("ciclo de revisión: sesión → chat → nota inline → responder → resolver", async ({ page }) => {
-  test.setTimeout(120_000);
+  // 240s: el turno real de agente solo (sin board-auth.spec.ts compitiendo por
+  // el mismo backend, ver commit b6cf691) ronda 108s — 120s dejaba un margen
+  // demasiado fino y fallaba en el primer intento, pasando recién en el retry.
+  test.setTimeout(240_000);
 
   await iniciarSesionBoard(page);
   await page.goto("/board/revision");
