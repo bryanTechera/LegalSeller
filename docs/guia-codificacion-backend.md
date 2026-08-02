@@ -52,7 +52,7 @@ export const consultasAgent = new Agent({
   instructions: dynamicInstructions,   // (ctx) => string; tolera requestContext undefined
   memory: sharedMemory,
   tools: dynamicTools,                 // (ctx) => buildTools(readOnly)
-  model: gateway("google/gemini-3-flash"),
+  model: gateway("google/gemini-3.6-flash"),
   maxRetries: 3,                       // main = 3, sub-agentes = 2
   defaultOptions: dynamicOptions,      // maxSteps, modelSettings, providerOptions
   agents: subAgents,                   // patrón Networks: delegación a expertos
@@ -68,7 +68,7 @@ Gotchas de producción (aprendidos, no negociables):
 - `.network()` está deprecado — usar `.stream()` con `maxSteps`.
 - **`server.apiRoutes` (custom routes vía `registerApiRoute`) no pueden empezar con el `apiPrefix` built-in (default `/api`)** — Mastra lo valida al boot y tira `Error: Custom API route "..." must not start with "/api"` (comportamiento intencional desde ~1.29, no un bug). Las rutas custom van sin el prefijo (ej. `/dominios`, no `/api/dominios`); solo se puede recuperar el prefijo `/api` para rutas custom si se reconfigura `server.apiPrefix` a otro valor, pero eso mueve también las rutas built-in (`/api/agents`, etc.) — no vale la pena para un solo endpoint.
 
-Model stack de referencia (calibrar con evals): agentes principales → modelo mid-tier rápido (`gemini-3-flash`); sub-agentes expertos y generadores → tier lite; jueces de evals → el lite más barato; retrieval web (si se necesita) → `perplexity/sonar` con `tools: {}` obligatorio.
+Model stack de referencia (calibrar con evals): agentes principales → modelo mid-tier rápido (`gemini-3.6-flash`); sub-agentes expertos y generadores → tier lite; jueces de evals → el lite más barato; retrieval web (si se necesita) → `perplexity/sonar` con `tools: {}` obligatorio.
 
 ## 4. Tools
 

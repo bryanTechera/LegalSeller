@@ -42,7 +42,7 @@ Cuando un LLM evalúa la salida de otro LLM (LLM-as-judge), el judge introduce s
 
 ### Advertencia: family bias si el judge es Gemini
 
-Los agentes de LegalSeller corren `google/gemini-3-flash` (`crearAgente`). **Si el primer scorer LLM-as-judge se implementa con un juez Gemini** (ej. el "lite más barato" que sugiere `guia-codificacion-backend.md § 9`, que es Gemini), el setup queda **same-family** y aparece family bias tipo libro de texto:
+Los agentes de LegalSeller corren `google/gemini-3.6-flash` (`crearAgente`). **Si el primer scorer LLM-as-judge se implementa con un juez Gemini** (ej. el "lite más barato" que sugiere `guia-codificacion-backend.md § 9`, que es Gemini), el setup queda **same-family** y aparece family bias tipo libro de texto:
 
 - Los scores absolutos de ese scorer estarán **inflados** respecto a un setup cross-family.
 - Comparar dos versiones de un prompt (ambas Gemini) es semi-confiable porque el sesgo aplica parejo a ambas — el **delta** sobrevive aunque el absoluto esté inflado.

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import useSWR from "swr";
 
@@ -115,10 +116,55 @@ export function MetricasPanel() {
             datos={[
               { nombre: "Iniciadas", valor: data.funnel.iniciadas },
               { nombre: "Clasificadas", valor: data.funnel.clasificadas },
-              { nombre: "Con caso", valor: data.funnel.conCaso },
               { nombre: "Captadas", valor: data.funnel.captadas },
             ]}
           />
+
+          <section className={styles.bloque}>
+            <h2 className={styles.subtitulo}>Casos captados</h2>
+            <p className={styles.ayuda}>
+              Los consultantes que dejaron cómo contactarlos. Es lo único que un abogado puede accionar.
+            </p>
+            {data.captados.length === 0 ? (
+              <p className={styles.ayuda}>Sin casos captados en este rango.</p>
+            ) : (
+              <>
+                <table className={styles.tabla}>
+                  <thead>
+                    <tr>
+                      <th scope="col">Contacto</th>
+                      <th scope="col">Teléfono</th>
+                      <th scope="col">Email</th>
+                      <th scope="col">Último mensaje</th>
+                      <th scope="col">Conversación</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.captados.map((caso) => (
+                      <tr key={caso.conversationId}>
+                        <td>{caso.contactoNombre ?? "—"}</td>
+                        <td>{caso.contactoTelefono ?? "—"}</td>
+                        <td>{caso.contactoEmail ?? "—"}</td>
+                        <td>{caso.ultimoMensaje?.slice(0, 10) ?? "—"}</td>
+                        <td>
+                          <Link href={`/board/chats/${caso.conversationId}`} className={styles.link}>
+                            Ver chat
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {/* El listado tiene tope: decir cuántos quedaron afuera evita
+                    leer una tabla recortada como el total del período. */}
+                {data.captados.length < data.funnel.captadas ? (
+                  <p className={styles.ayuda}>
+                    Mostrando los {data.captados.length} más recientes de {data.funnel.captadas}.
+                  </p>
+                ) : null}
+              </>
+            )}
+          </section>
 
           <GraficoLinea
             titulo="Conversaciones por día"

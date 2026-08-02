@@ -282,7 +282,7 @@ demostraste entender el caso — el momento lo decidís vos según cómo fluye l
 
 ## Thinking Configuration
 
-Los agentes corren `google/gemini-3-flash` vía `@ai-sdk/gateway`. La config está centralizada en `crearAgente` (`common/crear-agente.ts`) y hoy es deliberadamente mínima:
+Los agentes corren `google/gemini-3.6-flash` vía `@ai-sdk/gateway`. La config está centralizada en `crearAgente` (`common/crear-agente.ts`) y hoy es deliberadamente mínima:
 
 - **`temperature: 1` explícito.** Requerido con gateway+Gemini; bajarlo puede causar looping en Gemini 3. No lo toques por agente.
 - **Provider order pineado** (`providerOptions.gateway.order = ["google", "vertex"]`) para caching implícito.

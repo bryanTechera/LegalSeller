@@ -102,6 +102,10 @@
   font-weight: 600;
 }
 
+.link {
+  color: var(--accent-strong);
+}
+
 .lista {
   list-style: none;
   margin-top: var(--space-4);

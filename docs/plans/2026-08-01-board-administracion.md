@@ -168,17 +168,24 @@ Sin ese join, las corridas de `pnpm escenario` y las pruebas del equipo legal in
 
 ### 4.2 Funnel de captación
 
-Prisma sobre `Conversation` + `Caso`. Cinco etapas, con tasa de conversión entre etapas y serie diaria:
+Prisma sobre `Conversation` + `Caso`. Cuatro etapas, con tasa de conversión entre etapas y serie diaria:
 
 | Etapa | Condición |
 |---|---|
 | Iniciadas | `Conversation` con `esRevision = false` |
 | Clasificadas | `categoria != null` |
-| Con caso | existe `Caso` asociado |
 | Captadas | `Caso.estado = CAPTADO` |
 | Fuera de cobertura | `Caso.estado = FUERA_DE_COBERTURA` |
 
 Transiciones verificadas en `lib/clasificacion.ts`: `CAPTADO` se dispara cuando llega **cualquier** dato de contacto (línea ~202); `FUERA_DE_COBERTURA` se fija en la clasificación cuando el receptor detecta un escape (líneas ~67-68).
+
+> **Enmienda 2026-08-02.** La etapa "Con caso" (existe `Caso` asociado, en cualquier estado) salió del funnel a pedido del equipo: un caso sin contacto no es accionable por un abogado, y la barra además rompía la monotonía del gráfico — un `Caso` FUERA_DE_COBERTURA nace antes de que `asignarClasificacion` escriba `Conversation.categoria`, así que contaba en "Con caso" sin contar en "Clasificadas" y el funnel se leía como un dashboard roto. En su lugar va la sección **Casos captados** (§4.2.1), que resuelve el follow-up registrado al cierre del plan de implementación.
+
+### 4.2.1 Casos captados (sección)
+
+Los `Caso` en estado `CAPTADO` del período, con el mismo filtro que el contador del funnel — si divergieran, la tabla y el KPI mostrarían números distintos para el mismo rango sin forma de saber cuál miente. Por fila: contacto (nombre, teléfono, email), fecha del último mensaje de la conversación y enlace a `/board/chats/{id}`.
+
+La fecha del último mensaje sale de `MAX(createdAt)` sobre `mastra.mastra_messages` por `thread_id`, y ordena el listado descendente; los casos cuya conversación no dejó mensajes persistidos van al final. El listado tiene tope de 100 filas y avisa en pantalla cuántas quedaron afuera: un recorte silencioso se lee como el total del período.
 
 ### 4.3 Demanda por categoría
 
