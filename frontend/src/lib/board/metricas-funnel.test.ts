@@ -20,11 +20,10 @@ describe("calcularFunnel", () => {
     prismaMock.prisma.caso.count.mockResolvedValue(0);
   });
 
-  it("devuelve las cinco etapas", async () => {
+  it("devuelve las cuatro etapas", async () => {
     prismaMock.prisma.conversation.count
       .mockResolvedValueOnce(100) // iniciadas
-      .mockResolvedValueOnce(80) // clasificadas
-      .mockResolvedValueOnce(60); // con caso
+      .mockResolvedValueOnce(80); // clasificadas
     prismaMock.prisma.caso.count
       .mockResolvedValueOnce(25) // captadas
       .mockResolvedValueOnce(10); // fuera de cobertura
@@ -32,10 +31,19 @@ describe("calcularFunnel", () => {
     expect(await calcularFunnel(DESDE)).toEqual({
       iniciadas: 100,
       clasificadas: 80,
-      conCaso: 60,
       captadas: 25,
       fueraDeCobertura: 10,
     });
+  });
+
+  // "Con caso" contaba conversaciones con un `Caso` en cualquier estado, y un
+  // caso sin contacto no es accionable. Que no vuelva por la puerta de atrás.
+  it("no cuenta conversaciones por tener un caso asociado", async () => {
+    await calcularFunnel(DESDE);
+
+    for (const llamada of prismaMock.prisma.conversation.count.mock.calls) {
+      expect(llamada[0].where.caso).toBeUndefined();
+    }
   });
 
   // El invariante del spec §4.1: sin esto, las pruebas del equipo legal y las

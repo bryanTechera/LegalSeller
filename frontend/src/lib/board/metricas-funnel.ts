@@ -9,7 +9,6 @@ import { casosReales, conversacionesReales, JOIN_CASO_REAL } from "./scope";
 export interface Funnel {
   iniciadas: number;
   clasificadas: number;
-  conCaso: number;
   captadas: number;
   fueraDeCobertura: number;
 }
@@ -38,18 +37,26 @@ export interface Demanda {
 
 const LIMITE_FUERA_DE_COBERTURA = 50;
 
+/**
+ * El funnel no cuenta "con caso" (conversaciones con un `Caso` en cualquier
+ * estado). Un caso sin contacto no es accionable por un abogado, y esa barra
+ * además rompía la monotonía del gráfico: un `Caso` FUERA_DE_COBERTURA se crea
+ * antes de que `asignarClasificacion` escriba `Conversation.categoria`, así que
+ * contaba en "Con caso" sin contar en "Clasificadas" y el funnel se leía como
+ * un dashboard roto. Los captados salen del funnel con nombre y apellido en
+ * `listarCaptados`.
+ */
 export async function calcularFunnel(desde: Date | null): Promise<Funnel> {
-  const [iniciadas, clasificadas, conCaso, captadas, fueraDeCobertura] = await Promise.all([
+  const [iniciadas, clasificadas, captadas, fueraDeCobertura] = await Promise.all([
     prisma.conversation.count({ where: conversacionesReales(desde) }),
     prisma.conversation.count({
       where: { ...conversacionesReales(desde), categoria: { not: null } },
     }),
-    prisma.conversation.count({ where: { ...conversacionesReales(desde), caso: { isNot: null } } }),
     prisma.caso.count({ where: { ...casosReales(desde), estado: "CAPTADO" } }),
     prisma.caso.count({ where: { ...casosReales(desde), estado: "FUERA_DE_COBERTURA" } }),
   ]);
 
-  return { iniciadas, clasificadas, conCaso, captadas, fueraDeCobertura };
+  return { iniciadas, clasificadas, captadas, fueraDeCobertura };
 }
 
 const filaSubcategoriaSchema = z.object({
