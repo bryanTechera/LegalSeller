@@ -54,3 +54,4 @@ Por definir al inicializar cada servicio. Convención objetivo:
 
 - Backend: `pnpm dev` (mastra dev) · `pnpm test` · `pnpm lint` · `pnpm evals [filtro]` (ej. `pnpm evals captacion`) · `pnpm ingest <archivo> --title "<título>" [--categoria laboral --subcategoria despido]`
 - Frontend: `pnpm dev` · `pnpm typecheck` · `pnpm lint` · `pnpm test:unit` · `pnpm test` (e2e) · `pnpm feedback:pull` · `pnpm feedback:respond` · `pnpm escenario correr <slug>`
+- `pnpm test` del frontend necesita el backend Mastra corriendo en `MASTRA_BASE_URL` — `revision.spec.ts` dispara un turno real de agente; sin el backend arriba la falla se ve como "No pudimos hablar con el asistente", no como un problema de entorno obvio.
