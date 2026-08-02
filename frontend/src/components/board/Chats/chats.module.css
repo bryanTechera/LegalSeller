@@ -76,6 +76,18 @@
   color: var(--ink-500);
 }
 
+.paginacion {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.contador {
+  color: var(--ink-500);
+  font-size: var(--text-sm);
+}
+
 .error {
   color: var(--state-error);
 }
