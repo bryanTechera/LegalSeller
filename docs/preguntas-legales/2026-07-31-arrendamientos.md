@@ -1,6 +1,6 @@
 # Consultas al equipo legal — Arrendamientos urbanos y desalojo
 
-**Estado: PENDIENTE de respuesta**
+**Estado: RESPONDIDA (respuestas recibidas e incorporadas el 2026-08-03)**
 
 Documento de referencia: *"Arrendamientos urbanos y desalojo"* (síntesis jurídica y didáctica, versión actualizada al 19 de julio de 2026), enviado por el equipo legal en julio de 2026.
 
@@ -14,6 +14,8 @@ El diagrama de categorías que nos enviaron originalmente llamaba a una subcateg
 
 **¿Confirman que la subcategoría se refiere a la Ley Nº 19.889 y que "19980" era un error de tipeo?** Así la registramos.
 
+> **Respuesta (2026-08-03):** Si, la ley correcta es la 19.889.
+
 ## 2. Frase institucional sobre el origen de la información
 
 Cuando un consultante pregunta de dónde sale la información, el asistente de arrendamientos responde (adaptación de la frase ya aprobada para laboral y familia):
@@ -21,6 +23,8 @@ Cuando un consultante pregunta de dónde sale la información, el asistente de a
 > "Las respuestas se basan en material inédito y de propiedad intelectual propia desarrollado por Jurco, además de la normativa nacional en materia de arrendamientos y desalojos."
 
 **¿Aprueban esta redacción para la categoría de arrendamientos?**
+
+> **Respuesta (2026-08-03):** Si, apruebo tal redacción.
 
 ## 3. Recargo de la clausura del desalojo en el régimen general
 
@@ -30,11 +34,17 @@ En la página 22 del documento, la tabla comparativa de falta de pago dice, para
 
 **¿En qué casos aplica hoy la clausura del art. 51 con el recargo del 40%, y a qué contratos no debe aplicarse?** Mientras tanto, el asistente reproduce la reserva del documento ("su aplicación al régimen concreto debe revisarse en cada caso").
 
+> **Respuesta (2026-08-03):** El artículo 51 del Decreto Ley 14.219 establece: "Los juicios de desalojo contra malos pagadores quedarán clausurados si dentro del plazo para oponer excepciones el inquilino consignare la suma adeudada más el 40% (cuarenta por ciento) de esa suma como pago de los intereses, tributos y costos devengados. El arrendatario o subarrendatario se beneficiará una sola vez con la clausura del respectivo juicio."
+>
+> La referencia al régimen concreto seguramente se refiera a que algunos regímenes tienen % distinto como la LUC, que en el artículo 445 establece: "Artículo 445 (Lanzamiento en desalojo por mal pagador. Clausura).- Los juicios de desalojo contra malos pagadores quedarán clausurados si dentro del plazo para oponer excepciones, el inquilino consignara la suma adeudada más el 60% (sesenta por ciento) de esa suma como pago de los intereses, tributos y costos devengados. El arrendatario o subarrendatario se beneficiará una sola vez con la clausura del respectivo juicio."
+
 ## 4. Frontera con Familia: desalojo del ex concubino
 
 El documento incluye el desalojo del ex concubino (DL 14.219, art. 36-BIS, plazo de 30 días, página 21). Una consulta real suele mezclar la separación de la pareja (disolución de la unión concubinaria, tema de Familia) con la recuperación de la vivienda (tema de Arrendamiento y desalojo).
 
 **Cuando una persona consulta porque su ex concubino no se va de la vivienda, sin conflicto sobre hijos ni bienes, ¿prefieren que la consulta la conduzca el área de familia o la de arrendamientos y desalojos?** Hoy el sistema la encamina por arrendamientos cuando el objetivo central es recuperar la vivienda, y por familia cuando hay disolución de la unión, hijos o violencia de por medio.
+
+> **Respuesta (2026-08-03):** Es correcto canalizarla atendiendo al fin, que si es recuperar la vivienda es lógico que se enrute hacia arrendamientos y desalojo.
 
 ## 5. Frontera con Laboral: vivienda vinculada al empleo urbano
 
@@ -42,19 +52,27 @@ El desalojo de la vivienda vinculada al empleo (DL 14.219, art. 35, plazo de 30 
 
 **¿Confirman ese reparto?** (Trabajador rural despedido que debe dejar la vivienda del establecimiento → área laboral; otros casos de vivienda entregada por el empleo, por ejemplo un portero, → arrendamientos, art. 35.)
 
+> **Respuesta (2026-08-03):** Si, es correcto.
+
 ## 6. Arrendamiento por temporada como parte del decreto-ley 14.219
 
 El arrendamiento por temporada (art. 28 A del DL 14.219, redacción de la Ley 20.352) quedó dentro de la subcategoría "Desalojo ley 14219", porque es un artículo de ese decreto-ley. **¿Están de acuerdo, o prefieren que la temporada sea una subcategoría propia del caso?**
 
+> **Respuesta (2026-08-03):** Está correcto así.
+
 ## 7. Desalojos de destinos no habitacionales desde 2026
 
 Los desalojos por vencimiento de locales comerciales, oficinas e industrias (en libre contratación desde el 1º de enero de 2026 por la Ley 20.446) quedaron bajo la subcategoría "Desalojo ley 8153", que es la ley que fija los plazos de desalojo por vencimiento en libre contratación (6 meses o 1 año, página 8 del documento). **¿Es correcto ese encuadre para estos destinos, o los plazos de desalojo de los destinos no habitacionales se rigen por otra norma?**
+
+> **Respuesta (2026-08-03):** Es correcto.
 
 ## 8. Arrendamientos rurales
 
 El documento se limita al sistema urbano y aclara que el destino agropecuario remite al régimen rural con su normativa especial (página 7). Hoy, ante una consulta por un arrendamiento rural, el asistente es honesto en que aún no cubre ese tema y ofrece igual tomar el caso.
 
 **¿Tienen previsto enviarnos material sobre arrendamientos rurales (Decreto-Ley 14.384 y concordantes)?** No es urgente; lo registramos como faltante conocido.
+
+> **Respuesta (2026-08-03):** Respondida con el envío del texto consolidado del **Decreto-Ley Nº 14.384** (arrendamientos rurales), incorporado al asistente el 2026-08-03. Las dudas que surgieron al procesar ese texto están en `2026-08-03-arrendamientos-rurales.md`.
 
 ---
 

@@ -22,5 +22,21 @@
   {
     "mensaje": "Alquilo sin garantia bajo la ley 19889 y debo dos meses de alquiler. En cuanto tiempo me pueden desalojar si el dueño inicia el juicio?",
     "esperado": { "contiene": ["6"], "contieneAlguno": ["hábiles", "habiles"] }
+  },
+  {
+    "mensaje": "Alquilo un apartamento con contrato comun con garantia y fiador, me atrase y me iniciaron el desalojo por deuda. Me dijeron que puedo frenar el juicio depositando lo que debo mas un recargo, cuanto es el recargo?",
+    "esperado": { "contiene": ["40"] }
+  },
+  {
+    "mensaje": "Tengo arrendado un campo agricola con contrato inscripto, debo varios meses y me iniciaron el desalojo. Puedo frenar el juicio consignando la deuda? Cuanto mas tengo que depositar?",
+    "esperado": { "contiene": ["60"] }
+  },
+  {
+    "mensaje": "El contrato de arrendamiento de mi campo ganadero vencio, siempre pague al dia, y el dueño me pide el predio. Con que plazo se decreta el desalojo?",
+    "esperado": { "contieneAlguno": ["un año", "1 año", "un anio", "un ano"] }
+  },
+  {
+    "mensaje": "Le di mi campo en arrendamiento de palabra a un vecino para agricultura, sin contrato escrito. El contrato vale igual?",
+    "esperado": { "contiene": ["escrito"], "contieneAlguno": ["nul", "multa"] }
   }
 ]

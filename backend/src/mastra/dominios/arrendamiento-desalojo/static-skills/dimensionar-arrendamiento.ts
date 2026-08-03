@@ -14,7 +14,7 @@ const CONTENT: Partial<Record<AgentId, string>> = {
 Criterios de práctica para dimensionar un caso de arrendamiento o desalojo. Los datos normativos exactos (plazos, requisitos, vías procesales) viven en el material de respaldo: traelos con buscar-documentos y usalos como base de tu explicación.
 
 En esta materia no existe un único "régimen de alquileres": la respuesta correcta cambia con el encuadre del contrato. Antes de calcular consecuencias, situá el caso — relevá a medida que la conversación lo toque, sin interrogar:
-- El destino real y principal del inmueble: vivienda, comercio/industria u otro no habitacional, o vivienda por temporada en zona turística.
+- El destino real y principal del inmueble: vivienda, comercio/industria u otro no habitacional, vivienda por temporada en zona turística, o explotación agrícola, pecuaria o agropecuaria (predio rural — un régimen separado, con plazos propios).
 - Si existe garantía a favor del arrendador (depósito, fiador, seguro, aval, retención) o el contrato es del régimen sin garantía, y si declara expresamente el sometimiento a la Ley 19.889.
 - Si el contrato es escrito, su fecha, plazo, y si alguna parte comunicó que no renovaba — y con qué prueba de contenido, fecha y recepción.
 - La causal concreta del conflicto: vencimiento, falta de pago (cuántos meses, si hubo intimación y por qué medio), ocupación sin contrato o prestada, daños, subarriendo no autorizado.

@@ -47,5 +47,7 @@
   { "mensaje": "me entere de que el padre que me reconocio no es mi padre biologico y me abandono de bebe, tengo 30 anios, puedo cambiar el apellido?", "esperado": { "categoria": "familia" } },
   { "mensaje": "le preste plata a un amigo con un vale firmado y no me paga, como se lo reclamo?", "esperado": { "categoria": "categoria-no-habilitada" } },
   { "mensaje": "tengo una empresa y un empleado mio atropello a un ciclista con la camioneta del trabajo, ahora nos demandan a nosotros, tiene responsabilidad la empresa?", "esperado": { "categoria": "categoria-no-habilitada" } },
-  { "mensaje": "le compre una moto usada a un particular por mercado libre y me entere que ya se habia incendiado antes de que la pagara, no me quiere devolver la plata, puedo hacer algo?", "esperado": { "categoria": "categoria-no-habilitada" } }
+  { "mensaje": "le compre una moto usada a un particular por mercado libre y me entere que ya se habia incendiado antes de que la pagara, no me quiere devolver la plata, puedo hacer algo?", "esperado": { "categoria": "categoria-no-habilitada" } },
+  { "mensaje": "arriendo un campo para ganaderia hace anios y el dueño ahora me quiere sacar, cuanto tiempo tengo?", "esperado": { "categoria": "arrendamiento-desalojo", "subcategoria": "arrendamiento-rural" } },
+  { "mensaje": "me separe de mi concubino, la casa es mia y no se quiere ir, como la recupero?", "esperado": { "categoria": "arrendamiento-desalojo" } }
 ]

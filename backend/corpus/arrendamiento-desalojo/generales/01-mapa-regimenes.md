@@ -19,6 +19,7 @@ Antes de aplicar un plazo debe responderse, en este orden:
 - Industria, comercio u otros destinos no habitacionales: libre contratación desde el 1º de enero de 2026 (Ley 20.446, art. 689), cualquiera sea la fecha del permiso de construcción. El contrato adquiere especial importancia, pero la recuperación forzada del inmueble sigue requiriendo proceso judicial.
 - Vivienda por temporada en zona turística, hasta 120 días: Decreto-Ley 14.219, art. 28 A, en la redacción de la Ley 20.352. Desalojo con plazo de 15 días; solo corresponde si se trata realmente de vivienda en zona turística por un plazo no superior a 120 días.
 - Comodato, precario, vivienda vinculada a empleo, ex concubino: Decreto-Ley 14.219, arts. 35, 36 y 36-BIS, y Código Civil. No son arrendamientos, pero la recuperación de la tenencia se tramita por desalojo. Que no exista alquiler no habilita a retirar a la persona por la fuerza ni a cambiar cerraduras sin orden judicial.
+- Destino de explotación agrícola, pecuaria o agropecuaria: régimen rural del Decreto-Ley 14.384, un sistema separado del urbano, con contrato escrito obligatorio (so pena de nulidad), inscripción registral y plazos de desalojo propios (buen cumplidor un año, mora sesenta días, precario treinta días). Ninguno de los plazos urbanos de este mapa se aplica al predio rural.
 
 ## Normas contemporáneas relevantes
 

@@ -14,7 +14,7 @@ Configurada la mora, el desalojo del mal pagador se decreta con plazo de veinte 
 
 ## Mecanismos frente al desalojo por falta de pago
 
-- Clausura del desalojo: el texto consolidado del art. 51 prevé detener el desalojo depositando la deuda más un 40%, utilizable una sola vez; su aplicación al régimen concreto debe revisarse en cada caso.
+- Clausura del desalojo (art. 51): el juicio contra el mal pagador queda clausurado si, dentro del plazo para oponer excepciones, el inquilino consigna la suma adeudada más el 40% de esa suma como pago de los intereses, tributos y costos devengados. El beneficio se usa una sola vez. El porcentaje del 40% es propio de este régimen: en el régimen sin garantía de la Ley 19.889 la clausura es con el 60% — antes de informar el recargo debe encuadrarse el régimen del contrato.
 - Reforma del plazo: el pago de lo adeudado más un 20% dentro del plazo de desalojo puede convertirlo, una sola vez, al plazo del buen pagador.
 - El pago parcial no detiene por sí solo el desalojo; deben analizarse el pago total, la clausura u otros mecanismos dentro del plazo correspondiente.
 
