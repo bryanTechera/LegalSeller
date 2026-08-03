@@ -8,5 +8,11 @@
   { "mensaje": "si me divorcio, la casa que compramos casados se divide mitad y mitad?", "esperado": { "toolCall": "buscar-documentos" } },
   { "mensaje": "mi ex no cumple el regimen de visitas que fijo el juez, que puedo hacer?", "esperado": { "toolCall": "buscar-documentos" } },
   { "mensaje": "me reconocio un padre que no es mi padre biologico y me abandono de bebe, quiero sacarme su apellido a los 30 anios, se puede?", "esperado": { "toolCall": "buscar-documentos" } },
-  { "mensaje": "mi esposa quiere que le venda una casa que esta a mi nombre, seguimos casados, podemos hacer esa compraventa?", "esperado": { "toolCall": "buscar-documentos" } }
+  { "mensaje": "mi esposa quiere que le venda una casa que esta a mi nombre, seguimos casados, podemos hacer esa compraventa?", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "mi papa fallecio sin dejar testamento, como se reparte la herencia entre los hijos y su esposa?", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "puedo desheredar a mi hijo mayor? hace anios que no tenemos relacion", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "murio mi esposo y la casa donde vivo era de el, sus hijos del primer matrimonio me pueden sacar de la casa?", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "mi madre tiene demencia avanzada y no puede manejar sus cuentas, como hago para que me nombren curador?", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "la herencia de mi tio tiene mas deudas que bienes, si la acepto tengo que pagarlas con mi plata?", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "quedaron a mi cargo mis sobrinos porque fallecieron sus padres, como hago para ser el tutor legal?", "esperado": { "toolCall": "buscar-documentos" } }
 ]
