@@ -147,14 +147,23 @@ misma skill:
   `familia/fidelidad.json`: la respuesta a "por qué razones me puedo divorciar" debe
   incluir "mutuo" y "voluntad" — la enumeración nunca puede quedar reducida a las
   causales del 148.
-- **P2 y P3 (fronteras tránsito/consumo vs civil) siguen pendientes**: las dos
-  consultas de frontera permanecen fuera del golden set del receptor.
+- **P2 y P3 — respondidas en un segundo envío del mismo día: "Civil ambas"**. El
+  empleador demandado por el hecho de su dependiente y las compras entre particulares
+  pertenecen al área Civil (no a Tránsito ni a Consumo); con Civil sin habilitar, ambas
+  van al escape `categoria-no-habilitada` con captación. Implementación: las dos
+  fronteras quedaron explícitas en la descripción de la categoría civil del registry
+  (lo que el receptor lee en `<temas_aun_no_cubiertos>`, incluyendo el deslinde con
+  relaciones-consumo), y los dos ítems de frontera que habían quedado fuera del golden
+  set del receptor se incorporaron esperando `categoria-no-habilitada`. El archivo de
+  preguntas pasó a RESPONDIDA.
 
 ## Resultados de evals (corrida final)
 
-- Receptor clasificación: **45/47 (96%)**, threshold 90% — la empleada doméstica ya
-  clasifica `laboral/despido`. Las 2 fallas son los ítems `pregunta:true` ("hola",
-  "tengo un problema"), que oscilan entre corridas desde antes de este cambio:
+- Receptor clasificación: **48/49 (98%)**, threshold 90% — pasan la empleada doméstica
+  (`laboral/despido`) y los dos ítems de frontera de P2/P3 (empleador demandado por el
+  hecho del dependiente y compra de un usado a un particular → `categoria-no-habilitada`).
+  La falla restante es el ítem `pregunta:true` ("tengo un problema"), que oscila entre
+  corridas desde antes de este cambio:
   el receptor lite a veces clasifica `fuera-de-universo` con confianza baja en vez de
   preguntar ante mensajes sin contenido. **Observación abierta** para la próxima
   iteración del receptor (no se tocó acá: ítems preexistentes, gate verde).

@@ -20,8 +20,8 @@ Las preguntas de abajo son de dos tipos: **decisiones de alcance** (1, 2 y 3) y
 **Cómo responder**: pueden contestar directamente debajo de cada pregunta y devolvernos
 este mismo archivo, o responder por el canal habitual citando el número de pregunta.
 
-**Estado**: RESPONDIDA PARCIALMENTE (2026-08-03) — respondidas las preguntas 1, 4 y 5;
-siguen PENDIENTES la 2 y la 3.
+**Estado**: RESPONDIDA (2026-08-03) — las cinco preguntas contestadas (la 2 y la 3 en
+un segundo envío del mismo día).
 
 ---
 
@@ -65,6 +65,12 @@ Tránsito con el material del seguro obligatorio, o como parte del área Civil d
 pregunta 1?** Mientras tanto el asistente la trata como tema aún no cubierto y capta el
 contacto.
 
+> **Respuesta del equipo legal (2026-08-03)**: Civil.
+
+*Registrado: la consulta del empleador demandado por el hecho de su dependiente
+pertenece al área Civil. Como Civil no está habilitada (pregunta 1), el asistente la
+reconoce, dice con honestidad que aún no cubrimos el tema y toma el contacto.*
+
 ## 3. Compras entre particulares (por ejemplo, por Mercado Libre): ¿Consumo o Civil?
 
 La consulta de la moto comprada por Mercado Libre se responde en el documento con el
@@ -78,6 +84,13 @@ compraventa civil que pertenece al área de la pregunta 1? ¿Con qué criterio p
 distinguimos al "vendedor particular" del "proveedor"?** Hoy el asistente no tiene esta
 distinción cargada; hasta la respuesta no incorporamos la consulta a las pruebas
 automáticas de clasificación.
+
+> **Respuesta del equipo legal (2026-08-03)**: Civil.
+
+*Registrado: las compras entre particulares pertenecen al área Civil, no a Relaciones
+de Consumo (que queda para los reclamos a comercios y empresas). Como Civil no está
+habilitada, el asistente las trata como tema aún no cubierto y toma el contacto. Ambas
+fronteras quedaron incorporadas a las pruebas automáticas de clasificación.*
 
 ## 4. Confirmación: el artículo de la compraventa entre cónyuges es el 1.675
 
