@@ -128,6 +128,28 @@ Segunda corrida: **receptor 46/47 (98%)** — pasan la pensión del excónyuge, 
 filiación a los 30 años y el préstamo civil (escape correcto a
 `categoria-no-habilitada`) — y **familia fidelidad 6/6 (100%)**.
 
+## Respuestas del equipo legal (2026-08-03, mismo día)
+
+El equipo legal devolvió el archivo con las preguntas 1, 4 y 5 respondidas (2 y 3
+siguen pendientes; el archivo quedó RESPONDIDA PARCIALMENTE). Procesadas con esta
+misma skill:
+
+- **P1 — no avanzar con Civil por ahora** ("solo agregaremos familia"): decisión de
+  roadmap registrada acá y en `dominio-consultas.md`. El comportamiento implementado
+  (escape honesto + captación + `temaDetectado` como señal de demanda) queda validado
+  como el tratamiento correcto del área mientras no se habilite. Sin cambios de código.
+- **P4 — erratum 1675 confirmado**: el corpus ya citaba 1675; sin cambios. El ítem de
+  fidelidad de compraventa entre cónyuges ya lo mide.
+- **P5 — once numerales del 148 confirmados**, con el matiz del experto de que el
+  total de causales "son 12" sumando el mutuo consentimiento (vía del art. 187 — el
+  corpus ya estructura las tres vías: sola voluntad, mutuo consentimiento y las once
+  causales; sin cambio de contenido). El matiz se operacionalizó como ítem nuevo de
+  `familia/fidelidad.json`: la respuesta a "por qué razones me puedo divorciar" debe
+  incluir "mutuo" y "voluntad" — la enumeración nunca puede quedar reducida a las
+  causales del 148.
+- **P2 y P3 (fronteras tránsito/consumo vs civil) siguen pendientes**: las dos
+  consultas de frontera permanecen fuera del golden set del receptor.
+
 ## Resultados de evals (corrida final)
 
 - Receptor clasificación: **45/47 (96%)**, threshold 90% — la empleada doméstica ya

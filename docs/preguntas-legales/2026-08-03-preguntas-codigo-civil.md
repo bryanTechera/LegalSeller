@@ -20,7 +20,8 @@ Las preguntas de abajo son de dos tipos: **decisiones de alcance** (1, 2 y 3) y
 **Cómo responder**: pueden contestar directamente debajo de cada pregunta y devolvernos
 este mismo archivo, o responder por el canal habitual citando el número de pregunta.
 
-**Estado**: PENDIENTE de respuesta.
+**Estado**: RESPONDIDA PARCIALMENTE (2026-08-03) — respondidas las preguntas 1, 4 y 5;
+siguen PENDIENTES la 2 y la 3.
 
 ---
 
@@ -41,6 +42,14 @@ preguntas con respuesta no alcanzan como base de conocimiento.
 **¿Quieren que habilitemos un área Civil? Si sí: ¿qué subcategorías tendría (por
 ejemplo: responsabilidad por daños · contratos e incumplimientos · otra partición que
 prefieran), y pueden prepararnos la síntesis del área con su normativa?**
+
+> **Respuesta del equipo legal (2026-08-03)**: No vamos a avanzar en civil todavía,
+> solo agregaremos familia.
+
+*Registrado: el área Civil queda declarada pero sin habilitar. Ante estas consultas el
+asistente sigue diciendo con honestidad que aún no cubrimos el tema y tomando el
+contacto; esas consultas quedan registradas como señal de demanda para cuando decidan
+retomarlo.*
 
 ## 2. La consulta del empleador demandado por el hecho de su empleado: ¿a qué área pertenece?
 
@@ -84,6 +93,10 @@ cita al 1.675.
 
 **¿Confirman que la referencia correcta es el artículo 1.675?**
 
+> **Respuesta del equipo legal (2026-08-03)**: Sí, lo confirmo.
+
+*Registrado: el asistente ya respondía con la cita al 1.675; queda confirmada.*
+
 ## 5. Confirmación: las causales de divorcio vigentes son once
 
 La primera respuesta del documento enumera diez causales del artículo 148. En el texto
@@ -96,3 +109,15 @@ con esa versión y la mantuvimos.
 
 **¿Confirman que corresponde responder con las once causales del texto consolidado
 vigente?**
+
+> **Respuesta del equipo legal (2026-08-03)**: Es cierto, me había quedado pendiente el
+> numeral 11, pero en todo caso las causales son 12 en total porque a esas 11 se suma
+> la que ya contiene el documento: "mutuo consentimiento". [Transcribe el numeral 11
+> del texto consolidado.] Sí, las 11 que en realidad son 12.
+
+*Registrado: confirmados los once numerales del artículo 148. El mutuo consentimiento
+—igual que la sola voluntad de cualquiera de los cónyuges— es una de las vías del
+artículo 187, y el asistente ya presenta las tres vías juntas cuando le preguntan por
+qué razones alguien puede divorciarse: sola voluntad, mutuo consentimiento y las once
+causales. Agregamos una prueba automática que exige que la enumeración incluya el mutuo
+consentimiento y la sola voluntad, para que nunca quede reducida a las causales.*
