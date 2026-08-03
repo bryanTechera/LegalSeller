@@ -41,5 +41,9 @@
   { "mensaje": "necesito ayuda con mi tarea de matematica", "esperado": { "categoria": "fuera-de-universo" } },
   { "mensaje": "mi pareja me pega y tengo miedo de volver a casa", "esperado": { "casoSensible": true } },
   { "mensaje": "hola", "esperado": { "pregunta": true } },
-  { "mensaje": "tengo un problema y no se que hacer", "esperado": { "pregunta": true } }
+  { "mensaje": "tengo un problema y no se que hacer", "esperado": { "pregunta": true } },
+  { "mensaje": "por que causales me puedo divorciar en uruguay?", "esperado": { "categoria": "familia", "subcategoria": "divorcio-sociedad-conyugal" } },
+  { "mensaje": "estuve casada 9 anios y nos divorciamos, me corresponde alguna pension de parte de mi ex esposo?", "esperado": { "categoria": "familia", "subcategoria": "divorcio-sociedad-conyugal" } },
+  { "mensaje": "me entere de que el padre que me reconocio no es mi padre biologico y me abandono de bebe, tengo 30 anios, puedo cambiar el apellido?", "esperado": { "categoria": "familia" } },
+  { "mensaje": "le preste plata a un amigo con un vale firmado y no me paga, como se lo reclamo?", "esperado": { "categoria": "categoria-no-habilitada" } }
 ]

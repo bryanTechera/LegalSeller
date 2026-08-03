@@ -11,11 +11,13 @@
 
 ## 1. Universo completo de consultas
 
-El sistema completo atiende **5 categorías** (áreas del derecho), cada una con sus
-subcategorías (tipos de consulta). Delante de todas hay un **router** que recibe la
+El sistema completo atiende **5 categorías habilitadas** (áreas del derecho), cada una
+con sus subcategorías (tipos de consulta), más **1 categoría declarada aún no
+habilitada** (Civil). Delante de todas hay un **router** que recibe la
 consulta del usuario y la dirige a la categoría correspondiente. (El universo
 original era de 4 categorías; **Tránsito** se sumó el 2026-07-31 con el material
-normativo enviado por el equipo legal.)
+normativo enviado por el equipo legal; **Civil** se declaró el 2026-08-03 a partir
+del Q&A del Código Civil, sin habilitar.)
 
 ```
                           Usuario
@@ -27,6 +29,8 @@ normativo enviado por el equipo legal.)
       ▼              ▼       ▼              ▼                   ▼
    LABORAL        FAMILIA  TRÁNSITO   ARRENDAMIENTO       RELACIONES DE
                                        Y DESALOJO           CONSUMO
+
+   (declarada, aún sin habilitar: CIVIL)
 ```
 
 ### Laboral
@@ -76,6 +80,14 @@ El conocimiento que aplica a toda la categoría (mapa de regímenes y encuadre, 
 | Procedimiento ante MEF y poder judicial | ✅ **habilitada 2026-07-31** (vía administrativa ante el Área Defensa del Consumidor —audiencia de conciliación y trámite en línea del MEF—, infracciones y sanciones, y proceso judicial de pequeñas causas de la Ley 18.507) |
 
 Los conceptos que atraviesan ambas subcategorías (relación de consumo y su prueba, derechos básicos, plazos de caducidad y prescripción) van como **corpus transversal a nivel categoría** (`Document.subcategoria = NULL`). Ver `docs/plans/2026-07-31-procesamiento-relaciones-consumo.md`.
+
+### Civil
+
+| Subcategoría | Estado |
+|---|---|
+| *(partición pendiente del equipo legal)* | ⏳ **Declarada 2026-08-03, NO habilitada** — sin agente ni corpus. Derecho civil patrimonial: responsabilidad por daños entre particulares (C.C. art. 1324 y conc.), contratos civiles (compraventa, préstamos, incumplimientos) y daños y perjuicios (C.C. art. 1345). El receptor la reconoce como tema aún no cubierto (`categoria-no-habilitada`), lo dice con honestidad y capta el contacto. Habilitarla requiere material del equipo legal (síntesis + partición); pedido en `docs/preguntas-legales/2026-08-03-preguntas-codigo-civil.md` |
+
+El Q&A del Código Civil (2026-08-03) que motivó la declaración trajo además piezas de **Familia** fundadas en el Código Civil (adulterio, filiación art. 220, compraventa entre cónyuges art. 1675) que se integraron al corpus de esa categoría. Ver `docs/plans/2026-08-03-procesamiento-preguntas-codigo-civil.md`.
 
 ## 2. Roadmap de habilitación
 

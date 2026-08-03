@@ -9,13 +9,14 @@ import {
 } from "./registry.js";
 
 describe("registry de dominios", () => {
-  it("tiene las 5 categorías del universo", () => {
+  it("tiene las 6 categorías del universo (civil declarada, aún no habilitada)", () => {
     expect(CATEGORIAS.map((c) => c.id)).toEqual([
       "laboral",
       "familia",
       "transito",
       "arrendamiento-desalojo",
       "relaciones-consumo",
+      "civil",
     ]);
   });
 
@@ -53,6 +54,7 @@ describe("registry de dominios", () => {
       "derechos-del-consumidor",
       "procedimiento-mef-judicial",
     ]);
+    expect(subcategoriasHabilitadas("civil")).toEqual([]);
   });
 
   it("el cortocircuito de subcategoría única devuelve null cuando no hay exactamente una", () => {

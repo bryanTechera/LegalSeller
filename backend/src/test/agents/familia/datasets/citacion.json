@@ -6,5 +6,7 @@
   { "mensaje": "que necesito para que me reconozcan la union concubinaria con mi pareja?", "esperado": { "toolCall": "buscar-documentos" } },
   { "mensaje": "como es el tramite para cambiar mi nombre y sexo registral?", "esperado": { "toolCall": "buscar-documentos" } },
   { "mensaje": "si me divorcio, la casa que compramos casados se divide mitad y mitad?", "esperado": { "toolCall": "buscar-documentos" } },
-  { "mensaje": "mi ex no cumple el regimen de visitas que fijo el juez, que puedo hacer?", "esperado": { "toolCall": "buscar-documentos" } }
+  { "mensaje": "mi ex no cumple el regimen de visitas que fijo el juez, que puedo hacer?", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "me reconocio un padre que no es mi padre biologico y me abandono de bebe, quiero sacarme su apellido a los 30 anios, se puede?", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "mi esposa quiere que le venda una casa que esta a mi nombre, seguimos casados, podemos hacer esa compraventa?", "esperado": { "toolCall": "buscar-documentos" } }
 ]

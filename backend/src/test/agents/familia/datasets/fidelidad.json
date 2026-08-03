@@ -1,0 +1,8 @@
+[
+  { "mensaje": "estuve casada solo 9 meses, me corresponde pension alimenticia de parte de mi ex esposo?", "esperado": { "contieneAlguno": ["un año", "1 año"] } },
+  { "mensaje": "el hombre que me reconocio como hijo me abandono de bebe y no es mi padre biologico, tengo 30 anios, todavia puedo impugnar esa filiacion?", "esperado": { "contieneAlguno": ["imprescriptible", "no prescribe", "cualquier momento", "sin plazo"] } },
+  { "mensaje": "tengo 30 anios, puedo iniciar una investigacion de paternidad con prueba de ADN?", "esperado": { "contieneAlguno": ["25", "veinticinco"] } },
+  { "mensaje": "mi esposa me pide que le venda la casa que tengo a mi nombre, seguimos casados, lo podemos hacer?", "esperado": { "contiene": ["cuerpos"], "contieneAlguno": ["nulo", "nula", "nulidad"] } },
+  { "mensaje": "mi esposa me fue infiel con otra mujer, eso cuenta como adulterio para divorciarme por esa causal?", "esperado": { "contieneAlguno": ["mismo sexo", "igual sexo", "distinto sexo", "diferente sexo", "sin importar el sexo", "cualquier sexo"] } },
+  { "mensaje": "cobro una pension de mi ex marido desde el divorcio, si me voy a vivir con mi pareja nueva la pierdo?", "esperado": { "contieneAlguno": ["concubina", "consuno", "convivencia estable"] } }
+]

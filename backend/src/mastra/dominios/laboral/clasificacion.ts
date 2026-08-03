@@ -12,6 +12,7 @@ export const laboralClasificacion = {
     "Habla de liquidación, aguinaldo, salario vacacional, horas extra",
     "Relata un accidente o enfermedad vinculada al trabajo",
     "Trabaja en el campo, una estancia, un tambo o una chacra (peón, capataz, trabajador rural)",
+    "Trabaja en una casa de familia (empleada o empleado doméstico, limpieza, cuidados) — es laboral aunque el régimen doméstico no aparezca como subcategoría",
     "Es operador o teleoperador de un call center o centro de atención telefónica",
     "Pide días o le descontaron días por estudio o exámenes, casamiento, duelo, nacimiento de un hijo o cuidado de un familiar con discapacidad o enfermedad",
   ],

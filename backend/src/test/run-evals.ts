@@ -361,6 +361,7 @@ const EVALS: readonly { nombre: string; run: () => Promise<number> }[] = [
   { nombre: "familia-citacion", run: () => evalCitacion(familiaAgent, "familia", "Familia") },
   { nombre: "familia-voz-fuentes", run: () => evalVozFuentes(familiaAgent, "familia", "Familia") },
   { nombre: "familia-captacion", run: () => evalCaptacion(familiaAgent, "familia", "Familia") },
+  { nombre: "familia-fidelidad", run: () => evalFidelidad(familiaAgent, "familia", "Familia") },
   { nombre: "transito-citacion", run: () => evalCitacion(transitoAgent, "transito", "Tránsito") },
   { nombre: "transito-voz-fuentes", run: () => evalVozFuentes(transitoAgent, "transito", "Tránsito") },
   { nombre: "transito-captacion", run: () => evalCaptacion(transitoAgent, "transito", "Tránsito") },
