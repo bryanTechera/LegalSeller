@@ -12,7 +12,7 @@ import { transitoClasificacion } from "./transito/clasificacion.js";
  * Enabling a subcategory = its folder + an entry here. Disabled categories
  * keep their data inline until they gain an agent folder.
  */
-export type CategoriaId = "laboral" | "familia" | "transito" | "arrendamiento-desalojo" | "relaciones-consumo";
+export type CategoriaId = "laboral" | "familia" | "transito" | "arrendamiento-desalojo" | "relaciones-consumo" | "civil";
 export type ClasificacionEscape = "fuera-de-universo" | "categoria-no-habilitada";
 
 export interface SubcategoriaDef {
@@ -39,6 +39,18 @@ export const CATEGORIAS: readonly CategoriaDef[] = [
   transitoClasificacion,
   arrendamientoDesalojoClasificacion,
   relacionesConsumoClasificacion,
+  {
+    // Área declarada, aún sin agente ni corpus (Q&A del Código Civil, 2026-08-03):
+    // el receptor la reconoce como tema no cubierto y capta el contacto. Partición
+    // en subcategorías pendiente del equipo legal (docs/preguntas-legales/2026-08-03).
+    id: "civil",
+    nombre: "Civil",
+    descripcion:
+      "Derecho civil patrimonial: responsabilidad por daños entre particulares y contratos entre particulares (compraventa, préstamos, incumplimientos) con sus daños y perjuicios. No comprende los asuntos de familia (divorcio, filiación, sociedad conyugal), que van en la categoría familia.",
+    seniales: [],
+    habilitada: false,
+    subcategorias: [],
+  },
 ];
 
 export function categoriasHabilitadas(): CategoriaDef[] {

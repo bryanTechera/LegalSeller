@@ -22,6 +22,8 @@ Ambos cónyuges comparecen personalmente en el mismo acto ante el Juez Letrado d
 
 Requiere identificar una causal legal, narrar hechos concretos y ofrecer prueba; la oposición y la prueba inciden en el resultado. Las causales (Código Civil, art. 148) incluyen, entre otras: el adulterio; la tentativa contra la vida del otro cónyuge; las sevicias o injurias graves — la violencia basada en género contra la cónyuge y el abuso sexual contra hijas e hijos se consideran, en todos los casos, injurias graves que acreditan esta causal (redacción de la Ley 19.580) —; las riñas y disputas continuas que hagan insoportable la vida común; la condena a penitenciaría por más de diez años; el abandono voluntario del hogar por más de tres años; la separación de hecho ininterrumpida y voluntaria por más de tres años; la incapacidad declarada por enfermedad mental permanente e irreversible con requisitos específicos; y el cambio de identidad de género posterior a la unión matrimonial.
 
+El adulterio tiene definición legal: existe adulterio cuando se hubieran mantenido relaciones sexuales fuera del matrimonio con personas del mismo o diferente sexo (Código Civil, art. 148 numeral 1). La definición se entiende sin perjuicio de que la obligación de fidelidad mutua cesa si los cónyuges no viven de consuno (Código Civil, art. 127).
+
 Dado que existe la vía unilateral simplificada, elegir un divorcio por causal debe responder a una razón jurídica concreta — no a la idea de que es imprescindible atribuir culpa para divorciarse. Ninguno de los cónyuges puede fundar la acción en su propia culpa (Código Civil, art. 149).
 
 ## Los hijos primero: sin resolver su situación no hay sentencia

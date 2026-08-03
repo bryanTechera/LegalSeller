@@ -20,3 +20,7 @@ Ninguno de los cónyuges puede renunciar en las capitulaciones matrimoniales a l
 Antes de responder sobre "la mitad de todo", deben identificarse la fecha de adquisición de cada bien, el origen del dinero, las capitulaciones matrimoniales, las herencias o donaciones recibidas, las deudas, los bienes propios de cada cónyuge y eventuales actos de ocultamiento. La división no se resuelve con una regla genérica de 50%: exige distinguir bienes propios de gananciales y componer la masa con sus deudas.
 
 Durante el juicio de separación o divorcio, son nulas las obligaciones contraídas a cargo de la sociedad conyugal y las enajenaciones de sus bienes hechas en contravención de las providencias judiciales dictadas e inscriptas (Código Civil, art. 158).
+
+## Compraventa entre cónyuges
+
+Es nulo el contrato de compraventa entre cónyuges no separados de cuerpos (Código Civil, art. 1675). La nulidad alcanza también a la venta que encubriría una donación u otro negocio entre esposos: mientras no exista separación de cuerpos, esa compraventa no es válida. Reordenar el patrimonio del matrimonio pasa por las vías propias del régimen —capitulaciones, disolución y liquidación de la sociedad conyugal, o separación de cuerpos—, no por una venta entre cónyuges.

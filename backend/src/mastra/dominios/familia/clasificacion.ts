@@ -9,7 +9,7 @@ export const familiaClasificacion = {
   id: "familia" as const,
   nombre: "Familia",
   descripcion:
-    "Asuntos de familia: divorcio y separación, tenencia y visitas, pensión alimenticia, unión concubinaria, sucesiones, violencia de género o doméstica, adopción, filiación y cambios registrales (nombre, identidad de género).",
+    "Asuntos de familia: divorcio y separación, tenencia y visitas, pensión alimenticia, unión concubinaria, sucesiones, violencia de género o doméstica, adopción, filiación (reconocimiento, impugnación, investigación de paternidad) y cambios registrales (nombre, identidad de género).",
   seniales: [
     "Menciona divorcio, separación, matrimonio o una ex pareja",
     "Habla de hijos: tenencia, visitas, pensión alimenticia o retención de un niño",
