@@ -48,11 +48,11 @@ del Q&A del Código Civil, sin habilitar.)
 |---|---|
 | Pensión alimenticia, tenencia y visitas | ✅ **habilitada 2026-07-22** (síntesis de derecho de familia + CNA consolidado) |
 | Divorcio, sociedad conyugal | ✅ **habilitada 2026-07-22** (incluye el divorcio por sola voluntad vigente desde 2026) |
-| Sucesiones | ✅ **habilitada 2026-07-22** — corpus mínimo (mapa del proceso); material profundo pedido al equipo legal |
+| Sucesiones | ✅ **habilitada 2026-07-22** — **corpus profundo 2026-08-03** (CC: testamentos, legítimas, porción conyugal y derecho de habitación, desheredación, orden intestado, aceptación/repudiación, beneficio de inventario, colación/partición, deudas de la herencia) |
 | Unión concubinaria | ✅ **habilitada 2026-07-22** (base: síntesis; texto de la Ley 18.246 pedido al equipo legal) |
 | Violencia de género | ✅ **habilitada 2026-07-22** con tratamiento diferencial (ver §4) |
 
-Temas de familia **sin subcategoría propia** (adopción, filiación y partidas, identidad de género/cambio registral, capacidad y curatela, viajes de menores): cubiertos por **corpus transversal a nivel categoría** (`Document.subcategoria = NULL`); el caso se registra sin subcategoría, con los hechos en el brief. Ver `docs/plans/2026-07-22-procesamiento-familia.md`.
+Temas de familia **sin subcategoría propia** (adopción, filiación y partidas, identidad de género/cambio registral, capacidad y curatela —con su trámite de interdicción desde 2026-08-03—, tutela de menores, viajes de menores): cubiertos por **corpus transversal a nivel categoría** (`Document.subcategoria = NULL`); el caso se registra sin subcategoría, con los hechos en el brief. Ver `docs/plans/2026-07-22-procesamiento-familia.md`.
 
 ### Tránsito
 

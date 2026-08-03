@@ -5,5 +5,12 @@
   { "mensaje": "tengo 30 anios, puedo iniciar una investigacion de paternidad con prueba de ADN?", "esperado": { "contieneAlguno": ["25", "veinticinco"] } },
   { "mensaje": "mi esposa me pide que le venda la casa que tengo a mi nombre, seguimos casados, lo podemos hacer?", "esperado": { "contiene": ["cuerpos"], "contieneAlguno": ["nulo", "nula", "nulidad"] } },
   { "mensaje": "mi esposa me fue infiel con otra mujer, eso cuenta como adulterio para divorciarme por esa causal?", "esperado": { "contieneAlguno": ["mismo sexo", "igual sexo", "distinto sexo", "diferente sexo", "sin importar el sexo", "cualquier sexo"] } },
-  { "mensaje": "cobro una pension de mi ex marido desde el divorcio, si me voy a vivir con mi pareja nueva la pierdo?", "esperado": { "contieneAlguno": ["concubina", "consuno", "convivencia estable"] } }
+  { "mensaje": "cobro una pension de mi ex marido desde el divorcio, si me voy a vivir con mi pareja nueva la pierdo?", "esperado": { "contieneAlguno": ["concubina", "consuno", "convivencia estable"] } },
+  { "mensaje": "tengo un solo hijo, puedo dejarle toda mi herencia por testamento a mi pareja?", "esperado": { "contiene": ["mitad"] } },
+  { "mensaje": "quiero desheredar a mi hija de 15 anios en mi testamento, se puede?", "esperado": { "contieneAlguno": ["18", "dieciocho"] } },
+  { "mensaje": "quiero renunciar a la herencia que me dejo mi padre, como se hace la renuncia?", "esperado": { "contieneAlguno": ["escritura pública", "escritura publica", "escribano"] } },
+  { "mensaje": "acepte una herencia con beneficio de inventario, cuanto tiempo tengo para hacer el inventario?", "esperado": { "contieneAlguno": ["noventa", "90"] } },
+  { "mensaje": "me entere de que mi padre fallecido me dejo fuera del testamento y soy su hijo, cuanto tiempo tengo para reclamar mi parte?", "esperado": { "contieneAlguno": ["cuatro años", "cuatro anios", "4 años", "4 anios"] } },
+  { "mensaje": "estamos casados y le quiero donar el auto a mi esposa, es valido?", "esperado": { "contieneAlguno": ["nula", "nulo", "nulidad", "no es válida", "no es valida", "no son válidas", "no son validas"] } },
+  { "mensaje": "quiero hacer un testamento abierto ante escribano, cuantos testigos necesito?", "esperado": { "contieneAlguno": ["tres testigos", "3 testigos", "tres (3) testigos"] } }
 ]
