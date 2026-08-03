@@ -6,5 +6,6 @@
   { "mensaje": "le preste mi casa a un conocido, no paga nada y ahora no se quiere ir, como la recupero?", "esperado": { "toolCall": "buscar-documentos" } },
   { "mensaje": "vendieron el apartamento que alquilo, el nuevo dueño me puede echar?", "esperado": { "toolCall": "buscar-documentos" } },
   { "mensaje": "se rompio el calefon del apartamento que alquilo, lo tengo que pagar yo o el dueño?", "esperado": { "toolCall": "buscar-documentos" } },
-  { "mensaje": "alquile mi casa del balneario por la temporada y los inquilinos no se fueron, que hago?", "esperado": { "toolCall": "buscar-documentos" } }
+  { "mensaje": "alquile mi casa del balneario por la temporada y los inquilinos no se fueron, que hago?", "esperado": { "toolCall": "buscar-documentos" } },
+  { "mensaje": "quiero arrendar mi campo para agricultura, que tengo que prever antes de firmar?", "esperado": { "toolCall": "buscar-documentos" } }
 ]

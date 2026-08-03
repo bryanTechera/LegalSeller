@@ -49,6 +49,7 @@ describe("registry de dominios", () => {
       "desalojo-ley-14219",
       "desalojo-ley-19889",
       "cobro-alquileres",
+      "arrendamiento-rural",
     ]);
     expect(subcategoriasHabilitadas("relaciones-consumo").map((s) => s.id)).toEqual([
       "derechos-del-consumidor",

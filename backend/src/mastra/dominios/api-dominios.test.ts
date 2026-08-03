@@ -42,6 +42,7 @@ describe("payload de /api/dominios", () => {
             "desalojo-ley-14219",
             "desalojo-ley-19889",
             "cobro-alquileres",
+            "arrendamiento-rural",
           ],
         },
         {
