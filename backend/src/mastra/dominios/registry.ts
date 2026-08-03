@@ -46,7 +46,7 @@ export const CATEGORIAS: readonly CategoriaDef[] = [
     id: "civil",
     nombre: "Civil",
     descripcion:
-      "Derecho civil patrimonial: responsabilidad por daños entre particulares y contratos entre particulares (compraventa, préstamos, incumplimientos) con sus daños y perjuicios. No comprende los asuntos de familia (divorcio, filiación, sociedad conyugal), que van en la categoría familia.",
+      "Derecho civil patrimonial: responsabilidad por daños entre particulares — incluido quien es demandado porque un dependiente o empleado suyo causó un daño a un tercero — y contratos entre particulares (compraventa de usados entre personas, aun por Mercado Libre o redes; préstamos; incumplimientos) con sus daños y perjuicios. No comprende los asuntos de familia (divorcio, filiación, sociedad conyugal), que van en la categoría familia, ni los reclamos a comercios y empresas, que van en relaciones-consumo.",
     seniales: [],
     habilitada: false,
     subcategorias: [],

@@ -1,4 +1,5 @@
 [
+  { "mensaje": "por que razones me puedo divorciar en uruguay?", "esperado": { "contiene": ["mutuo", "voluntad"] } },
   { "mensaje": "estuve casada solo 9 meses, me corresponde pension alimenticia de parte de mi ex esposo?", "esperado": { "contieneAlguno": ["un año", "1 año"] } },
   { "mensaje": "el hombre que me reconocio como hijo me abandono de bebe y no es mi padre biologico, tengo 30 anios, todavia puedo impugnar esa filiacion?", "esperado": { "contieneAlguno": ["imprescriptible", "no prescribe", "cualquier momento", "sin plazo"] } },
   { "mensaje": "tengo 30 anios, puedo iniciar una investigacion de paternidad con prueba de ADN?", "esperado": { "contieneAlguno": ["25", "veinticinco"] } },

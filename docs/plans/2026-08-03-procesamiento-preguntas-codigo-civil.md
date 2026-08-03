@@ -128,11 +128,42 @@ Segunda corrida: **receptor 46/47 (98%)** — pasan la pensión del excónyuge, 
 filiación a los 30 años y el préstamo civil (escape correcto a
 `categoria-no-habilitada`) — y **familia fidelidad 6/6 (100%)**.
 
+## Respuestas del equipo legal (2026-08-03, mismo día)
+
+El equipo legal devolvió el archivo con las preguntas 1, 4 y 5 respondidas (2 y 3
+siguen pendientes; el archivo quedó RESPONDIDA PARCIALMENTE). Procesadas con esta
+misma skill:
+
+- **P1 — no avanzar con Civil por ahora** ("solo agregaremos familia"): decisión de
+  roadmap registrada acá y en `dominio-consultas.md`. El comportamiento implementado
+  (escape honesto + captación + `temaDetectado` como señal de demanda) queda validado
+  como el tratamiento correcto del área mientras no se habilite. Sin cambios de código.
+- **P4 — erratum 1675 confirmado**: el corpus ya citaba 1675; sin cambios. El ítem de
+  fidelidad de compraventa entre cónyuges ya lo mide.
+- **P5 — once numerales del 148 confirmados**, con el matiz del experto de que el
+  total de causales "son 12" sumando el mutuo consentimiento (vía del art. 187 — el
+  corpus ya estructura las tres vías: sola voluntad, mutuo consentimiento y las once
+  causales; sin cambio de contenido). El matiz se operacionalizó como ítem nuevo de
+  `familia/fidelidad.json`: la respuesta a "por qué razones me puedo divorciar" debe
+  incluir "mutuo" y "voluntad" — la enumeración nunca puede quedar reducida a las
+  causales del 148.
+- **P2 y P3 — respondidas en un segundo envío del mismo día: "Civil ambas"**. El
+  empleador demandado por el hecho de su dependiente y las compras entre particulares
+  pertenecen al área Civil (no a Tránsito ni a Consumo); con Civil sin habilitar, ambas
+  van al escape `categoria-no-habilitada` con captación. Implementación: las dos
+  fronteras quedaron explícitas en la descripción de la categoría civil del registry
+  (lo que el receptor lee en `<temas_aun_no_cubiertos>`, incluyendo el deslinde con
+  relaciones-consumo), y los dos ítems de frontera que habían quedado fuera del golden
+  set del receptor se incorporaron esperando `categoria-no-habilitada`. El archivo de
+  preguntas pasó a RESPONDIDA.
+
 ## Resultados de evals (corrida final)
 
-- Receptor clasificación: **45/47 (96%)**, threshold 90% — la empleada doméstica ya
-  clasifica `laboral/despido`. Las 2 fallas son los ítems `pregunta:true` ("hola",
-  "tengo un problema"), que oscilan entre corridas desde antes de este cambio:
+- Receptor clasificación: **48/49 (98%)**, threshold 90% — pasan la empleada doméstica
+  (`laboral/despido`) y los dos ítems de frontera de P2/P3 (empleador demandado por el
+  hecho del dependiente y compra de un usado a un particular → `categoria-no-habilitada`).
+  La falla restante es el ítem `pregunta:true` ("tengo un problema"), que oscila entre
+  corridas desde antes de este cambio:
   el receptor lite a veces clasifica `fuera-de-universo` con confianza baja en vez de
   preguntar ante mensajes sin contenido. **Observación abierta** para la próxima
   iteración del receptor (no se tocó acá: ítems preexistentes, gate verde).
