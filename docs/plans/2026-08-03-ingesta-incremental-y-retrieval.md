@@ -196,6 +196,18 @@ Procedimiento: medir baseline con el golden set → cambiar → re-embeber → v
 
 Para no dejar la base con dos espacios de embedding conviviendo, la corrida **embebe todo primero sin escribir y commitea los 385 chunks en una transacción**. La ventana de estado mezclado son segundos, no minutos — importa porque la base es compartida entre worktrees.
 
+**Resultado (2026-08-04)**: revertido. Con los umbrales neutralizados (`minSimilarityPara` devolviendo 0 temporalmente) se midió la separación piso-de-positivos menos techo-de-negativos en las dos escalas, ambas con `pnpm evals retrieval` corriendo el mismo código:
+
+| categoría | piso antes | techo antes | sep. antes | piso después | techo después | sep. después | delta |
+|---|---|---|---|---|---|---|---|
+| laboral | 0.752 | 0.683 | 0.069 | 0.735 | 0.675 | 0.060 | −0.009 |
+| familia | 0.701 | 0.656 | 0.045 | 0.679 | 0.647 | 0.032 | −0.013 |
+| arrendamiento-desalojo | 0.744 | 0.628 | 0.116 | 0.730 | 0.633 | 0.097 | −0.019 |
+| relaciones-consumo | 0.704 | 0.587 | 0.117 | 0.713 | 0.603 | 0.110 | −0.007 |
+| tránsito | 0.685 | 0.672 | 0.013 | 0.687 | 0.678 | 0.009 | −0.004 |
+
+Ventana global (piso mínimo de positivos menos techo máximo de negativos): **0.002 → 0.001**. Las cinco categorías se achicaron, ninguna creció; el `taskType` asimétrico no separó mejor, comprimió levemente ambos lados de la escala hacia el centro en vez de abrirla. Se revirtió: `EMBEDDING_TASK_TYPE` volvió a `"NINGUNO"`, los dos call sites de consulta volvieron a `generateEmbedding(texto)` sin segundo argumento, y `pnpm corpus:sync` restauró los 385 chunks en el espacio original (verificado: 155 `READY`, cero huellas nulas, `pnpm evals retrieval` reproduce 1.000/1.000/1.000 en las cinco categorías). **Conclusión**: la hipótesis del §2 queda confirmada en la dirección negativa — la similitud sin `taskType` ya llevaba toda la señal disponible en este corpus, y declarar el `taskType` no la mejora.
+
 ### Reranking
 
 Se decide con **`recall@20 − recall@5`** medido *después* de calibrar el umbral:
