@@ -20,6 +20,7 @@ import { PIPELINE_VERSION } from "../mastra/config/embedding.js";
 import { getPool } from "../mastra/config/storage.js";
 import { decidirAccion, type AccionSync } from "../mastra/services/corpus/decidir.js";
 import { derivarDocumento, hashContenido, type DocumentoDelCorpus } from "../mastra/services/corpus/paths.js";
+import { reembedDocument, registerDocument } from "../mastra/services/document-registry/index.js";
 
 const CORPUS_DIR = fileURLToPath(new URL("../../corpus", import.meta.url));
 
@@ -109,6 +110,81 @@ function reportar(items: ItemDelSync[], errores: string[], base: Map<string, Fil
   }
 }
 
+/** Creates or updates the Document row (metadata only) and returns its id. */
+async function upsertDocumento(doc: DocumentoDelCorpus): Promise<string> {
+  const { rows } = await getPool().query<{ id: string }>(
+    `INSERT INTO "Document" ("id", "title", "sourceKey", "categoria", "subcategoria", "status", "createdAt", "updatedAt")
+     VALUES (gen_random_uuid()::text, $1, $2, $3, $4, 'PROCESSING'::"ProcessingStatus", now(), now())
+     ON CONFLICT ("title") DO UPDATE
+        SET "sourceKey" = $2, "categoria" = $3, "subcategoria" = $4, "updatedAt" = now()
+     RETURNING "id"`,
+    [doc.title, doc.rutaRelativa, doc.categoria, doc.subcategoria],
+  );
+  return rows[0].id;
+}
+
+/**
+ * Stamps fingerprints on rows ingested before they existed, without
+ * re-embedding. Only touches rows whose stored partition already matches what
+ * the path derives — a mismatch means the row was not produced by this file.
+ */
+async function backfill(items: ItemDelSync[]): Promise<{ marcados: number; omitidos: string[] }> {
+  const omitidos: string[] = [];
+  let marcados = 0;
+
+  for (const item of items) {
+    if (item.fila === null) {
+      omitidos.push(`${item.doc.rutaRelativa}: no existe en la base (requiere ingesta real)`);
+      continue;
+    }
+    const { rowCount } = await getPool().query(
+      `UPDATE "Document"
+          SET "contentHash" = $2, "pipelineVersion" = $3, "updatedAt" = now()
+        WHERE "id" = $1
+          AND "categoria" IS NOT DISTINCT FROM $4
+          AND "subcategoria" IS NOT DISTINCT FROM $5
+          AND "status" = 'READY'::"ProcessingStatus"`,
+      [item.fila.id, item.hash, PIPELINE_VERSION, item.doc.categoria, item.doc.subcategoria],
+    );
+    if (rowCount === 1) marcados += 1;
+    else omitidos.push(`${item.doc.rutaRelativa}: la partición o el estado de la fila no coinciden con el archivo`);
+  }
+  return { marcados, omitidos };
+}
+
+async function ejecutar(items: ItemDelSync[]): Promise<string[]> {
+  const fallos: string[] = [];
+
+  for (const item of items) {
+    if (item.accion === "saltar") continue;
+
+    if (item.accion === "reembeber" && item.fila !== null) {
+      const resultado = await reembedDocument(item.fila.id, PIPELINE_VERSION);
+      if (resultado.status === "error") fallos.push(`${item.doc.rutaRelativa}: ${resultado.error ?? "error"}`);
+      else console.log(`  re-embebido  ${item.doc.rutaRelativa} (${String(resultado.chunksInserted)} chunks)`);
+      continue;
+    }
+
+    const documentId = await upsertDocumento(item.doc);
+    const resultado = await registerDocument({
+      documentId,
+      text: item.contenido,
+      contentHash: item.hash,
+      pipelineVersion: PIPELINE_VERSION,
+    });
+    if (resultado.status === "error") {
+      fallos.push(`${item.doc.rutaRelativa}: ${resultado.error ?? "error"}`);
+      await getPool().query(
+        `UPDATE "Document" SET "status" = 'FAILED'::"ProcessingStatus", "updatedAt" = now() WHERE "id" = $1`,
+        [documentId],
+      );
+    } else {
+      console.log(`  ingestado    ${item.doc.rutaRelativa} (${String(resultado.chunksInserted)} chunks)`);
+    }
+  }
+  return fallos;
+}
+
 async function main(): Promise<number> {
   const { values } = parseArgs({
     options: {
@@ -129,8 +205,20 @@ async function main(): Promise<number> {
     return errores.length > 0 ? 1 : 0;
   }
 
-  console.log("\nLa escritura se implementa en la Tarea 7.");
-  return errores.length > 0 ? 1 : 0;
+  if (values.backfill) {
+    const { marcados, omitidos } = await backfill(items);
+    console.log(`\nbackfill: ${String(marcados)} filas marcadas sin re-embeber.`);
+    for (const omitido of omitidos) console.log(`  OMITIDO ${omitido}`);
+    return errores.length > 0 || omitidos.length > 0 ? 1 : 0;
+  }
+
+  console.log("");
+  const fallos = await ejecutar(items);
+  if (fallos.length > 0) {
+    console.log(`\nFALLOS (${String(fallos.length)}):`);
+    for (const fallo of fallos) console.log(`  ${fallo}`);
+  }
+  return errores.length > 0 || fallos.length > 0 ? 1 : 0;
 }
 
 main()
