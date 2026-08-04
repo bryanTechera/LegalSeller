@@ -101,6 +101,15 @@ Los valores numéricos de ambos gates **se fijan con la primera corrida calibrad
 
 **Runner**: colgado del existente como `pnpm evals retrieval`.
 
+**Pregunta de alcance abierta**: la Tarea 9 armó un item "dentro de la categoría, fuera
+del corpus" para familia sobre mediación familiar y, al verificarlo, encontró que el
+corpus sí trata mediación pero solo para decir cuándo está prohibida y qué límites
+tienen los acuerdos entre padres — no describe el trámite en sí, que es lo que la
+consulta de prueba pregunta. La duda de alcance (¿el agente debe responder con ese
+material parcial o decir que el trámite no está cubierto?) quedó registrada en
+`docs/preguntas-legales/2026-08-04-alcance-mediacion-familiar.md` (estado: ABIERTA); el
+item de prueba se sacó del dataset de familia hasta tener la respuesta.
+
 ---
 
 ## 6. `pnpm corpus:sync`

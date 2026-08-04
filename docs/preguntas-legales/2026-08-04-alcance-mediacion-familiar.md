@@ -19,6 +19,12 @@ la ofrece, cómo se pide, qué pasa si no se llega a un acuerdo — para alguien
 pregunta específicamente por ese procedimiento antes de judicializar un conflicto por
 la tenencia de un hijo.
 
+Mientras esperamos la respuesta, una consulta de prueba sobre este tema quedó fuera de
+nuestras verificaciones hasta que nos respondan: no queremos afirmar de antemano si el
+asistente responde bien o mal ante esa pregunta cuando todavía no sabemos cuál de las
+dos opciones de abajo es la que corresponde. La reincorporamos con el criterio correcto
+en cuanto tengamos su respuesta.
+
 **Cómo responder**: pueden contestar directamente debajo de la pregunta y devolvernos
 este mismo archivo, o responder por el canal habitual.
 

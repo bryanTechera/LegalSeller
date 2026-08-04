@@ -12,6 +12,11 @@
   {
     "consulta": "choqué a un peatón mientras conducía, ¿puedo tener consecuencias penales por eso?",
     "categoria": "transito",
+    "esperado": ["Tránsito — Qué hacer ante un siniestro y mapa de vías de reclamo"]
+  },
+  {
+    "consulta": "circulo por la ciudad en monopatín eléctrico, ¿necesito seguro obligatorio o licencia de conducir para eso?",
+    "categoria": "transito",
     "esperado": []
   }
 ]

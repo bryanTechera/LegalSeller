@@ -59,12 +59,6 @@
     "esperado": []
   },
   {
-    "consulta": "quiero saber cómo funciona la mediación familiar antes de ir a juicio por la tenencia de mi hijo",
-    "categoria": "familia",
-    "subcategorias": ["pension-tenencia-visitas"],
-    "esperado": ["Familia — Acuerdos familiares y límites de la negociación"]
-  },
-  {
     "consulta": "quiero anotarme como familia de acogida para cuidar temporalmente a un niño mientras el estado decide su situación",
     "categoria": "familia",
     "esperado": []
