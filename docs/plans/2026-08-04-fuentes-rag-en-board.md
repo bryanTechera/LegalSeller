@@ -34,7 +34,7 @@ Verificado el 2026-08-04 con lecturas sobre la base de Railway y sobre el códig
 | Los `agent_run` tienen ventana `[startedAt, endedAt]` que contiene tanto el mensaje `assistant` del turno como sus `tool_call` descendientes | Es el agrupador correcto. `timeline.ts` ya sube por `parentSpanId` hasta el `agent_run` ([`timeline.ts:170-177`](../../frontend/src/lib/revision/timeline.ts#L170-L177)). |
 | Los umbrales de similitud están calibrados por categoría en el backend ([`buscar-documentos-tool.ts:42-45`](../../backend/src/mastra/tools/documentos/buscar-documentos-tool.ts#L42-L45)) | El frontend **no** los replica. Ver §5. |
 | `Nota` tiene `messageId` y `citaTexto`, y `pnpm feedback:pull` levanta ambos orígenes | Anotar una búsqueda o un fragmento no requiere migración. |
-| `/api/revision/sesiones/[id]` construye la timeline **sin** spans ([`route.ts:21`](../../frontend/src/app/api/revision/sesiones/[id]/route.ts#L21)) y `SesionView` filtra solo mensajes | Para llevar esto a `/revision` hay que pedir spans ahí; es el único cambio de contrato del endpoint. |
+| `/api/revision/sesiones/[id]` construye la timeline **sin** spans ([`route.ts:21`](../../frontend/src/app/api/revision/sesiones/[id]/route.ts#L21)) y `SesionView` filtra solo mensajes | Las búsquedas no viven en la timeline con spans: llegan por su propio camino (`construirBusquedas`, el mismo módulo que usa el board). El endpoint no necesita pedir spans para sumarlas — ver §6. |
 
 ---
 
@@ -152,7 +152,7 @@ Sin migración de schema. Las notas quedan en el mismo hilo que las de mensaje y
 
 El componente de fuentes se construye compartido y se monta en las dos pantallas.
 
-En `/revision` hay dos cambios: `/api/revision/sesiones/[id]` pasa a construir la timeline con spans, y `SesionView` deja de filtrar solo mensajes para montar el panel.
+En `/revision` el cambio real fue uno solo: `/api/revision/sesiones/[id]` suma `busquedas` al payload llamando a `construirBusquedas(sesion.threadId)`, sin pedirle spans a la timeline — las búsquedas no viven ahí, y engordarla con `input`/`output` de cada tool call no tiene contrapartida (nadie los renderiza en esta pantalla). `SesionView` sigue filtrando `timeline` a `tipo === "mensaje"` para el transcript, igual que antes, y monta `PanelFuentes` aparte, alimentado directamente por `busquedas`.
 
 **Particularidad de la vista en vivo**: ahí el chat corre en streaming (`useRevisionChat`), y los spans se escriben en la base con retraso respecto del stream. La marca de una respuesta recién terminada puede aparecer un instante después; el refetch que la vista ya hace la trae. No se agrega polling nuevo por esto.
 
