@@ -31,7 +31,7 @@ Ante conflicto entre reglas, seguir la más estricta.
 
 - **NUNCA** `any` — `unknown` + Zod. Contratos siempre como schema Zod, tipos con `z.infer`.
 - **NUNCA** `console.log` en código de producción — logger estructurado.
-- **NUNCA** push directo a `main`/`develop`; conventional commits; lint + tests antes de commit.
+- **SIEMPRE** conventional commits; lint + tests antes de commit. El push directo a `main` está permitido cuando el usuario lo pide; por defecto el trabajo va por rama + PR.
 - **NUNCA** una tool de agente tira una excepción en `execute` — degradación graceful `{ status: "error", mensaje }`.
 - **NUNCA** el browser habla directo con el backend Mastra o la DB — todo pasa por el BFF.
 - **SIEMPRE** aislar recursos por identidad en las queries (en v1: `sessionId` de la cookie anónima; con auth futura: `userId`). Verificación siempre server-side.

@@ -46,7 +46,7 @@ Convención probada en los proyectos anteriores; se mantiene tal cual:
 ## 4. Workflow de Git
 
 - Ramas: `main` (producción) y `develop` (preproducción); trabajo en `feature/*`, `fix/*`, `hotfix/*`.
-- **Nunca push directo a `main` ni `develop`**: siempre PR.
+- **Por defecto el trabajo va por rama + PR** hacia `main`/`develop`. El push directo a `main` queda habilitado cuando el usuario lo pide explícitamente (cambios chicos ya verificados); el resto de los requisitos —conventional commits, typecheck + lint + tests antes de commitear— se cumple igual.
 - Conventional commits (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`).
 - **Antes de cada commit: `typecheck` (donde aplique) + `lint` + tests relevantes.** Pre-commit hooks con husky + lint-staged (ESLint `--fix` sobre archivos staged).
 - Nunca commitear sin revisión del diff completo.
