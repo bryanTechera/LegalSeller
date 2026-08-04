@@ -7,8 +7,7 @@
  *
  * Negativos: `esperado` vacío afirma que la consulta no debería traer nada de
  * esa partición. El item pasa si el resultado queda estrictamente vacío tras
- * aplicar MIN_SIMILARITY. Con el umbral sin calibrar fallan todos, por
- * construcción: nada del corpus puntúa por debajo de 0,3.
+ * aplicar el umbral calibrado de la categoría (`minSimilarityPara`, Tarea 10).
  */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -18,7 +17,7 @@ import { z } from "zod";
 
 import { generateEmbedding, toVectorLiteral } from "../../mastra/config/embedding.js";
 import { getPool } from "../../mastra/config/storage.js";
-import { buildSearchQuery, MIN_SIMILARITY } from "../../mastra/tools/documentos/buscar-documentos-tool.js";
+import { buildSearchQuery, minSimilarityPara } from "../../mastra/tools/documentos/buscar-documentos-tool.js";
 
 const itemSchema = z.object({
   consulta: z.string().min(1),
@@ -65,7 +64,7 @@ export async function evalRetrieval(categoria: string, etiqueta: string): Promis
   const similitudesDeAcierto: number[] = [];
 
   for (const item of positivos) {
-    const top20 = await recuperar(item, 20, MIN_SIMILARITY);
+    const top20 = await recuperar(item, 20, minSimilarityPara(item.categoria));
     const indice = top20.findIndex((r) => item.esperado.includes(r.titulo));
     if (indice >= 0 && indice < 5) {
       aciertos5 += 1;
@@ -82,7 +81,7 @@ export async function evalRetrieval(categoria: string, etiqueta: string): Promis
   let vacios = 0;
   const similitudesDeNegativo: number[] = [];
   for (const item of negativos) {
-    const top5 = await recuperar(item, 5, MIN_SIMILARITY);
+    const top5 = await recuperar(item, 5, minSimilarityPara(item.categoria));
     if (top5.length === 0) vacios += 1;
     else {
       similitudesDeNegativo.push(top5[0].similarity);

@@ -395,17 +395,19 @@ const EVALS: readonly { nombre: string; run: () => Promise<number>; umbral?: num
     nombre: "consumo-captacion",
     run: () => evalCaptacion(relacionesConsumoAgent, "relaciones-consumo", "Consumo"),
   },
-  // Umbral 0 mientras se calibra MIN_SIMILARITY: los negativos fallan todos por
-  // construcción hasta la Tarea 10, y un gate acá bloquearía todo el runner.
-  { nombre: "retrieval-laboral", run: () => evalRetrieval("laboral", "Laboral"), umbral: 0 },
-  { nombre: "retrieval-familia", run: () => evalRetrieval("familia", "Familia"), umbral: 0 },
+  // Gates fijados 2026-08-04 con el umbral calibrado por categoría (Tarea 10 del
+  // plan, minSimilarityPara). El score de cada dataset es min(recall@5, tasa de
+  // vacío correcto); la corrida de calibración dio 1.000 en las cinco categorías,
+  // así que el gate queda a 0.95 (margen de 0,05).
+  { nombre: "retrieval-laboral", run: () => evalRetrieval("laboral", "Laboral"), umbral: 0.95 },
+  { nombre: "retrieval-familia", run: () => evalRetrieval("familia", "Familia"), umbral: 0.95 },
   {
     nombre: "retrieval-arrendamiento",
     run: () => evalRetrieval("arrendamiento-desalojo", "Arrendamiento"),
-    umbral: 0,
+    umbral: 0.95,
   },
-  { nombre: "retrieval-consumo", run: () => evalRetrieval("relaciones-consumo", "Consumo"), umbral: 0 },
-  { nombre: "retrieval-transito", run: () => evalRetrieval("transito", "Tránsito"), umbral: 0 },
+  { nombre: "retrieval-consumo", run: () => evalRetrieval("relaciones-consumo", "Consumo"), umbral: 0.95 },
+  { nombre: "retrieval-transito", run: () => evalRetrieval("transito", "Tránsito"), umbral: 0.95 },
 ];
 
 /** `pnpm evals [filtro]` — sin filtro corre todo; con filtro, los datasets cuyo nombre lo contenga. */

@@ -5,8 +5,44 @@ import { fallbackLogger } from "../../common/logger.js";
 import { generateEmbedding, toVectorLiteral } from "../../config/embedding.js";
 import { getPool } from "../../config/storage.js";
 
-/** Minimum cosine similarity for a chunk to be considered relevant. Calibrated with src/test/retrieval. */
-export const MIN_SIMILARITY = 0.3;
+/**
+ * Minimum cosine similarity for a chunk to be considered relevant, per categoría.
+ * Calibrated 2026-08-04 against src/test/retrieval: for each categoría, the
+ * threshold is the midpoint between the floor of matched positives and the
+ * ceiling of negatives. The old single `MIN_SIMILARITY = 0.3` sat below the
+ * scale's floor — an unrelated query still scores ~0.49 — so it never filtered
+ * anything.
+ *
+ * A single global threshold does not work here: the highest negative ceiling
+ * (laboral, 0.683) sits just 0.002 below the lowest positive floor (tránsito,
+ * 0.685), which would overfit a threshold to 42 golden-set items. The scales
+ * differ by categoría by up to a tenth (consumo negatives top out at 0.587,
+ * laboral's reach 0.683), so each categoría gets its own midpoint instead.
+ *
+ * Tránsito's margin (±0.006) is thin because that categoría has only 9
+ * documents — it's the first threshold to revisit as the corpus grows.
+ */
+const MIN_SIMILARITY_POR_CATEGORIA: Record<string, number> = {
+  laboral: 0.717,
+  familia: 0.678,
+  "arrendamiento-desalojo": 0.686,
+  "relaciones-consumo": 0.645,
+  transito: 0.678,
+};
+
+/**
+ * Default for a query with no `categoria` filter, or with one not in the map
+ * above: the lowest of the five calibrated thresholds (relaciones-consumo),
+ * so an uncategorized call stays the most permissive — the alternative is
+ * silently dropping results for a partition whose scale hasn't been measured.
+ */
+const MIN_SIMILARITY_DEFAULT = 0.645;
+
+/** Single entry point for the calibrated threshold — keeps the tool and the eval from drifting apart. */
+export function minSimilarityPara(categoria?: string): number {
+  if (categoria === undefined) return MIN_SIMILARITY_DEFAULT;
+  return MIN_SIMILARITY_POR_CATEGORIA[categoria] ?? MIN_SIMILARITY_DEFAULT;
+}
 
 export const ChunkResultSchema = z.object({
   documentId: z.string().meta({ description: "Id del documento de origen" }),
@@ -99,7 +135,7 @@ CUANDO USAR:
       const pool = getPool();
       const { sql, params } = buildSearchQuery({
         vector: toVectorLiteral(queryEmbedding),
-        minSimilarity: MIN_SIMILARITY,
+        minSimilarity: minSimilarityPara(input.categoria),
         limit: input.limit,
         categoria: input.categoria,
         subcategorias: input.subcategorias,

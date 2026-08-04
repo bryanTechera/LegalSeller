@@ -97,6 +97,24 @@ Cinco piezas. El orden está determinado por qué habilita la medición de qué.
 
 Los valores numéricos de ambos gates **se fijan con la primera corrida calibrada** y se registran acá; no se eligen de antemano. El `THRESHOLD = 0.9` del runner actual (`backend/src/test/run-evals.ts`) es del matcher de clasificación y no aplica a estas métricas.
 
+**Calibración fijada el 2026-08-04** (Tarea 10). El brief original preveía un único umbral global — mínimo de los pisos de positivos, máximo de los techos de negativos, punto medio. Corrido sobre los datos reales, esa ventana global mide **0,002**: el techo de negativos más alto (laboral, 0,683) queda apenas por debajo del piso de positivos más bajo (tránsito, 0,685). Un solo número técnicamente satisface las dos restricciones en 0,684, pero con un milésimo de margen queda sobreajustado a los 42 ítems del golden set y flaquearía apenas se agregue un documento o una consulta más. La causa es estructural: las escalas difieren por categoría — los negativos de consumo no superan 0,587 mientras que los de laboral llegan a 0,683, una décima de separación — y un solo número no puede servir bien a las dos.
+
+**Decisión**: un umbral por categoría, cada uno en el punto medio de su propia ventana (`minSimilarityPara` en `buscar-documentos-tool.ts`):
+
+| categoría | piso de positivos | techo de negativos | umbral = punto medio | margen |
+|---|---|---|---|---|
+| `laboral` | 0.752 | 0.683 | **0.717** | ±0.034 |
+| `familia` | 0.701 | 0.656 | **0.678** | ±0.022 |
+| `arrendamiento-desalojo` | 0.744 | 0.628 | **0.686** | ±0.058 |
+| `relaciones-consumo` | 0.704 | 0.587 | **0.645** | ±0.058 |
+| `transito` | 0.685 | 0.672 | **0.678** | ±0.006 |
+
+El default para una consulta sin `categoria` (o con una no mapeada) es 0,645 — el más bajo de los cinco, para que un llamado sin contexto de categoría sea el más permisivo en vez de descartar en silencio resultados de una partición sin medir.
+
+Con estos umbrales, la corrida de verificación dio `recall@5 = 1.000` y `vacío-correcto = 1.000` en las cinco categorías. Gates de `retrieval-*` en `run-evals.ts` fijados en 0,95 (margen de 0,05 sobre lo observado). Baseline previo (con `MIN_SIMILARITY = 0.3`): recall@5 1,000, vacío correcto 0,000.
+
+**Limitación conocida**: el margen de tránsito (±0,006) es angosto porque esa categoría tiene solo 9 documentos — es el primer umbral a revisar cuando crezca el corpus.
+
 **Tamaño**: ~30 positivos y ~10 negativos, proporcionales al corpus de cada categoría. Semillados desde el dataset de citación existente y los 155 títulos del corpus; revisados por el equipo — sobre todo los negativos "dentro de la categoría, fuera del corpus", que requieren saber qué se decidió no cubrir.
 
 **Runner**: colgado del existente como `pnpm evals retrieval`.
