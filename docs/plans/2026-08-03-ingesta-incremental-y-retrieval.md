@@ -217,7 +217,11 @@ Se decide con **`recall@20 − recall@5`** medido *después* de calibrar el umbr
 
 Aun con brecha, la ganancia se pesa contra meter una llamada de modelo en el camino crítico del TTFT y sumar la entrada en `frontend/src/lib/board/costos.ts`.
 
-**Predicción registrada para verificar**: con 155 documentos ya particionados por categoría y subcategoría, y un razonador leyendo los resultados, la brecha va a ser chica y el reranker no va a justificarse.
+**Medido (2026-08-04)**: `recall@5 = 1.000` y `recall@20 = 1.000` en las cinco categorías — brecha de 0 puntos porcentuales contra el umbral de decisión de 10. Decisión: no se construye. Todo documento esperado ya aparece en el top-5; no queda ninguno entre las posiciones 6 y 20 esperando a que un reranker lo promueva, así que no hay nada que reordenar. La predicción registrada al escribir el spec —que con 155 documentos ya particionados por categoría y subcategoría, y un razonador leyendo los resultados, la brecha iba a ser chica y el reranker no se iba a justificar— se cumplió.
+
+**Limitación de la medición**: el golden set tiene 31 positivos sobre un corpus de 155 documentos, y hoy los 31 pasan. Eso mide "no se detecta mal-rankeo a este tamaño de corpus con este golden set", no "el reranking nunca va a servir" — la pregunta se reabre por evidencia, no por intuición, si el corpus crece de escala o el golden set se amplía y algún positivo empieza a caer fuera del top-5.
+
+Aun si la brecha hubiera sido real, construirlo tenía un costo a pesar: un modelo más en el camino crítico del TTFT de un chat que se transmite por streaming, y una entrada nueva en `frontend/src/lib/board/costos.ts` para que el board no reporte ese turno como "sin dato".
 
 ---
 
