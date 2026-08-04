@@ -35,8 +35,8 @@
 }
 
 .lineaMapaVacia {
-  border-color: var(--state-warning, var(--ink-300));
-  background: var(--surface);
+  border-color: var(--state-warning);
+  background: color-mix(in srgb, var(--state-warning) 14%, var(--surface));
 }
 
 .lineaMapa:disabled,
