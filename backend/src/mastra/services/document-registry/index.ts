@@ -87,7 +87,14 @@ async function escribirChunks(
     );
     await client.query("COMMIT");
   } catch (error) {
-    await client.query("ROLLBACK");
+    try {
+      await client.query("ROLLBACK");
+    } catch (rollbackError) {
+      logger.error("ROLLBACK failed", {
+        documentId,
+        error: rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
+      });
+    }
     throw error;
   } finally {
     client.release();
@@ -152,7 +159,14 @@ export async function reembedDocument(documentId: string, pipelineVersion: strin
       ]);
       await client.query("COMMIT");
     } catch (error) {
-      await client.query("ROLLBACK");
+      try {
+        await client.query("ROLLBACK");
+      } catch (rollbackError) {
+        logger.error("ROLLBACK failed", {
+          documentId,
+          error: rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
+        });
+      }
       throw error;
     } finally {
       client.release();

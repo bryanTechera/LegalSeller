@@ -88,4 +88,23 @@ describe("registerDocument", () => {
     expect(query.mock.calls.map((c) => String(c[0]))).toContain("ROLLBACK");
     expect(release).toHaveBeenCalled();
   });
+
+  it("si el ROLLBACK también falla, propaga el error original de la escritura, no el del rollback", async () => {
+    query.mockImplementation((sql: string) => {
+      if (sql.includes('INSERT INTO "DocumentChunk"')) throw new Error("deadlock");
+      if (sql === "ROLLBACK") throw new Error("connection terminated");
+      return Promise.resolve({ rows: [] });
+    });
+
+    const result = await registerDocument({
+      documentId: "doc-1",
+      text: "# T\n\nTexto del documento legal.",
+      contentHash: "a".repeat(64),
+      pipelineVersion: "modelo|NINGUNO|2000:200",
+    });
+
+    expect(result.status).toBe("error");
+    expect(result.error).toBe("deadlock");
+    expect(release).toHaveBeenCalled();
+  });
 });
