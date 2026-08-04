@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { buildSearchQuery, categoriaSinCalibrar, minSimilarityPara } from "./buscar-documentos-tool.js";
+import { categoriasHabilitadas } from "../../dominios/registry.js";
+
+import {
+  buildSearchQuery,
+  CATEGORIAS_CALIBRADAS,
+  categoriaSinCalibrar,
+  minSimilarityPara,
+} from "./buscar-documentos-tool.js";
 
 describe("buildSearchQuery", () => {
   it("sin filtro: no agrega condiciones de partición", () => {
@@ -54,6 +61,17 @@ describe("minSimilarityPara", () => {
 
   it("categoría desconocida: cae al mismo default, no revienta", () => {
     expect(minSimilarityPara("categoria-inexistente")).toBe(0.645);
+  });
+});
+
+describe("MIN_SIMILARITY_POR_CATEGORIA cobertura", () => {
+  it("toda categoría habilitada del registry tiene un umbral calibrado", () => {
+    // Guarda contra el modo de falla real: habilitar una categoría nueva en el
+    // registry sin calibrar su umbral la deja cayendo en silencio al default
+    // de relaciones-consumo — sin este test, ni pnpm test ni pnpm evals lo detectan.
+    for (const categoria of categoriasHabilitadas()) {
+      expect(CATEGORIAS_CALIBRADAS).toContain(categoria.id);
+    }
   });
 });
 

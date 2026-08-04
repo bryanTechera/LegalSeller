@@ -45,13 +45,27 @@ export function minSimilarityPara(categoria?: string): number {
 }
 
 /**
+ * Category ids with a calibrated entry in `MIN_SIMILARITY_POR_CATEGORIA`.
+ * Exported (narrow — just the ids, not the map) so a test can assert every
+ * enabled category from the domain registry has a calibrated threshold,
+ * without exposing the threshold values themselves as part of the module's
+ * public surface.
+ */
+export const CATEGORIAS_CALIBRADAS: readonly string[] = Object.keys(MIN_SIMILARITY_POR_CATEGORIA);
+
+/**
  * True when `categoria` was given explicitly but has no calibrated entry, so
  * `minSimilarityPara` is about to silently apply relaciones-consumo's scale
  * to a partition whose noise floor was never measured. `categoria ===
- * undefined` (no partition filter at all) is a legitimate call and must NOT
- * trip this — only an explicit-but-unmapped string is the anomaly worth a
- * log line. Kept separate from `minSimilarityPara` so that function stays
- * pure and total (no logger dependency, never throws).
+ * undefined` does NOT trip this — it is a *different* anomaly, logged
+ * separately in `execute` below: `searchDocumentsTool` is registered on
+ * exactly the five categoría agents, and every one of their `conducta-*`
+ * rules instructs the model to pass its categoria, so an undefined value in
+ * production means the model dropped the filter its own rule mandates, not a
+ * legitimate uncategorized call (the only genuinely legitimate undefined
+ * calls are eval/test harnesses that construct the tool call by hand). Kept
+ * separate from `minSimilarityPara` so that function stays pure and total (no
+ * logger dependency, never throws).
  */
 export function categoriaSinCalibrar(categoria: string | undefined): categoria is string {
   return categoria !== undefined && !(categoria in MIN_SIMILARITY_POR_CATEGORIA);
@@ -144,7 +158,12 @@ CUANDO USAR:
   execute: async (input, executionContext) => {
     const logger = executionContext.mastra?.getLogger() ?? fallbackLogger;
     try {
-      if (categoriaSinCalibrar(input.categoria)) {
+      if (input.categoria === undefined) {
+        logger.warn(
+          "buscar-documentos: llamada sin categoría — el agente no aplicó el filtro que su propia regla de conducta le exige; la búsqueda corrió sin partición sobre todo el corpus, al umbral más permisivo",
+          { tool: "buscar-documentos" },
+        );
+      } else if (categoriaSinCalibrar(input.categoria)) {
         logger.warn("buscar-documentos: categoría sin umbral calibrado, aplicando el default de relaciones-consumo", {
           tool: "buscar-documentos",
           categoria: input.categoria,
