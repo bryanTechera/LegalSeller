@@ -125,8 +125,11 @@ async function upsertDocumento(doc: DocumentoDelCorpus): Promise<string> {
 
 /**
  * Stamps fingerprints on rows ingested before they existed, without
- * re-embedding. Only touches rows whose stored partition already matches what
- * the path derives — a mismatch means the row was not produced by this file.
+ * re-embedding. Only touches rows that have never been fingerprinted
+ * (`contentHash IS NULL`) — a row that already has one was produced by a real
+ * ingestion, and stamping over it would silently detach it from its actual
+ * chunks. Also requires the stored partition to match what the path derives —
+ * a mismatch means the row was not produced by this file.
  */
 async function backfill(items: ItemDelSync[]): Promise<{ marcados: number; omitidos: string[] }> {
   const omitidos: string[] = [];
@@ -137,13 +140,18 @@ async function backfill(items: ItemDelSync[]): Promise<{ marcados: number; omiti
       omitidos.push(`${item.doc.rutaRelativa}: no existe en la base (requiere ingesta real)`);
       continue;
     }
+    if (item.fila.contentHash !== null) {
+      omitidos.push(`${item.doc.rutaRelativa}: la fila ya tiene huella (no necesita backfill)`);
+      continue;
+    }
     const { rowCount } = await getPool().query(
       `UPDATE "Document"
           SET "contentHash" = $2, "pipelineVersion" = $3, "updatedAt" = now()
         WHERE "id" = $1
           AND "categoria" IS NOT DISTINCT FROM $4
           AND "subcategoria" IS NOT DISTINCT FROM $5
-          AND "status" = 'READY'::"ProcessingStatus"`,
+          AND "status" = 'READY'::"ProcessingStatus"
+          AND "contentHash" IS NULL`,
       [item.fila.id, item.hash, PIPELINE_VERSION, item.doc.categoria, item.doc.subcategoria],
     );
     if (rowCount === 1) marcados += 1;
