@@ -32,11 +32,13 @@ export function decidirAccion(
   hashArchivo: string,
   versionActual: string,
 ): AccionSync {
-  if (base === null || base.contentHash === null || base.contentHash !== hashArchivo) return "reingestar";
+  if (base === null) return "reingestar";
+  if (base.contentHash !== hashArchivo) return "reingestar";
   if (base.pipelineVersion === versionActual) return "saltar";
 
   const enBase = base.pipelineVersion === null ? null : partesDeVersion(base.pipelineVersion);
   const actual = partesDeVersion(versionActual);
-  if (!enBase || !actual || enBase.chunk !== actual.chunk) return "reingestar";
+  if (enBase === null || actual === null) return "reingestar";
+  if (enBase.chunk !== actual.chunk) return "reingestar";
   return "reembeber";
 }
