@@ -19,6 +19,7 @@ import { parseArgs } from "node:util";
 import { PIPELINE_VERSION } from "../mastra/config/embedding.js";
 import { getPool } from "../mastra/config/storage.js";
 import { decidirAccion, type AccionSync } from "../mastra/services/corpus/decidir.js";
+import { upsertDocumento } from "../mastra/services/corpus/documento.js";
 import { derivarDocumento, hashContenido, type DocumentoDelCorpus } from "../mastra/services/corpus/paths.js";
 import { reembedDocument, registerDocument } from "../mastra/services/document-registry/index.js";
 
@@ -108,19 +109,6 @@ function reportar(items: ItemDelSync[], errores: string[], base: Map<string, Fil
     console.log(`\n  ERRORES DE DERIVACIÓN (${String(errores.length)}):`);
     for (const error of errores) console.log(`    ${error}`);
   }
-}
-
-/** Creates or updates the Document row (metadata only) and returns its id. */
-async function upsertDocumento(doc: DocumentoDelCorpus): Promise<string> {
-  const { rows } = await getPool().query<{ id: string }>(
-    `INSERT INTO "Document" ("id", "title", "sourceKey", "categoria", "subcategoria", "status", "createdAt", "updatedAt")
-     VALUES (gen_random_uuid()::text, $1, $2, $3, $4, 'PROCESSING'::"ProcessingStatus", now(), now())
-     ON CONFLICT ("title") DO UPDATE
-        SET "sourceKey" = $2, "categoria" = $3, "subcategoria" = $4, "updatedAt" = now()
-     RETURNING "id"`,
-    [doc.title, doc.rutaRelativa, doc.categoria, doc.subcategoria],
-  );
-  return rows[0].id;
 }
 
 /**

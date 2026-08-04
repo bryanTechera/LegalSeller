@@ -18,6 +18,7 @@ import { parseArgs } from "node:util";
 import { makeLogger } from "../mastra/common/logger.js";
 import { PIPELINE_VERSION } from "../mastra/config/embedding.js";
 import { getPool } from "../mastra/config/storage.js";
+import { upsertDocumento } from "../mastra/services/corpus/documento.js";
 import { derivarDocumento, hashContenido } from "../mastra/services/corpus/paths.js";
 import { registerDocument } from "../mastra/services/document-registry/index.js";
 
@@ -42,16 +43,7 @@ async function main(): Promise<number> {
   const contenido = readFileSync(absoluta, "utf8");
   const doc = derivarDocumento(rutaRelativa, contenido);
 
-  const { rows } = await getPool().query<{ id: string }>(
-    `INSERT INTO "Document" ("id", "title", "sourceKey", "categoria", "subcategoria", "status", "createdAt", "updatedAt")
-     VALUES (gen_random_uuid()::text, $1, $2, $3, $4, 'PROCESSING'::"ProcessingStatus", now(), now())
-     ON CONFLICT ("title") DO UPDATE
-        SET "sourceKey" = $2, "categoria" = $3, "subcategoria" = $4,
-            "status" = 'PROCESSING'::"ProcessingStatus", "updatedAt" = now()
-     RETURNING "id"`,
-    [doc.title, doc.rutaRelativa, doc.categoria, doc.subcategoria],
-  );
-  const documentId = rows[0].id;
+  const documentId = await upsertDocumento(doc);
   logger.info("Ingesting document", { documentId, title: doc.title, bytes: contenido.length });
 
   const resultado = await registerDocument({
