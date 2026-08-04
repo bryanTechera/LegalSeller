@@ -137,3 +137,7 @@ export async function POST(request: Request) {
 ## 12. SEO y metadata (páginas públicas)
 
 `export const metadata` con `metadataBase` y `title.template`; OG/Twitter images dinámicas; `sitemap.ts`, `robots.ts`, `manifest.ts`; JSON-LD tipado con `schema-dts`. `lang="es"` (o `es-UY` si el producto es local).
+
+## 13. Gotchas del board
+
+El mensaje `assistant` de la tabla `mastra_messages` se persiste ANTES que las tool calls de su propio turno. Esto significa que atribuir spans de búsquedas a mensajes por orden cronológico resulta en que todas las búsquedas del turno N se asocien con el mensaje del turno N+1. La atribución correcta sube por `parentSpanId` hasta el `agent_run` (que engloba tanto las tool calls como el mensaje del mismo turno) y usa su ventana temporal `[startedAt, endedAt]`. Ver `frontend/src/lib/revision/busquedas.ts`.
