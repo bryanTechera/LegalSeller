@@ -40,6 +40,8 @@ import { recepcionAgent } from "../mastra/dominios/recepcion/index.js";
 import { relacionesConsumoAgent } from "../mastra/dominios/relaciones-consumo/index.js";
 import { transitoAgent } from "../mastra/dominios/transito/index.js";
 
+import { evalRetrieval } from "./retrieval/run-retrieval.js";
+
 const THRESHOLD = 0.9;
 
 interface EvalItem {
@@ -352,7 +354,7 @@ async function evalFidelidad(agent: CategoriaAgent, agentDir: string, label: str
   return precision;
 }
 
-const EVALS: readonly { nombre: string; run: () => Promise<number> }[] = [
+const EVALS: readonly { nombre: string; run: () => Promise<number>; umbral?: number }[] = [
   { nombre: "receptor", run: evalReceptorClasificacion },
   { nombre: "laboral-citacion", run: () => evalCitacion(laboralAgent, "laboral", "Laboral") },
   { nombre: "laboral-voz-fuentes", run: () => evalVozFuentes(laboralAgent, "laboral", "Laboral") },
@@ -393,6 +395,19 @@ const EVALS: readonly { nombre: string; run: () => Promise<number> }[] = [
     nombre: "consumo-captacion",
     run: () => evalCaptacion(relacionesConsumoAgent, "relaciones-consumo", "Consumo"),
   },
+  // Gates fijados 2026-08-04 con el umbral calibrado por categoría (Tarea 10 del
+  // plan, minSimilarityPara). El score de cada dataset es min(recall@5, tasa de
+  // vacío correcto); la corrida de calibración dio 1.000 en las cinco categorías,
+  // así que el gate queda a 0.95 (margen de 0,05).
+  { nombre: "retrieval-laboral", run: () => evalRetrieval("laboral", "Laboral"), umbral: 0.95 },
+  { nombre: "retrieval-familia", run: () => evalRetrieval("familia", "Familia"), umbral: 0.95 },
+  {
+    nombre: "retrieval-arrendamiento",
+    run: () => evalRetrieval("arrendamiento-desalojo", "Arrendamiento"),
+    umbral: 0.95,
+  },
+  { nombre: "retrieval-consumo", run: () => evalRetrieval("relaciones-consumo", "Consumo"), umbral: 0.95 },
+  { nombre: "retrieval-transito", run: () => evalRetrieval("transito", "Tránsito"), umbral: 0.95 },
 ];
 
 /** `pnpm evals [filtro]` — sin filtro corre todo; con filtro, los datasets cuyo nombre lo contenga. */
@@ -406,9 +421,15 @@ async function main(): Promise<number> {
     );
     return 1;
   }
-  const resultados: number[] = [];
-  for (const evalDef of seleccion) resultados.push(await evalDef.run());
-  return resultados.every((precision) => precision >= THRESHOLD) ? 0 : 1;
+  const resultados: { nombre: string; precision: number; umbral: number }[] = [];
+  for (const evalDef of seleccion) {
+    resultados.push({ nombre: evalDef.nombre, precision: await evalDef.run(), umbral: evalDef.umbral ?? THRESHOLD });
+  }
+  const reprobados = resultados.filter((r) => r.precision < r.umbral);
+  for (const r of reprobados) {
+    console.log(`\nGATE FALLADO: ${r.nombre} — ${r.precision.toFixed(3)} < ${r.umbral.toFixed(3)}`);
+  }
+  return reprobados.length === 0 ? 0 : 1;
 }
 
 main()

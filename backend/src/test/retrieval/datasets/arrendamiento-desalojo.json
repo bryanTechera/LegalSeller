@@ -1,0 +1,42 @@
+[
+  {
+    "consulta": "arriendo un campo para ganadería y el propietario me quiere echar antes del plazo",
+    "categoria": "arrendamiento-desalojo",
+    "subcategorias": ["arrendamiento-rural"],
+    "esperado": ["Arrendamiento — Desalojo rural y entrega del predio (Decreto-Ley 14.384)"]
+  },
+  {
+    "consulta": "mi inquilino no paga hace tres meses, cómo lo desalojo",
+    "categoria": "arrendamiento-desalojo",
+    "subcategorias": ["desalojo-ley-14219"],
+    "esperado": ["Arrendamiento — Falta de pago y desalojo del mal pagador en el régimen general (Decreto-Ley 14.219)"]
+  },
+  {
+    "consulta": "qué garantías puedo pedir para alquilar mi apartamento",
+    "categoria": "arrendamiento-desalojo",
+    "subcategorias": ["contrato-de-alquiler"],
+    "esperado": ["Arrendamiento — Garantías del contrato de alquiler"]
+  },
+  {
+    "consulta": "cuánto dura el contrato de alquiler y si se renueva solo",
+    "categoria": "arrendamiento-desalojo",
+    "subcategorias": ["contrato-de-alquiler"],
+    "esperado": ["Arrendamiento — Plazo del contrato y renovación"]
+  },
+  {
+    "consulta": "quiero saber cómo es el trámite de desalojo en términos generales, qué pasos tiene",
+    "categoria": "arrendamiento-desalojo",
+    "esperado": ["Arrendamiento — El proceso de desalojo: estructura general"]
+  },
+  {
+    "consulta": "me despidieron sin causa después de seis años de trabajo",
+    "categoria": "arrendamiento-desalojo",
+    "subcategorias": ["arrendamiento-rural"],
+    "esperado": []
+  },
+  {
+    "consulta": "cuál es la receta de la tortilla de papas con cebolla",
+    "categoria": "arrendamiento-desalojo",
+    "esperado": []
+  }
+]

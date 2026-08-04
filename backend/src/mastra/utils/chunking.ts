@@ -12,8 +12,10 @@ export interface ChunkOptions {
   overlap?: number;
 }
 
-const DEFAULT_CHUNK_SIZE = 2000;
-const DEFAULT_OVERLAP = 200;
+/** Target chunk size in characters. Part of PIPELINE_VERSION: changing it invalidates every stored chunk. */
+export const CHUNK_SIZE = 2000;
+/** Overlap between consecutive chunks, in characters. Part of PIPELINE_VERSION. */
+export const CHUNK_OVERLAP = 200;
 
 /**
  * Splits a document into overlapping chunks, preferring paragraph and
@@ -24,8 +26,8 @@ const DEFAULT_OVERLAP = 200;
  * real domain documents before adding complexity.
  */
 export function chunkText(text: string, options: ChunkOptions = {}): TextChunk[] {
-  const chunkSize = options.chunkSize ?? DEFAULT_CHUNK_SIZE;
-  const overlap = options.overlap ?? DEFAULT_OVERLAP;
+  const chunkSize = options.chunkSize ?? CHUNK_SIZE;
+  const overlap = options.overlap ?? CHUNK_OVERLAP;
   if (chunkSize <= 0) throw new Error("chunkSize must be positive");
   if (overlap < 0 || overlap >= chunkSize) throw new Error("overlap must be in [0, chunkSize)");
 

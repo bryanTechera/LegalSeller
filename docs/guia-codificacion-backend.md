@@ -90,6 +90,7 @@ export const searchDocumentsTool = createTool({
   inputSchema: z.object({
     query: z.string().min(1).meta({ description: "Consulta en lenguaje natural" }),
     limit: z.number().int().min(1).max(10).default(5),
+    categoria: z.string().optional().meta({ description: "Limitar la búsqueda a una categoría del corpus" }),
   }),
   outputSchema: z.object({
     chunks: z.array(ChunkSchema),
@@ -107,7 +108,9 @@ export const searchDocumentsTool = createTool({
          WHERE 1 - (embedding <=> $1::vector) > $2
          ORDER BY embedding <=> $1::vector
          LIMIT $3`,
-        [toVectorLiteral(queryEmbedding), MIN_SIMILARITY, input.limit],
+        // El umbral es por categoría, no una constante única — ver
+        // minSimilarityPara(categoria) en buscar-documentos-tool.ts.
+        [toVectorLiteral(queryEmbedding), minSimilarityPara(input.categoria), input.limit],
       );
       return { chunks, count: chunks.length, mensaje: "..." };
     } catch (error) {

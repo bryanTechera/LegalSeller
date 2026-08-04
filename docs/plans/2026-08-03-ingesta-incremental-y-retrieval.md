@@ -97,9 +97,36 @@ Cinco piezas. El orden está determinado por qué habilita la medición de qué.
 
 Los valores numéricos de ambos gates **se fijan con la primera corrida calibrada** y se registran acá; no se eligen de antemano. El `THRESHOLD = 0.9` del runner actual (`backend/src/test/run-evals.ts`) es del matcher de clasificación y no aplica a estas métricas.
 
+**Calibración fijada el 2026-08-04** (Tarea 10). El brief original preveía un único umbral global — mínimo de los pisos de positivos, máximo de los techos de negativos, punto medio. Corrido sobre los datos reales, esa ventana global mide **0,002**: el techo de negativos más alto (laboral, 0,683) queda apenas por debajo del piso de positivos más bajo (tránsito, 0,685). Un solo número técnicamente satisface las dos restricciones en 0,684, pero con un milésimo de margen queda sobreajustado a los 42 ítems del golden set y flaquearía apenas se agregue un documento o una consulta más. La causa es estructural: las escalas difieren por categoría — los negativos de consumo no superan 0,587 mientras que los de laboral llegan a 0,683, una décima de separación — y un solo número no puede servir bien a las dos.
+
+**Decisión**: un umbral por categoría, cada uno en el punto medio de su propia ventana (`minSimilarityPara` en `buscar-documentos-tool.ts`):
+
+| categoría | piso de positivos | techo de negativos | umbral = punto medio | margen |
+|---|---|---|---|---|
+| `laboral` | 0.752 | 0.683 | **0.717** | ±0.034 |
+| `familia` | 0.701 | 0.656 | **0.678** | ±0.022 |
+| `arrendamiento-desalojo` | 0.744 | 0.628 | **0.686** | ±0.058 |
+| `relaciones-consumo` | 0.704 | 0.587 | **0.645** | ±0.058 |
+| `transito` | 0.685 | 0.672 | **0.678** | ±0.006 |
+
+El default para una consulta sin `categoria` (o con una no mapeada) es 0,645 — el más bajo de los cinco, para que un llamado sin contexto de categoría sea el más permisivo en vez de descartar en silencio resultados de una partición sin medir.
+
+Con estos umbrales, la corrida de verificación dio `recall@5 = 1.000` y `vacío-correcto = 1.000` en las cinco categorías. Gates de `retrieval-*` en `run-evals.ts` fijados en 0,95 (margen de 0,05 sobre lo observado). Baseline previo (con `MIN_SIMILARITY = 0.3`): recall@5 1,000, vacío correcto 0,000.
+
+**Limitación conocida**: el margen de tránsito (±0,006) es angosto porque esa categoría tiene solo 9 documentos — es el primer umbral a revisar cuando crezca el corpus.
+
 **Tamaño**: ~30 positivos y ~10 negativos, proporcionales al corpus de cada categoría. Semillados desde el dataset de citación existente y los 155 títulos del corpus; revisados por el equipo — sobre todo los negativos "dentro de la categoría, fuera del corpus", que requieren saber qué se decidió no cubrir.
 
 **Runner**: colgado del existente como `pnpm evals retrieval`.
+
+**Pregunta de alcance abierta**: la Tarea 9 armó un item "dentro de la categoría, fuera
+del corpus" para familia sobre mediación familiar y, al verificarlo, encontró que el
+corpus sí trata mediación pero solo para decir cuándo está prohibida y qué límites
+tienen los acuerdos entre padres — no describe el trámite en sí, que es lo que la
+consulta de prueba pregunta. La duda de alcance (¿el agente debe responder con ese
+material parcial o decir que el trámite no está cubierto?) quedó registrada en
+`docs/preguntas-legales/2026-08-04-alcance-mediacion-familiar.md` (estado: ABIERTA); el
+item de prueba se sacó del dataset de familia hasta tener la respuesta.
 
 ---
 
@@ -155,7 +182,7 @@ Sin cambios / re-ingestados / nuevos / fallidos, más el **drift como advertenci
 
 ### Calibración del umbral
 
-Se comparan dos distribuciones sobre el golden set: la similitud del primer documento esperado en cada positivo, y la del top-1 en cada negativo. El umbral vive entre el techo de los negativos y el piso de los positivos. Si las nubes se solapan, ningún número absoluto sirve y hay que ir a un **corte relativo al top-1** (descartar lo que quede por debajo de cierto porcentaje del mejor resultado). Se implementa el absoluto primero — es un cambio de constante — y el relativo se prueba contra él.
+Se comparan dos distribuciones sobre el golden set: la similitud del primer documento esperado en cada positivo, y la del top-1 en cada negativo. El umbral vive entre el techo de los negativos y el piso de los positivos. Si las nubes se solapan, ningún número absoluto único sirve — pero el fallback no puede ser un corte relativo al top-1 (descartar lo que quede por debajo de cierto porcentaje del mejor resultado): un corte relativo nunca vacía un resultado, porque el top-1 siempre sobrevive a ser el 100% de sí mismo, y los negativos miden justamente si la consulta devuelve *nada*. Un corte relativo sirve para recortar la cola de un resultado, no para rechazarlo entero. El fallback real, aplicado cuando la Tarea 12 confirmó que la ventana global es de apenas 0.002, es un **umbral absoluto por categoría**: las escalas difieren entre particiones (el techo de negativos de relaciones-consumo es 0.587, el de laboral 0.683), así que cada categoría se calibra con su propio punto medio en vez de un solo número global.
 
 El criterio es **asimétrico a propósito**: maximizar los negativos que salen vacíos *sin perder recall* en los positivos. Un chunk de más lo descarta `gpt-5.6-luna` leyendo; un chunk faltante produce un "no encontré" o una respuesta armada sobre material que no venía al caso.
 
@@ -167,7 +194,19 @@ El criterio es **asimétrico a propósito**: maximizar los negativos que salen v
 
 Procedimiento: medir baseline con el golden set → cambiar → re-embeber → volver a medir. Se adopta si mejora, se revierte si no, y revertir es simétrico (otra corrida de `--reembed-stale`, ~150k tokens).
 
-Para no dejar la base con dos espacios de embedding conviviendo, la corrida **embebe todo primero sin escribir y commitea los 385 chunks en una transacción**. La ventana de estado mezclado son segundos, no minutos — importa porque la base es compartida entre worktrees.
+La corrida re-embebe documento por documento: `reembedDocument` abre `BEGIN`/`COMMIT` por documento, así que ningún documento individual queda nunca a medio escribir. Pero no hay una transacción de lote — el corpus como conjunto atraviesa un estado mezclado durante toda la corrida (los ~80 segundos medidos en la Tarea 12), con algunos documentos ya en el `pipelineVersion` nuevo y otros todavía en el viejo. La consecuencia de concurrencia no es un resultado vacío: una sesión paralela que llame a `buscar-documentos` en esa ventana rankea chunks de dos espacios de embedding incompatibles contra un mismo vector de consulta, lo que produce un ranking silenciosamente equivocado — el peor tipo de falla en un producto legal, porque no se nota como error. La mitigación es coordinar la corrida con las otras sesiones (o repetirla al final), no confiar en que la ventana sea corta.
+
+**Resultado (2026-08-04)**: revertido. Con los umbrales neutralizados (`minSimilarityPara` devolviendo 0 temporalmente) se midió la separación piso-de-positivos menos techo-de-negativos en las dos escalas, ambas con `pnpm evals retrieval` corriendo el mismo código:
+
+| categoría | piso antes | techo antes | sep. antes | piso después | techo después | sep. después | delta |
+|---|---|---|---|---|---|---|---|
+| laboral | 0.752 | 0.683 | 0.069 | 0.735 | 0.675 | 0.060 | −0.009 |
+| familia | 0.701 | 0.656 | 0.045 | 0.679 | 0.647 | 0.032 | −0.013 |
+| arrendamiento-desalojo | 0.744 | 0.628 | 0.116 | 0.730 | 0.633 | 0.097 | −0.019 |
+| relaciones-consumo | 0.704 | 0.587 | 0.117 | 0.713 | 0.603 | 0.110 | −0.007 |
+| tránsito | 0.685 | 0.672 | 0.013 | 0.687 | 0.678 | 0.009 | −0.004 |
+
+Ventana global (piso mínimo de positivos menos techo máximo de negativos): **0.002 → 0.001**. Las cinco categorías se achicaron, ninguna creció; el `taskType` asimétrico no separó mejor, comprimió levemente ambos lados de la escala hacia el centro en vez de abrirla. Se revirtió: `EMBEDDING_TASK_TYPE` volvió a `"NINGUNO"`, los dos call sites de consulta volvieron a `generateEmbedding(texto)` sin segundo argumento, y `pnpm corpus:sync` restauró los 385 chunks en el espacio original (verificado: 155 `READY`, cero huellas nulas, `pnpm evals retrieval` reproduce 1.000/1.000/1.000 en las cinco categorías). **Conclusión**: la hipótesis del §2 queda confirmada en la dirección negativa — la similitud sin `taskType` ya llevaba toda la señal disponible en este corpus, y declarar el `taskType` no la mejora.
 
 ### Reranking
 
@@ -178,7 +217,11 @@ Se decide con **`recall@20 − recall@5`** medido *después* de calibrar el umbr
 
 Aun con brecha, la ganancia se pesa contra meter una llamada de modelo en el camino crítico del TTFT y sumar la entrada en `frontend/src/lib/board/costos.ts`.
 
-**Predicción registrada para verificar**: con 155 documentos ya particionados por categoría y subcategoría, y un razonador leyendo los resultados, la brecha va a ser chica y el reranker no va a justificarse.
+**Medido (2026-08-04)**: `recall@5 = 1.000` y `recall@20 = 1.000` en las cinco categorías — brecha de 0 puntos porcentuales contra el umbral de decisión de 10. Decisión: no se construye. Todo documento esperado ya aparece en el top-5; no queda ninguno entre las posiciones 6 y 20 esperando a que un reranker lo promueva, así que no hay nada que reordenar. La predicción registrada al escribir el spec —que con 155 documentos ya particionados por categoría y subcategoría, y un razonador leyendo los resultados, la brecha iba a ser chica y el reranker no se iba a justificar— se cumplió.
+
+**Limitación de la medición**: el golden set tiene 31 positivos sobre un corpus de 155 documentos, y hoy los 31 pasan. Eso mide "no se detecta mal-rankeo a este tamaño de corpus con este golden set", no "el reranking nunca va a servir" — la pregunta se reabre por evidencia, no por intuición, si el corpus crece de escala o el golden set se amplía y algún positivo empieza a caer fuera del top-5.
+
+Aun si la brecha hubiera sido real, construirlo tenía un costo a pesar: un modelo más en el camino crítico del TTFT de un chat que se transmite por streaming, y una entrada nueva en `frontend/src/lib/board/costos.ts` para que el board no reporte ese turno como "sin dato".
 
 ---
 
@@ -210,6 +253,39 @@ Explícito, para que no se cuele en la implementación:
 | Riesgo | Mitigación |
 |---|---|
 | El golden set queda sesgado a lo que el corpus ya cubre bien | Los negativos "dentro de la categoría, fuera del corpus" los revisa el equipo legal, que sabe qué se decidió no cubrir |
-| Las distribuciones de positivos y negativos se solapan y no hay umbral absoluto viable | El corte relativo al top-1 está previsto como alternativa; ambos son cambios de pocas líneas |
-| Una sesión paralela ingesta durante la migración de `taskType` | La ventana de estado mezclado es de segundos (una transacción); coordinar la corrida o repetirla al final |
+| Las distribuciones de positivos y negativos se solapan y no hay umbral absoluto único viable | Umbral absoluto por categoría (cada partición calibra su propio punto medio); el corte relativo no sirve de fallback porque nunca vacía un resultado |
+| Una sesión paralela ingesta durante la migración de `taskType` | El corpus completo queda en estado mezclado durante toda la corrida (~80s medidos en la Tarea 12), por documentos con `pipelineVersion` distinta rankeando contra el mismo vector de consulta — no un resultado vacío, un ranking equivocado; coordinar la corrida con las otras sesiones o repetirla al final |
 | `--reembed-stale` re-embebe desde chunks producidos con un `chunkSize` viejo | `pipelineVersion` incluye `chunkSize`/`overlap`: si cambiaron, el documento requiere el archivo y el modo lo reporta como no resoluble sin `.md` |
+
+---
+
+## 11. Hallazgos preexistentes detectados durante la implementación
+
+Ninguno de estos lo causó este trabajo. Aparecieron al correr `pnpm evals fidelidad` y
+`pnpm evals voz-fuentes` tras calibrar el umbral — evals que **nadie había corrido** en
+las tareas previas, porque los `citacion` sólo verifican que `buscar-documentos` se llame
+y pasan igual si la tool devolvió cinco chunks o cero.
+
+Las cinco fallas se diagnosticaron y **cero son atribuibles al umbral calibrado**: en
+cuatro, el documento que carga el contenido esperado queda por encima del corte de su
+categoría (top-3, márgenes 0,003 a 0,07); en la quinta se hizo el contrafáctico —
+forzando `minSimilarityPara` al 0,3 viejo se reproduce la falla idéntica.
+
+Quedan dos bugs reales, a rutear fuera de esta rama:
+
+1. **La aserción `prohibido` del harness de evals no entiende negaciones.**
+   `evalFidelidad` y `evalVozFuentes` (`backend/src/test/run-evals.ts`) hacen un chequeo
+   de substring, así que una respuesta que explica correctamente que la indemnización
+   triple **no** corresponde a un caso dispara el mismo detector que una que la inventa.
+   Esos datasets vienen reportando falsos positivos. Es un bug del harness, no de los
+   agentes.
+
+2. **Fuga del título de un documento del corpus** en una consulta de despido rural que
+   sintetiza varias fuentes. Viola la regla de que las fuentes son de uso interno y el
+   agente nunca las nombra (`conducta-laboral`, y la regla crítica de CLAUDE.md). Va por
+   el flujo de la skill `revisar-feedback-legal`, con su eval anti-regresión.
+
+Aparte, dos observaciones sin acción inmediata: `temperature: 1` produce flakiness real
+en estos evals (dos de las cinco fallas no reprodujeron al repetirlas), y
+`backend/` no tiene script de `typecheck`, así que dos errores preexistentes de `tsc`
+en `run-evals.ts` nunca estuvieron gateados.

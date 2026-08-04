@@ -1,61 +1,69 @@
 /**
- * Ingesta CLI de un documento al corpus RAG.
+ * Ingesta de un único archivo del corpus. Para el corpus completo, usar
+ * `pnpm corpus:sync`, que es incremental.
  *
- * Uso: pnpm ingest <archivo.txt> --title "Ley N° 17.250 — Defensa del Consumidor (Uruguay)" [--categoria laboral --subcategoria despido]
+ * Uso: pnpm ingest corpus/laboral/despido/03-modalidades-despido.md
  *
- * Crea (o re-usa por título) la fila Document y delega en registerDocument
- * el pipeline chunk → embed → pgvector. Re-ejecutar re-ingesta el documento.
+ * El título y la partición se derivan del archivo y su ubicación, con la misma
+ * validación contra el registry que usa el sync: no hay flags que puedan
+ * contradecir lo que el agente filtra.
  */
 import "dotenv/config";
 
 import { readFileSync } from "node:fs";
+import { isAbsolute, relative, resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 
 import { makeLogger } from "../mastra/common/logger.js";
+import { PIPELINE_VERSION } from "../mastra/config/embedding.js";
 import { getPool } from "../mastra/config/storage.js";
+import { upsertDocumento } from "../mastra/services/corpus/documento.js";
+import { derivarDocumento, hashContenido } from "../mastra/services/corpus/paths.js";
 import { registerDocument } from "../mastra/services/document-registry/index.js";
 
 const logger = makeLogger("Ingest");
+const CORPUS_DIR = fileURLToPath(new URL("../../corpus", import.meta.url));
 
 async function main(): Promise<number> {
-  const { values, positionals } = parseArgs({
-    options: { title: { type: "string" }, categoria: { type: "string" }, subcategoria: { type: "string" } },
-    allowPositionals: true,
-  });
-  const filePath = positionals[0];
-  const title = values.title;
+  const { positionals } = parseArgs({ allowPositionals: true });
+  if (positionals.length === 0) {
+    logger.error("Uso: pnpm ingest <ruta dentro de backend/corpus>/<archivo>.md");
+    return 1;
+  }
+  const argumento = positionals[0];
 
-  if (!filePath || !title) {
-    logger.error(
-      'Uso: pnpm ingest <archivo.txt> --title "<título>" [--categoria laboral --subcategoria despido]',
-    );
+  const absoluta = isAbsolute(argumento) ? argumento : resolve(process.cwd(), argumento);
+  const rutaRelativa = relative(CORPUS_DIR, absoluta).split(sep).join("/");
+  if (rutaRelativa.startsWith("..")) {
+    logger.error("El archivo tiene que vivir dentro de backend/corpus/", { archivo: argumento });
     return 1;
   }
 
-  const text = readFileSync(filePath, "utf8");
-  const pool = getPool();
+  const contenido = readFileSync(absoluta, "utf8");
+  const doc = derivarDocumento(rutaRelativa, contenido);
 
-  const { rows } = await pool.query<{ id: string }>(
-    `INSERT INTO "Document" ("id", "title", "sourceKey", "categoria", "subcategoria", "status", "createdAt", "updatedAt")
-     VALUES (gen_random_uuid()::text, $1, $2, $3, $4, 'PROCESSING'::"ProcessingStatus", now(), now())
-     ON CONFLICT ("title") DO UPDATE
-        SET "sourceKey" = $2, "categoria" = $3, "subcategoria" = $4,
-            "status" = 'PROCESSING'::"ProcessingStatus", "updatedAt" = now()
-     RETURNING "id"`,
-    [title, filePath, values.categoria ?? null, values.subcategoria ?? null],
-  );
-  const documentId = rows[0].id;
-  logger.info("Ingesting document", { documentId, title, bytes: text.length });
+  const documentId = await upsertDocumento(doc);
+  logger.info("Ingesting document", { documentId, title: doc.title, bytes: contenido.length });
 
-  const result = await registerDocument({ documentId, text });
-  const finalStatus = result.status === "ok" && result.chunksInserted > 0 ? "READY" : "FAILED";
-  await pool.query(`UPDATE "Document" SET "status" = $2::"ProcessingStatus", "updatedAt" = now() WHERE "id" = $1`, [
+  const resultado = await registerDocument({
     documentId,
-    finalStatus,
-  ]);
+    text: contenido,
+    contentHash: hashContenido(contenido),
+    pipelineVersion: PIPELINE_VERSION,
+  });
 
-  logger.info("Ingest finished", { documentId, status: finalStatus, chunksInserted: result.chunksInserted });
-  return finalStatus === "READY" ? 0 : 1;
+  if (resultado.status === "error") {
+    await getPool().query(
+      `UPDATE "Document" SET "status" = 'FAILED'::"ProcessingStatus", "updatedAt" = now() WHERE "id" = $1`,
+      [documentId],
+    );
+    logger.error("Ingest failed", { documentId, error: resultado.error });
+    return 1;
+  }
+
+  logger.info("Ingest finished", { documentId, chunksInserted: resultado.chunksInserted });
+  return 0;
 }
 
 main()

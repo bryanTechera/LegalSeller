@@ -5,8 +5,71 @@ import { fallbackLogger } from "../../common/logger.js";
 import { generateEmbedding, toVectorLiteral } from "../../config/embedding.js";
 import { getPool } from "../../config/storage.js";
 
-/** Minimum cosine similarity for a chunk to be considered relevant. Calibrate with evals. */
-const MIN_SIMILARITY = 0.3;
+/**
+ * Minimum cosine similarity for a chunk to be considered relevant, per categoría.
+ * Calibrated 2026-08-04 against src/test/retrieval: for each categoría, the
+ * threshold is the midpoint between the floor of matched positives and the
+ * ceiling of negatives. The old single `MIN_SIMILARITY = 0.3` sat below the
+ * scale's floor — an unrelated query still scores ~0.49 — so it never filtered
+ * anything.
+ *
+ * A single global threshold does not work here: the highest negative ceiling
+ * (laboral, 0.683) sits just 0.002 below the lowest positive floor (tránsito,
+ * 0.685), which would overfit a threshold to 42 golden-set items. The scales
+ * differ by categoría by up to a tenth (consumo negatives top out at 0.587,
+ * laboral's reach 0.683), so each categoría gets its own midpoint instead.
+ *
+ * Tránsito's margin (±0.006) is thin because that categoría has only 9
+ * documents — it's the first threshold to revisit as the corpus grows.
+ */
+const MIN_SIMILARITY_POR_CATEGORIA: Record<string, number> = {
+  laboral: 0.717,
+  familia: 0.678,
+  "arrendamiento-desalojo": 0.686,
+  "relaciones-consumo": 0.645,
+  transito: 0.678,
+};
+
+/**
+ * Default for a query with no `categoria` filter, or with one not in the map
+ * above: the lowest of the five calibrated thresholds (relaciones-consumo),
+ * so an uncategorized call stays the most permissive — the alternative is
+ * silently dropping results for a partition whose scale hasn't been measured.
+ */
+const MIN_SIMILARITY_DEFAULT = 0.645;
+
+/** Single entry point for the calibrated threshold — keeps the tool and the eval from drifting apart. */
+export function minSimilarityPara(categoria?: string): number {
+  if (categoria === undefined) return MIN_SIMILARITY_DEFAULT;
+  return MIN_SIMILARITY_POR_CATEGORIA[categoria] ?? MIN_SIMILARITY_DEFAULT;
+}
+
+/**
+ * Category ids with a calibrated entry in `MIN_SIMILARITY_POR_CATEGORIA`.
+ * Exported (narrow — just the ids, not the map) so a test can assert every
+ * enabled category from the domain registry has a calibrated threshold,
+ * without exposing the threshold values themselves as part of the module's
+ * public surface.
+ */
+export const CATEGORIAS_CALIBRADAS: readonly string[] = Object.keys(MIN_SIMILARITY_POR_CATEGORIA);
+
+/**
+ * True when `categoria` was given explicitly but has no calibrated entry, so
+ * `minSimilarityPara` is about to silently apply relaciones-consumo's scale
+ * to a partition whose noise floor was never measured. `categoria ===
+ * undefined` does NOT trip this — it is a *different* anomaly, logged
+ * separately in `execute` below: `searchDocumentsTool` is registered on
+ * exactly the five categoría agents, and every one of their `conducta-*`
+ * rules instructs the model to pass its categoria, so an undefined value in
+ * production means the model dropped the filter its own rule mandates, not a
+ * legitimate uncategorized call (the only genuinely legitimate undefined
+ * calls are eval/test harnesses that construct the tool call by hand). Kept
+ * separate from `minSimilarityPara` so that function stays pure and total (no
+ * logger dependency, never throws).
+ */
+export function categoriaSinCalibrar(categoria: string | undefined): categoria is string {
+  return categoria !== undefined && !(categoria in MIN_SIMILARITY_POR_CATEGORIA);
+}
 
 export const ChunkResultSchema = z.object({
   documentId: z.string().meta({ description: "Id del documento de origen" }),
@@ -95,11 +158,22 @@ CUANDO USAR:
   execute: async (input, executionContext) => {
     const logger = executionContext.mastra?.getLogger() ?? fallbackLogger;
     try {
+      if (input.categoria === undefined) {
+        logger.warn(
+          "buscar-documentos: llamada sin categoría — el agente no aplicó el filtro que su propia regla de conducta le exige; la búsqueda corrió sin partición sobre todo el corpus, al umbral más permisivo",
+          { tool: "buscar-documentos" },
+        );
+      } else if (categoriaSinCalibrar(input.categoria)) {
+        logger.warn("buscar-documentos: categoría sin umbral calibrado, aplicando el default de relaciones-consumo", {
+          tool: "buscar-documentos",
+          categoria: input.categoria,
+        });
+      }
       const queryEmbedding = await generateEmbedding(input.query);
       const pool = getPool();
       const { sql, params } = buildSearchQuery({
         vector: toVectorLiteral(queryEmbedding),
-        minSimilarity: MIN_SIMILARITY,
+        minSimilarity: minSimilarityPara(input.categoria),
         limit: input.limit,
         categoria: input.categoria,
         subcategorias: input.subcategorias,

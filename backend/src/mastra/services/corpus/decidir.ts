@@ -1,0 +1,52 @@
+/** What the sync must do with one corpus file. */
+export type AccionSync = "saltar" | "reingestar" | "reembeber";
+
+/** Fingerprints currently stored for a Document row. */
+export interface EstadoEnBase {
+  contentHash: string | null;
+  pipelineVersion: string | null;
+}
+
+export interface PartesDeVersion {
+  /** modelo|taskType — a change here is fixable from stored chunk text. */
+  embed: string;
+  /** chunkSize:overlap — a change here moves chunk boundaries, so it needs the file. */
+  chunk: string;
+}
+
+/**
+ * Splits a PIPELINE_VERSION string (`modelo|taskType|chunkSize:overlap`) into
+ * its embed/chunk halves. Exported for `corpus-sync.ts --reembed-stale`, which
+ * needs the same chunk-half comparison to tell a database row that's safely
+ * re-embeddable from stored chunk text apart from one whose chunk boundaries
+ * moved (unresolvable without the source file) — reused here instead of
+ * duplicated so the two call sites can't drift on what counts as "same chunking".
+ */
+export function partesDeVersion(version: string): PartesDeVersion | null {
+  const partes = version.split("|");
+  if (partes.length !== 3) return null;
+  return { embed: `${partes[0]}|${partes[1]}`, chunk: partes[2] };
+}
+
+/**
+ * Decides what to do with a corpus file given what the database already holds.
+ * "reembeber" is only reachable when the chunking half of the fingerprint is
+ * unchanged: stored chunks are reusable as text only if their boundaries still
+ * match the current chunker. Anything ambiguous falls back to "reingestar",
+ * which is always correct (just more expensive).
+ */
+export function decidirAccion(
+  base: EstadoEnBase | null,
+  hashArchivo: string,
+  versionActual: string,
+): AccionSync {
+  if (base === null) return "reingestar";
+  if (base.contentHash !== hashArchivo) return "reingestar";
+  if (base.pipelineVersion === versionActual) return "saltar";
+
+  const enBase = base.pipelineVersion === null ? null : partesDeVersion(base.pipelineVersion);
+  const actual = partesDeVersion(versionActual);
+  if (enBase === null || actual === null) return "reingestar";
+  if (enBase.chunk !== actual.chunk) return "reingestar";
+  return "reembeber";
+}

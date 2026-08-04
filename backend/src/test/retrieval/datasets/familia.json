@@ -1,0 +1,66 @@
+[
+  {
+    "consulta": "me quiero divorciar de mi esposo, ¿cómo es el proceso?",
+    "categoria": "familia",
+    "subcategorias": ["divorcio-sociedad-conyugal"],
+    "esperado": ["Familia — Divorcio: las tres vías y el régimen vigente desde 2026"]
+  },
+  {
+    "consulta": "compré una casa con plata que tenía antes de casarme, ¿es mía o de los dos?",
+    "categoria": "familia",
+    "subcategorias": ["divorcio-sociedad-conyugal"],
+    "esperado": ["Familia — Sociedad conyugal: bienes propios y bienes gananciales"]
+  },
+  {
+    "consulta": "me separé y quiero saber cómo pedir pensión alimenticia para mis hijos",
+    "categoria": "familia",
+    "subcategorias": ["pension-tenencia-visitas"],
+    "esperado": ["Familia — Pensión alimenticia: concepto, beneficiarios y vigencia"]
+  },
+  {
+    "consulta": "me separé de mi pareja y quiero acordar cómo van a ser las visitas a mis hijos",
+    "categoria": "familia",
+    "subcategorias": ["pension-tenencia-visitas"],
+    "esperado": ["Familia — Visitas y contacto familiar"]
+  },
+  {
+    "consulta": "se murió mi padre sin dejar testamento, ¿cómo se reparte la herencia?",
+    "categoria": "familia",
+    "subcategorias": ["sucesiones"],
+    "esperado": ["Familia — Sucesiones: la sucesión intestada y el orden de llamamiento"]
+  },
+  {
+    "consulta": "quiero hacer un testamento, ¿qué formas tiene y quién puede hacerlo?",
+    "categoria": "familia",
+    "subcategorias": ["sucesiones"],
+    "esperado": ["Familia — Sucesiones: el testamento, sus formas y quién puede testar"]
+  },
+  {
+    "consulta": "convivo hace varios años con mi pareja sin casarnos, ¿tenemos algún derecho como si fuéramos casados?",
+    "categoria": "familia",
+    "subcategorias": ["union-concubinaria"],
+    "esperado": ["Familia — Unión concubinaria: reconocimiento, efectos y disolución"]
+  },
+  {
+    "consulta": "mi pareja me agrede y quiero saber qué protecciones tengo",
+    "categoria": "familia",
+    "subcategorias": ["violencia-de-genero"],
+    "esperado": ["Familia — Violencia basada en género: qué comprende y derechos de la víctima"]
+  },
+  {
+    "consulta": "me chocaron el auto y el otro conductor no tenía seguro, ¿qué hago?",
+    "categoria": "familia",
+    "subcategorias": ["divorcio-sociedad-conyugal"],
+    "esperado": []
+  },
+  {
+    "consulta": "cómo se prepara un mate bien cebado",
+    "categoria": "familia",
+    "esperado": []
+  },
+  {
+    "consulta": "quiero anotarme como familia de acogida para cuidar temporalmente a un niño mientras el estado decide su situación",
+    "categoria": "familia",
+    "esperado": []
+  }
+]
