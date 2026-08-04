@@ -185,4 +185,28 @@ describe("obtenerConversacion", () => {
     expect(detalle?.busquedas).toHaveLength(1);
     expect(detalle?.busquedas[0]).toMatchObject({ messageId: "m1", consulta: "indemnización por despido" });
   });
+
+  // El detalle del board no renderiza ningún tool-call (las búsquedas llegan
+  // por su propio camino, ya agrupadas): no tiene sentido duplicar los ~9 KB
+  // de chunks del corpus que trae la timeline con spans.
+  it("no devuelve el input/output de los tool-call, pero conserva el error", async () => {
+    timelineMock.construirTimeline.mockResolvedValue([
+      { tipo: "mensaje", id: "m1", rol: "assistant", texto: "hola", fecha: "2026-07-30T10:00:00.000Z" },
+      {
+        tipo: "tool-call",
+        spanId: "t1",
+        tool: "buscar-documentos",
+        agente: "laboral",
+        input: { query: "indemnización por despido" },
+        output: { status: "ok", chunks: [{ content: "x".repeat(9000) }] },
+        error: { message: "algo falló" },
+        fecha: "2026-07-30T10:00:01.000Z",
+      },
+    ]);
+
+    const detalle = await obtenerConversacion("c1");
+
+    const toolCall = detalle?.timeline.find((item) => item.tipo === "tool-call");
+    expect(toolCall).toMatchObject({ input: null, output: null, error: { message: "algo falló" } });
+  });
 });
