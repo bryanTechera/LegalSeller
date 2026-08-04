@@ -44,6 +44,19 @@ export function minSimilarityPara(categoria?: string): number {
   return MIN_SIMILARITY_POR_CATEGORIA[categoria] ?? MIN_SIMILARITY_DEFAULT;
 }
 
+/**
+ * True when `categoria` was given explicitly but has no calibrated entry, so
+ * `minSimilarityPara` is about to silently apply relaciones-consumo's scale
+ * to a partition whose noise floor was never measured. `categoria ===
+ * undefined` (no partition filter at all) is a legitimate call and must NOT
+ * trip this — only an explicit-but-unmapped string is the anomaly worth a
+ * log line. Kept separate from `minSimilarityPara` so that function stays
+ * pure and total (no logger dependency, never throws).
+ */
+export function categoriaSinCalibrar(categoria: string | undefined): categoria is string {
+  return categoria !== undefined && !(categoria in MIN_SIMILARITY_POR_CATEGORIA);
+}
+
 export const ChunkResultSchema = z.object({
   documentId: z.string().meta({ description: "Id del documento de origen" }),
   documentTitle: z.string().meta({ description: "Título del documento de origen" }),
@@ -131,6 +144,12 @@ CUANDO USAR:
   execute: async (input, executionContext) => {
     const logger = executionContext.mastra?.getLogger() ?? fallbackLogger;
     try {
+      if (categoriaSinCalibrar(input.categoria)) {
+        logger.warn("buscar-documentos: categoría sin umbral calibrado, aplicando el default de relaciones-consumo", {
+          tool: "buscar-documentos",
+          categoria: input.categoria,
+        });
+      }
       const queryEmbedding = await generateEmbedding(input.query);
       const pool = getPool();
       const { sql, params } = buildSearchQuery({

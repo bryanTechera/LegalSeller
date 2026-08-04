@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildSearchQuery } from "./buscar-documentos-tool.js";
+import { buildSearchQuery, categoriaSinCalibrar, minSimilarityPara } from "./buscar-documentos-tool.js";
 
 describe("buildSearchQuery", () => {
   it("sin filtro: no agrega condiciones de partición", () => {
@@ -35,5 +35,42 @@ describe("buildSearchQuery", () => {
     });
     expect(sql).toContain('d."subcategoria" IS NULL');
     expect(sql).toContain('(d."subcategoria" = ANY($5) OR d."subcategoria" IS NULL)');
+  });
+});
+
+describe("minSimilarityPara", () => {
+  it("devuelve el umbral calibrado de cada categoría (Tarea 10, 2026-08-04)", () => {
+    expect(minSimilarityPara("laboral")).toBe(0.717);
+    expect(minSimilarityPara("familia")).toBe(0.678);
+    expect(minSimilarityPara("arrendamiento-desalojo")).toBe(0.686);
+    expect(minSimilarityPara("relaciones-consumo")).toBe(0.645);
+    expect(minSimilarityPara("transito")).toBe(0.678);
+  });
+
+  it("sin categoría: usa el default (el más bajo de los cinco)", () => {
+    expect(minSimilarityPara(undefined)).toBe(0.645);
+    expect(minSimilarityPara()).toBe(0.645);
+  });
+
+  it("categoría desconocida: cae al mismo default, no revienta", () => {
+    expect(minSimilarityPara("categoria-inexistente")).toBe(0.645);
+  });
+});
+
+describe("categoriaSinCalibrar", () => {
+  it("categoría explícita fuera del mapa: true (la anomalía a loguear)", () => {
+    expect(categoriaSinCalibrar("categoria-inexistente")).toBe(true);
+  });
+
+  it("sin categoría: false — llamado legítimo sin partición, no es una anomalía", () => {
+    expect(categoriaSinCalibrar(undefined)).toBe(false);
+  });
+
+  it("las cinco categorías calibradas: false", () => {
+    expect(categoriaSinCalibrar("laboral")).toBe(false);
+    expect(categoriaSinCalibrar("familia")).toBe(false);
+    expect(categoriaSinCalibrar("arrendamiento-desalojo")).toBe(false);
+    expect(categoriaSinCalibrar("relaciones-consumo")).toBe(false);
+    expect(categoriaSinCalibrar("transito")).toBe(false);
   });
 });
