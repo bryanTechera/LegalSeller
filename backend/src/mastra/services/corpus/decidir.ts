@@ -32,12 +32,11 @@ export function decidirAccion(
   hashArchivo: string,
   versionActual: string,
 ): AccionSync {
-  if (base?.contentHash !== hashArchivo) return "reingestar";
+  if (base === null || base.contentHash === null || base.contentHash !== hashArchivo) return "reingestar";
   if (base.pipelineVersion === versionActual) return "saltar";
 
-  const enBase = base.pipelineVersion ? partesDeVersion(base.pipelineVersion) : null;
+  const enBase = base.pipelineVersion === null ? null : partesDeVersion(base.pipelineVersion);
   const actual = partesDeVersion(versionActual);
-  // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
   if (!enBase || !actual || enBase.chunk !== actual.chunk) return "reingestar";
   return "reembeber";
 }
