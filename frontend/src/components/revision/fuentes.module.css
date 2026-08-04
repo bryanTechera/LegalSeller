@@ -1,0 +1,131 @@
+.vacio,
+.contador,
+.etiqueta {
+  font-size: var(--text-xs);
+  color: var(--ink-500);
+}
+
+.mapa,
+.detalle {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.listaMapa {
+  list-style: none;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.lineaMapa,
+.lineaMapaVacia {
+  font: inherit;
+  font-size: var(--text-xs);
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  text-align: left;
+  padding: var(--space-2);
+  border: 1px solid var(--ink-100);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink-700);
+  cursor: pointer;
+}
+
+.lineaMapaVacia {
+  border-color: var(--state-warning, var(--ink-300));
+  background: var(--surface);
+}
+
+.consultaMapa {
+  flex: 1;
+  min-width: 0;
+}
+
+.busqueda {
+  display: grid;
+  gap: var(--space-2);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--ink-100);
+}
+
+.consulta {
+  font-size: var(--text-sm);
+  color: var(--ink-900);
+}
+
+.filtros {
+  font-size: var(--text-xs);
+  color: var(--ink-500);
+}
+
+.fragmento {
+  border-left: 3px solid var(--accent, var(--ink-300));
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface);
+}
+
+.fragmentoMeta {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--ink-500);
+}
+
+.fragmentoTexto {
+  font-size: var(--text-sm);
+  color: var(--ink-700);
+  margin-top: var(--space-1);
+}
+
+.score {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-variant-numeric: tabular-nums;
+}
+
+.barra {
+  display: inline-block;
+  width: 2rem;
+  height: 0.3rem;
+  border-radius: var(--radius-sm);
+  background: var(--ink-100);
+}
+
+.barra span {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-sm);
+  background: var(--accent, var(--ink-500));
+}
+
+.aviso {
+  font-size: var(--text-sm);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--state-warning, var(--ink-300));
+  background: var(--surface);
+  color: var(--state-warning, var(--ink-700));
+}
+
+.filaAcciones {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: var(--space-2);
+}
+
+.botonChico {
+  font: inherit;
+  font-size: var(--text-xs);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--ink-300);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-700);
+  cursor: pointer;
+}
