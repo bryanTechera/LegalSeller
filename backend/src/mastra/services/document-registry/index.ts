@@ -70,6 +70,12 @@ async function escribirChunks(
   const client = await getPool().connect();
   try {
     await client.query("BEGIN");
+    // Serializes concurrent writers on the same Document: without this, two
+    // overlapping syncs of the same file can both pass READ COMMITTED's
+    // snapshot check and each insert their own full set of chunks, leaving
+    // duplicates (B's DELETE blocks on A's row lock, but B's SELECT snapshot
+    // was taken before A committed, so B never sees A's new rows to delete).
+    await client.query(`SELECT "id" FROM "Document" WHERE "id" = $1 FOR UPDATE`, [documentId]);
     await client.query(`DELETE FROM "DocumentChunk" WHERE "documentId" = $1`, [documentId]);
     for (const [indice, chunk] of chunks.entries()) {
       await client.query(
@@ -147,6 +153,8 @@ export async function reembedDocument(documentId: string, pipelineVersion: strin
     const client = await getPool().connect();
     try {
       await client.query("BEGIN");
+      // Same concurrency guard as escribirChunks — see the comment there.
+      await client.query(`SELECT "id" FROM "Document" WHERE "id" = $1 FOR UPDATE`, [documentId]);
       for (const [indice, row] of rows.entries()) {
         await client.query(`UPDATE "DocumentChunk" SET "embedding" = $2::vector WHERE "id" = $1`, [
           row.id,
