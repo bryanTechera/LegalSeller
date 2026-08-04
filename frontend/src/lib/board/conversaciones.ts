@@ -9,6 +9,8 @@ import { prisma } from "@/lib/prisma";
 import { listarNotasDeSesion, type NotaConRespuestas } from "@/lib/revision/notas";
 import { getCasoDeSesion, type CasoSnapshot } from "@/lib/revision/sesiones";
 import { construirTimeline, extraerTexto, type ItemTimeline } from "@/lib/revision/timeline";
+import { construirBusquedas } from "@/lib/revision/busquedas";
+import type { BusquedaCorpus } from "@/lib/revision/fuentes";
 
 import { fechaDesde } from "./rango";
 import { conversacionesReales } from "./scope";
@@ -140,6 +142,7 @@ export interface DetalleConversacion {
   categoria: string | null;
   fecha: string;
   timeline: ItemTimeline[];
+  busquedas: BusquedaCorpus[];
   caso: CasoSnapshot | null;
   notas: NotaConRespuestas[];
 }
@@ -156,8 +159,9 @@ export async function obtenerConversacion(id: string): Promise<DetalleConversaci
   });
   if (!conversacion) return null;
 
-  const [timeline, caso, notas] = await Promise.all([
+  const [timeline, busquedas, caso, notas] = await Promise.all([
     construirTimeline(conversacion.threadId, { conSpans: true }),
+    construirBusquedas(conversacion.threadId),
     getCasoDeSesion(conversacion.id),
     listarNotasDeSesion(conversacion.id),
   ]);
@@ -168,6 +172,7 @@ export async function obtenerConversacion(id: string): Promise<DetalleConversaci
     categoria: conversacion.categoria,
     fecha: conversacion.createdAt.toISOString(),
     timeline,
+    busquedas,
     caso,
     notas,
   };

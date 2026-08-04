@@ -21,6 +21,9 @@ vi.mock("@/lib/revision/sesiones", () => sesionesMock);
 const notasMock = vi.hoisted(() => ({ listarNotasDeSesion: vi.fn() }));
 vi.mock("@/lib/revision/notas", () => notasMock);
 
+const busquedasMock = vi.hoisted(() => ({ construirBusquedas: vi.fn() }));
+vi.mock("@/lib/revision/busquedas", () => busquedasMock);
+
 import { listarConversaciones, obtenerConversacion } from "./conversaciones";
 
 function filaConversacion(id: string) {
@@ -144,6 +147,9 @@ describe("obtenerConversacion", () => {
     timelineMock.construirTimeline.mockResolvedValue([{ tipo: "mensaje", id: "m1" }]);
     sesionesMock.getCasoDeSesion.mockResolvedValue({ estado: "CAPTADO" });
     notasMock.listarNotasDeSesion.mockResolvedValue([]);
+    busquedasMock.construirBusquedas.mockResolvedValue([
+      { spanId: "t1", messageId: "m1", agente: "laboral", consulta: "indemnización por despido", categoria: "laboral", subcategorias: ["despido"], estado: "ok", fragmentos: [], fecha: "2026-07-30T10:00:04.000Z" },
+    ]);
   });
 
   it("arma el detalle con timeline, caso y notas", async () => {
@@ -171,5 +177,12 @@ describe("obtenerConversacion", () => {
       id: "s1",
       esRevision: false,
     });
+  });
+
+  it("incluye las búsquedas al corpus del thread", async () => {
+    const detalle = await obtenerConversacion("c1");
+    expect(busquedasMock.construirBusquedas).toHaveBeenCalledWith("chat-c1");
+    expect(detalle?.busquedas).toHaveLength(1);
+    expect(detalle?.busquedas[0]).toMatchObject({ messageId: "m1", consulta: "indemnización por despido" });
   });
 });
