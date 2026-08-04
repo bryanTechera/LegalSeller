@@ -95,6 +95,11 @@ function reportar(items: ItemDelSync[], errores: string[], base: Map<string, Fil
   if (soloEnBase.length > 0) {
     console.log(`\n  AVISO — ${String(soloEnBase.length)} documentos en la base sin archivo en el corpus.`);
     console.log("  No se borran: la base es compartida y pueden ser de otra rama en vuelo.");
+    if (errores.length > 0) {
+      console.log(
+        `  ADVERTENCIA: ${String(errores.length)} archivos fallaron la derivación; alguno de los documentos listados abajo puede corresponder a esos archivos y no estar realmente huérfano.`,
+      );
+    }
     for (const titulo of soloEnBase) console.log(`    ${titulo}`);
   }
 
