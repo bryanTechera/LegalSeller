@@ -171,6 +171,56 @@
   color: var(--ink-500);
 }
 
+.solapas {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.solapa,
+.solapaActiva {
+  font: inherit;
+  font-size: var(--text-sm);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  background: transparent;
+  color: var(--ink-500);
+  cursor: pointer;
+}
+
+.solapaActiva {
+  border-color: var(--ink-100);
+  background: var(--surface);
+  color: var(--ink-900);
+}
+
+.mensajeBoton {
+  font: inherit;
+  text-align: left;
+  width: 100%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.mensajeAgente[data-seleccionada="true"] {
+  border-color: var(--ink-500);
+}
+
+.marca,
+.marcaAlerta {
+  font-size: var(--text-xs);
+  color: var(--ink-500);
+  margin-top: var(--space-2);
+}
+
+.marcaAlerta {
+  color: var(--warning-ink, var(--ink-900));
+  font-weight: 600;
+}
+
 @media (width <= 60rem) {
   .detalle {
     grid-template-columns: 1fr;
