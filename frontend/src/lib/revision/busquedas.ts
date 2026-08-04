@@ -2,6 +2,7 @@ import "server-only";
 
 import { z } from "zod";
 
+import { prisma } from "../prisma";
 import type { BusquedaCorpus, EstadoBusqueda, FragmentoRecuperado } from "./fuentes";
 
 /** Span del thread sin payload: alcanza para armar el árbol y las ventanas. */
@@ -154,4 +155,58 @@ export function agruparBusquedas(datos: {
       };
     })
     .sort((a, b) => a.fecha.localeCompare(b.fecha));
+}
+
+const filaSpanLigeroSchema = z.object({
+  spanId: z.string(),
+  parentSpanId: z.string().nullable(),
+  spanType: z.string(),
+  entityName: z.string().nullable(),
+  startedAt: z.date(),
+  endedAt: z.date().nullable(),
+});
+
+const filaSpanBusquedaSchema = z.object({
+  spanId: z.string(),
+  parentSpanId: z.string().nullable(),
+  input: z.unknown(),
+  output: z.unknown(),
+  error: z.unknown(),
+  startedAt: z.date(),
+});
+
+const filaMensajeAsistenteSchema = z.object({ id: z.string(), createdAt: z.date() });
+
+/**
+ * Búsquedas al corpus de un thread, atadas a la respuesta que produjeron.
+ *
+ * Tres lecturas y no una: el árbol de spans se lee SIN payload porque un
+ * thread tiene cientos de spans `model_chunk` cuyo input/output no se usa acá
+ * y pesan de más; solo las filas de `buscar-documentos` traen payload.
+ */
+export async function construirBusquedas(threadId: string): Promise<BusquedaCorpus[]> {
+  const [filasSpans, filasBusquedas, filasMensajes] = await Promise.all([
+    prisma.$queryRaw`
+      SELECT "spanId", "parentSpanId", "spanType", "entityName", "startedAt", "endedAt"
+      FROM mastra.mastra_ai_spans
+      WHERE "threadId" = ${threadId}`,
+    prisma.$queryRaw`
+      SELECT "spanId", "parentSpanId", input, output, error, "startedAt"
+      FROM mastra.mastra_ai_spans
+      WHERE "threadId" = ${threadId}
+        AND "spanType" = 'tool_call'
+        AND (COALESCE("entityName", name) LIKE '%buscar-documentos%')
+      ORDER BY "startedAt" ASC`,
+    prisma.$queryRaw`
+      SELECT id, "createdAt"
+      FROM mastra.mastra_messages
+      WHERE thread_id = ${threadId} AND role = 'assistant'
+      ORDER BY "createdAt" ASC`,
+  ]);
+
+  return agruparBusquedas({
+    spans: filaSpanLigeroSchema.array().parse(filasSpans),
+    busquedas: filaSpanBusquedaSchema.array().parse(filasBusquedas),
+    mensajes: filaMensajeAsistenteSchema.array().parse(filasMensajes),
+  });
 }

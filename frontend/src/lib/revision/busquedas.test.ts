@@ -1,6 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { agruparBusquedas, type SpanBusqueda, type SpanLigero } from "./busquedas";
+const db = vi.hoisted(() => ({ $queryRaw: vi.fn() }));
+vi.mock("../prisma", () => ({ prisma: db }));
+
+import { agruparBusquedas, construirBusquedas, type SpanBusqueda, type SpanLigero } from "./busquedas";
 
 const chunk = {
   documentId: "d1",
@@ -168,5 +171,43 @@ describe("agruparBusquedas", () => {
       mensajes,
     });
     expect(busqueda).toMatchObject({ consulta: "serializado", categoria: "familia", estado: "ok" });
+  });
+});
+
+describe("construirBusquedas", () => {
+  beforeEach(() => {
+    // resetAllMocks y no clearAllMocks: clear no vacía la cola de
+    // mockResolvedValueOnce, y las respuestas encoladas se filtran al
+    // siguiente test.
+    vi.resetAllMocks();
+  });
+
+  it("arma las búsquedas del thread a partir de las tres lecturas", async () => {
+    db.$queryRaw
+      .mockResolvedValueOnce([
+        { spanId: "run1", parentSpanId: null, spanType: "agent_run", entityName: "laboral", startedAt: new Date("2026-08-04T10:00:00Z"), endedAt: new Date("2026-08-04T10:00:08Z") },
+        { spanId: "t1", parentSpanId: "run1", spanType: "tool_call", entityName: "buscar-documentos", startedAt: new Date("2026-08-04T10:00:04Z"), endedAt: null },
+      ])
+      .mockResolvedValueOnce([
+        {
+          spanId: "t1",
+          parentSpanId: "run1",
+          input: { query: "indemnización por despido", categoria: "laboral", subcategorias: ["despido"] },
+          output: { status: "ok", chunks: [chunk] },
+          error: null,
+          startedAt: new Date("2026-08-04T10:00:04Z"),
+        },
+      ])
+      .mockResolvedValueOnce([{ id: "m1", createdAt: new Date("2026-08-04T10:00:02Z") }]);
+
+    const busquedas = await construirBusquedas("thread-1");
+
+    expect(busquedas).toHaveLength(1);
+    expect(busquedas[0]).toMatchObject({ spanId: "t1", messageId: "m1", consulta: "indemnización por despido" });
+  });
+
+  it("un thread sin búsquedas devuelve lista vacía sin tocar el agrupador", async () => {
+    db.$queryRaw.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+    await expect(construirBusquedas("thread-vacio")).resolves.toEqual([]);
   });
 });
