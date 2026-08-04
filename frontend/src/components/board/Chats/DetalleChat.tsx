@@ -8,6 +8,7 @@ import { NotaComposer } from "@/components/revision/NotaComposer";
 import { NotaThread } from "@/components/revision/NotaThread";
 import { PanelFuentes } from "@/components/revision/PanelFuentes";
 import type { DetalleConversacion } from "@/lib/board/conversaciones";
+import { resumirTecnico } from "@/lib/board/tecnico";
 import { resumirPorRespuesta, textoDeMarca } from "@/lib/revision/fuentes";
 
 import styles from "./chats.module.css";
@@ -93,6 +94,7 @@ export function DetalleChat({ id }: { id: string }) {
   if (isLoading || !data) return <p className={styles.cargando}>Cargando…</p>;
 
   const resumenes = resumirPorRespuesta(data.busquedas);
+  const tecnico = resumirTecnico(data.timeline);
 
   return (
     <section className={styles.detalle}>
@@ -107,66 +109,43 @@ export function DetalleChat({ id }: { id: string }) {
 
         <ol className={styles.timeline}>
           {data.timeline.map((item) => {
-            if (item.tipo === "mensaje") {
-              const resumen = item.rol === "assistant" ? resumenes.get(item.id) : undefined;
-              const esSeleccionada = seleccionada === item.id;
-              return (
-                <li
-                  key={item.id}
-                  className={item.rol === "user" ? styles.mensajeUsuario : styles.mensajeAgente}
-                  aria-current={esSeleccionada ? "true" : undefined}
-                  data-seleccionada={esSeleccionada ? "true" : undefined}
-                >
-                  {item.rol === "assistant" ? (
-                    <button
-                      type="button"
-                      className={styles.mensajeBoton}
-                      onClick={() => {
-                        setSeleccionada(item.id);
-                        setSolapa("fuentes");
-                      }}
-                    >
-                      {item.texto}
-                    </button>
-                  ) : (
-                    <p>{item.texto}</p>
-                  )}
-                  {resumen ? (
-                    <p className={resumen.vacias > 0 ? styles.marcaAlerta : styles.marca}>{textoDeMarca(resumen)}</p>
-                  ) : null}
+            if (item.tipo !== "mensaje") return null;
+            const resumen = item.rol === "assistant" ? resumenes.get(item.id) : undefined;
+            const esSeleccionada = seleccionada === item.id;
+            return (
+              <li
+                key={item.id}
+                className={item.rol === "user" ? styles.mensajeUsuario : styles.mensajeAgente}
+                aria-current={esSeleccionada ? "true" : undefined}
+                data-seleccionada={esSeleccionada ? "true" : undefined}
+              >
+                {item.rol === "assistant" ? (
                   <button
                     type="button"
-                    className={styles.botonNota}
+                    className={styles.mensajeBoton}
                     onClick={() => {
-                      setAnotando({ messageId: item.id, cita: item.texto.slice(0, 300) });
-                      setSolapa("notas");
+                      setSeleccionada(item.id);
+                      setSolapa("fuentes");
                     }}
                   >
-                    Dejar nota
+                    {item.texto}
                   </button>
-                </li>
-              );
-            }
-            if (item.tipo === "tool-call") {
-              return (
-                <li key={item.spanId} className={styles.traza}>
-                  {item.tool}
-                  {item.agente ? ` · ${item.agente}` : ""}
-                  {item.error ? " · con error" : ""}
-                </li>
-              );
-            }
-            if (item.tipo === "turno-agente") {
-              return (
-                <li key={item.spanId} className={styles.traza}>
-                  turno de {item.agente}
-                </li>
-              );
-            }
-            return (
-              <li key={item.spanId} className={styles.traza}>
-                {item.modelo ?? "modelo desconocido"} · {item.tokensEntrada} entrada /{" "}
-                {item.tokensSalida} salida
+                ) : (
+                  <p>{item.texto}</p>
+                )}
+                {resumen ? (
+                  <p className={resumen.vacias > 0 ? styles.marcaAlerta : styles.marca}>{textoDeMarca(resumen)}</p>
+                ) : null}
+                <button
+                  type="button"
+                  className={styles.botonNota}
+                  onClick={() => {
+                    setAnotando({ messageId: item.id, cita: item.texto.slice(0, 300) });
+                    setSolapa("notas");
+                  }}
+                >
+                  Dejar nota
+                </button>
               </li>
             );
           })}
@@ -244,6 +223,27 @@ export function DetalleChat({ id }: { id: string }) {
             ) : (
               <p className={styles.etiqueta}>Todavía no se abrió un caso.</p>
             )}
+            <details className={styles.tecnico}>
+              <summary>Detalle técnico</summary>
+              <dl className={styles.datos}>
+                <dt>Agentes</dt>
+                <dd>{tecnico.agentes.join(" · ") || "—"}</dd>
+                <dt>Modelos</dt>
+                <dd>{tecnico.modelos.join(" · ") || "—"}</dd>
+                <dt>Tokens</dt>
+                <dd>
+                  {tecnico.tokensEntrada} entrada / {tecnico.tokensSalida} salida
+                </dd>
+                <dt>Costo estimado</dt>
+                <dd>{tecnico.costoUsd === null ? "sin dato" : `US$ ${tecnico.costoUsd.toFixed(4)}`}</dd>
+                <dt>Otras herramientas</dt>
+                <dd>
+                  {tecnico.tools.length === 0
+                    ? "—"
+                    : tecnico.tools.map((tool) => `${tool.tool}${tool.conError ? " (con error)" : ""}`).join(" · ")}
+                </dd>
+              </dl>
+            </details>
           </section>
         ) : null}
 

@@ -71,6 +71,40 @@ const detalleBase: DetalleConversacion = {
       texto: "No encontré nada sobre ese plazo puntual",
       fecha: "2026-08-04T10:02:00.000Z",
     },
+    {
+      tipo: "turno-agente",
+      spanId: "run1",
+      agente: "laboral",
+      fecha: "2026-08-04T10:00:30.000Z",
+    },
+    {
+      tipo: "tool-call",
+      spanId: "t1",
+      tool: "buscar-documentos",
+      agente: "laboral",
+      input: null,
+      output: null,
+      error: null,
+      fecha: "2026-08-04T10:00:31.000Z",
+    },
+    {
+      tipo: "tool-call",
+      spanId: "t2",
+      tool: "registrar-caso",
+      agente: "laboral",
+      input: null,
+      output: null,
+      error: null,
+      fecha: "2026-08-04T10:00:32.000Z",
+    },
+    {
+      tipo: "generacion",
+      spanId: "g1",
+      modelo: "openai/gpt-5.6-luna",
+      tokensEntrada: 1000,
+      tokensSalida: 500,
+      fecha: "2026-08-04T10:00:33.000Z",
+    },
   ],
   busquedas: [busquedaConFuente, busquedaVacia],
   caso: {
@@ -182,5 +216,29 @@ describe("DetalleChat", () => {
     expect(screen.getByRole("tab", { name: "Notas (1)" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByLabelText("Texto de la nota")).toBeInTheDocument();
     expect(screen.getByText(citaDeBusqueda(busquedaConFuente))).toBeInTheDocument();
+  });
+
+  it("la timeline no rinde trazas técnicas: ni 'turno de', ni la línea de tokens", () => {
+    render(<DetalleChat id="c1" />);
+
+    expect(screen.queryByText(/turno de/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/entrada \/ 500 salida/)).not.toBeInTheDocument();
+    expect(screen.queryByText("registrar-caso")).not.toBeInTheDocument();
+  });
+
+  it("el bloque «Detalle técnico» de la solapa Caso resume agentes, modelos, tokens, costo y otras herramientas", () => {
+    render(<DetalleChat id="c1" />);
+
+    fireEvent.click(screen.getByRole("tab", { name: "Caso" }));
+
+    const detalle = screen.getByText("Detalle técnico").closest("details");
+    expect(detalle).not.toBeNull();
+    const dentro = within(detalle as HTMLElement);
+
+    expect(dentro.getByText("laboral")).toBeInTheDocument();
+    expect(dentro.getByText("openai/gpt-5.6-luna")).toBeInTheDocument();
+    expect(dentro.getByText("1000 entrada / 500 salida")).toBeInTheDocument();
+    expect(dentro.getByText("US$ 0.0008")).toBeInTheDocument();
+    expect(dentro.getByText("registrar-caso")).toBeInTheDocument();
   });
 });
