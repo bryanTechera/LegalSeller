@@ -114,6 +114,15 @@ describe("textoDelMapa", () => {
     expect(texto).toBe("1 de 3 consultas volvió sin fuentes");
   });
 
+  it("concordancia verbal con múltiples búsquedas vacías", () => {
+    const texto = textoDelMapa([
+      busqueda({ spanId: "t1", estado: "empty", fragmentos: [] }),
+      busqueda({ spanId: "t2", estado: "error", fragmentos: [] }),
+      busqueda({ spanId: "t3" }),
+    ]);
+    expect(texto).toBe("2 de 3 consultas volvieron sin fuentes");
+  });
+
   it("todas con fuentes lo dice en positivo", () => {
     expect(textoDelMapa([busqueda()])).toBe("1 consulta, con fuentes");
   });

@@ -86,5 +86,6 @@ export function textoDelMapa(busquedas: BusquedaCorpus[]): string {
   const vacias = busquedas.filter((busqueda) => busqueda.estado !== "ok").length;
   const total = plural(busquedas.length, "consulta", "consultas");
   if (vacias === 0) return `${total}, con fuentes`;
-  return `${String(vacias)} de ${total} volvió sin fuentes`;
+  const verbo = vacias === 1 ? "volvió" : "volvieron";
+  return `${String(vacias)} de ${total} ${verbo} sin fuentes`;
 }
