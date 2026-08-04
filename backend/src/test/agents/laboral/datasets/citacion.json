@@ -86,5 +86,9 @@
       { "rol": "usuario", "texto": "trabaje 5 años y ganaba 30000 nominales por mes, cuanto me corresponderia de indemnizacion?" }
     ],
     "esperado": { "toolCall": "buscar-documentos" }
+  },
+  {
+    "mensaje": "mi empleador me obliga a usar una campera con el logo de un partido político, ¿eso está permitido?",
+    "esperado": { "toolCall": "buscar-documentos" }
   }
 ]
