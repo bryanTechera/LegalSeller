@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import type { BusquedaCorpus } from "@/lib/revision/fuentes";
 import type { NotaConRespuestas } from "@/lib/revision/notas";
 import type { ItemTimeline } from "@/lib/revision/timeline";
 import { createSseLineSplitter, parseSseData } from "@/utils/sse";
@@ -9,6 +10,7 @@ import { createSseLineSplitter, parseSseData } from "@/utils/sse";
 export interface DetalleSesion {
   sesion: { id: string; titulo: string | null; creadaPor: string | null };
   timeline: ItemTimeline[];
+  busquedas: BusquedaCorpus[];
   notas: NotaConRespuestas[];
 }
 
