@@ -9,6 +9,8 @@ import { prisma } from "@/lib/prisma";
 import { listarNotasDeSesion, type NotaConRespuestas } from "@/lib/revision/notas";
 import { getCasoDeSesion, type CasoSnapshot } from "@/lib/revision/sesiones";
 import { construirTimeline, extraerTexto, type ItemTimeline } from "@/lib/revision/timeline";
+import { construirBusquedas } from "@/lib/revision/busquedas";
+import type { BusquedaCorpus } from "@/lib/revision/fuentes";
 
 import { fechaDesde } from "./rango";
 import { conversacionesReales } from "./scope";
@@ -140,8 +142,23 @@ export interface DetalleConversacion {
   categoria: string | null;
   fecha: string;
   timeline: ItemTimeline[];
+  busquedas: BusquedaCorpus[];
   caso: CasoSnapshot | null;
   notas: NotaConRespuestas[];
+}
+
+/**
+ * Descarta `input`/`output` de los items `tool-call`: desde la Task 7,
+ * `DetalleChat` no renderiza ningún `tool-call` de la timeline (las búsquedas
+ * al corpus llegan por su propio camino, `construirBusquedas`, ya agrupadas
+ * y livianas) y `resumirTecnico` solo lee `tool`/`agente`/`error`. Sin podar,
+ * el detalle del board duplica ~9 KB por llamada a `buscar-documentos` que
+ * nadie lee. `construirTimeline` NO cambia de contrato: `feedback:pull`
+ * (`exportar-markdown.ts`) sí necesita el payload completo y sigue
+ * pidiéndolo directo. `error` se conserva — `resumirTecnico` lo usa.
+ */
+function sinPayloadDeTools(timeline: ItemTimeline[]): ItemTimeline[] {
+  return timeline.map((item) => (item.tipo === "tool-call" ? { ...item, input: null, output: null } : item));
 }
 
 /**
@@ -156,8 +173,9 @@ export async function obtenerConversacion(id: string): Promise<DetalleConversaci
   });
   if (!conversacion) return null;
 
-  const [timeline, caso, notas] = await Promise.all([
+  const [timeline, busquedas, caso, notas] = await Promise.all([
     construirTimeline(conversacion.threadId, { conSpans: true }),
+    construirBusquedas(conversacion.threadId),
     getCasoDeSesion(conversacion.id),
     listarNotasDeSesion(conversacion.id),
   ]);
@@ -167,7 +185,8 @@ export async function obtenerConversacion(id: string): Promise<DetalleConversaci
     threadId: conversacion.threadId,
     categoria: conversacion.categoria,
     fecha: conversacion.createdAt.toISOString(),
-    timeline,
+    timeline: sinPayloadDeTools(timeline),
+    busquedas,
     caso,
     notas,
   };

@@ -5,11 +5,13 @@ import { useRef, useState } from "react";
 import { Composer } from "@/components/chat/Composer";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { useRevisionChat } from "@/hooks/useRevisionChat";
+import { resumirPorRespuesta, textoDeMarca } from "@/lib/revision/fuentes";
 import type { NotaConRespuestas } from "@/lib/revision/notas";
 import { citaDesdeSeleccion } from "@/lib/revision/seleccion";
 
 import { NotaComposer } from "./NotaComposer";
 import { NotaThread } from "./NotaThread";
+import { PanelFuentes } from "./PanelFuentes";
 import styles from "./revision.module.css";
 
 const MAX_MESSAGE_LENGTH = 4000;
@@ -31,6 +33,7 @@ export function SesionView({ id, onVolver }: { id: string; onVolver: () => void 
   const [draft, setDraft] = useState("");
   const [composerAbierto, setComposerAbierto] = useState<ComposerAbierto | null>(null);
   const [pill, setPill] = useState<PillSeleccion | null>(null);
+  const [seleccionada, setSeleccionada] = useState<string | null>(null);
   const chatRef = useRef<HTMLElement>(null);
 
   const enviar = () => {
@@ -114,6 +117,8 @@ export function SesionView({ id, onVolver }: { id: string; onVolver: () => void 
   };
 
   const mensajes = (detalle?.timeline ?? []).filter((item) => item.tipo === "mensaje");
+  const busquedas = detalle?.busquedas ?? [];
+  const resumenes = resumirPorRespuesta(busquedas);
   const notas = detalle?.notas ?? [];
   const idsMensajes = new Set(mensajes.map((mensaje) => mensaje.id));
   const notasDeMensaje = (messageId: string): NotaConRespuestas[] => notas.filter((nota) => nota.messageId === messageId);
@@ -151,51 +156,79 @@ export function SesionView({ id, onVolver }: { id: string; onVolver: () => void 
           </section>
         ) : null}
 
-        <section aria-label="Conversación de prueba" className={styles.chatColumna} ref={chatRef} onMouseUp={handleMouseUp}>
-          {mensajes.map((mensaje) => (
-            <div key={mensaje.id} className={styles.bloqueMensaje}>
-              <div className={styles.mensajeConGutter}>
-                <MessageBubble role={mensaje.rol} content={mensaje.texto} anchorId={mensaje.id} />
-                <button
-                  type="button"
-                  className={styles.botonAnotar}
-                  onClick={() => abrirComposer(mensaje.id, null)}
-                  aria-label="Dejar nota en este mensaje"
-                >
-                  +
-                </button>
-              </div>
-              {notasDeMensaje(mensaje.id).map((nota) => (
-                <NotaThread key={nota.id} nota={nota} onResponder={responderNota} onResolver={resolverNota} />
-              ))}
-              {composerAbierto?.messageId === mensaje.id ? (
-                <NotaComposer
-                  cita={composerAbierto.cita}
-                  onCancelar={() => setComposerAbierto(null)}
-                  onGuardar={crearNota}
-                />
-              ) : null}
-            </div>
-          ))}
-          {pendienteUsuario ? <MessageBubble role="user" content={pendienteUsuario} /> : null}
-          {textoStreaming !== null ? (
-            <MessageBubble role="assistant" content={textoStreaming} showThinking={textoStreaming.length === 0} />
-          ) : null}
-          {pill ? (
-            <button
-              type="button"
-              className={styles.pillSeleccion}
-              style={{ left: pill.x, top: pill.y }}
-              onMouseDown={(event) => event.preventDefault()}
-              onClick={() => {
-                abrirComposer(pill.messageId, pill.cita);
-                window.getSelection()?.removeAllRanges();
-              }}
-            >
-              Dejar nota
-            </button>
-          ) : null}
-        </section>
+        <div className={styles.columnas}>
+          <section aria-label="Conversación de prueba" className={styles.chatColumna} ref={chatRef} onMouseUp={handleMouseUp}>
+            {mensajes.map((mensaje) => {
+              const resumen = mensaje.rol === "assistant" ? resumenes.get(mensaje.id) : undefined;
+              return (
+                <div key={mensaje.id} className={styles.bloqueMensaje}>
+                  <div className={styles.mensajeConGutter}>
+                    <MessageBubble role={mensaje.rol} content={mensaje.texto} anchorId={mensaje.id} />
+                    <button
+                      type="button"
+                      className={styles.botonAnotar}
+                      onClick={() => abrirComposer(mensaje.id, null)}
+                      aria-label="Dejar nota en este mensaje"
+                    >
+                      +
+                    </button>
+                  </div>
+                  {resumen ? (
+                    <button
+                      type="button"
+                      className={resumen.vacias > 0 ? styles.marcaFuentesAlerta : styles.marcaFuentes}
+                      aria-label={`${textoDeMarca(resumen)}: ver fuentes de esta respuesta`}
+                      onClick={() => setSeleccionada(mensaje.id)}
+                    >
+                      {textoDeMarca(resumen)}
+                    </button>
+                  ) : null}
+                  {notasDeMensaje(mensaje.id).map((nota) => (
+                    <NotaThread key={nota.id} nota={nota} onResponder={responderNota} onResolver={resolverNota} />
+                  ))}
+                  {composerAbierto?.messageId === mensaje.id ? (
+                    <NotaComposer
+                      cita={composerAbierto.cita}
+                      onCancelar={() => setComposerAbierto(null)}
+                      onGuardar={crearNota}
+                    />
+                  ) : null}
+                </div>
+              );
+            })}
+            {pendienteUsuario ? <MessageBubble role="user" content={pendienteUsuario} /> : null}
+            {textoStreaming !== null ? (
+              <MessageBubble role="assistant" content={textoStreaming} showThinking={textoStreaming.length === 0} />
+            ) : null}
+            {pill ? (
+              <button
+                type="button"
+                className={styles.pillSeleccion}
+                style={{ left: pill.x, top: pill.y }}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => {
+                  abrirComposer(pill.messageId, pill.cita);
+                  window.getSelection()?.removeAllRanges();
+                }}
+              >
+                Dejar nota
+              </button>
+            ) : null}
+          </section>
+          <aside className={styles.columnaFuentes} aria-label="Fuentes del corpus">
+            {seleccionada !== null ? (
+              <button type="button" className={styles.botonSecundario} onClick={() => setSeleccionada(null)}>
+                Ver todas las consultas
+              </button>
+            ) : null}
+            <PanelFuentes
+              busquedas={busquedas}
+              messageIdSeleccionado={seleccionada}
+              onIrARespuesta={(messageId) => setSeleccionada(messageId)}
+              onAnotar={(messageId, cita) => abrirComposer(messageId, cita)}
+            />
+          </aside>
+        </div>
       </div>
 
       {error ? <p role="alert" className={styles.error}>{error}</p> : null}

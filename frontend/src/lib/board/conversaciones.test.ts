@@ -21,6 +21,9 @@ vi.mock("@/lib/revision/sesiones", () => sesionesMock);
 const notasMock = vi.hoisted(() => ({ listarNotasDeSesion: vi.fn() }));
 vi.mock("@/lib/revision/notas", () => notasMock);
 
+const busquedasMock = vi.hoisted(() => ({ construirBusquedas: vi.fn() }));
+vi.mock("@/lib/revision/busquedas", () => busquedasMock);
+
 import { listarConversaciones, obtenerConversacion } from "./conversaciones";
 
 function filaConversacion(id: string) {
@@ -144,6 +147,9 @@ describe("obtenerConversacion", () => {
     timelineMock.construirTimeline.mockResolvedValue([{ tipo: "mensaje", id: "m1" }]);
     sesionesMock.getCasoDeSesion.mockResolvedValue({ estado: "CAPTADO" });
     notasMock.listarNotasDeSesion.mockResolvedValue([]);
+    busquedasMock.construirBusquedas.mockResolvedValue([
+      { spanId: "t1", messageId: "m1", agente: "laboral", consulta: "indemnización por despido", categoria: "laboral", subcategorias: ["despido"], estado: "ok", fragmentos: [], fecha: "2026-07-30T10:00:04.000Z" },
+    ]);
   });
 
   it("arma el detalle con timeline, caso y notas", async () => {
@@ -171,5 +177,36 @@ describe("obtenerConversacion", () => {
       id: "s1",
       esRevision: false,
     });
+  });
+
+  it("incluye las búsquedas al corpus del thread", async () => {
+    const detalle = await obtenerConversacion("c1");
+    expect(busquedasMock.construirBusquedas).toHaveBeenCalledWith("chat-c1");
+    expect(detalle?.busquedas).toHaveLength(1);
+    expect(detalle?.busquedas[0]).toMatchObject({ messageId: "m1", consulta: "indemnización por despido" });
+  });
+
+  // El detalle del board no renderiza ningún tool-call (las búsquedas llegan
+  // por su propio camino, ya agrupadas): no tiene sentido duplicar los ~9 KB
+  // de chunks del corpus que trae la timeline con spans.
+  it("no devuelve el input/output de los tool-call, pero conserva el error", async () => {
+    timelineMock.construirTimeline.mockResolvedValue([
+      { tipo: "mensaje", id: "m1", rol: "assistant", texto: "hola", fecha: "2026-07-30T10:00:00.000Z" },
+      {
+        tipo: "tool-call",
+        spanId: "t1",
+        tool: "buscar-documentos",
+        agente: "laboral",
+        input: { query: "indemnización por despido" },
+        output: { status: "ok", chunks: [{ content: "x".repeat(9000) }] },
+        error: { message: "algo falló" },
+        fecha: "2026-07-30T10:00:01.000Z",
+      },
+    ]);
+
+    const detalle = await obtenerConversacion("c1");
+
+    const toolCall = detalle?.timeline.find((item) => item.tipo === "tool-call");
+    expect(toolCall).toMatchObject({ input: null, output: null, error: { message: "algo falló" } });
   });
 });

@@ -335,6 +335,50 @@
   margin-top: var(--space-3);
 }
 
+.columnas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 22rem;
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.columnaFuentes {
+  display: grid;
+  gap: var(--space-3);
+  position: sticky;
+  top: var(--space-6);
+}
+
+.marcaFuentes,
+.marcaFuentesAlerta {
+  font: inherit;
+  font-size: var(--text-xs);
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin-top: var(--space-1);
+  cursor: pointer;
+}
+
+.marcaFuentes {
+  color: var(--ink-500);
+}
+
+.marcaFuentesAlerta {
+  color: var(--state-warning);
+  font-weight: 600;
+}
+
+@media (width <= 60rem) {
+  .columnas {
+    grid-template-columns: 1fr;
+  }
+
+  .columnaFuentes {
+    position: static;
+  }
+}
+
 .chatColumna {
   position: relative; /* marco de posicionamiento del pill de selección */
   display: flex;

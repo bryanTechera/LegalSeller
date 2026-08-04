@@ -121,12 +121,6 @@
   background: var(--surface);
 }
 
-.traza {
-  font-size: var(--text-xs);
-  color: var(--ink-500);
-  padding-left: var(--space-4);
-}
-
 .botonNota {
   font: inherit;
   font-size: var(--text-xs);
@@ -169,6 +163,65 @@
 
 .datos dt {
   color: var(--ink-500);
+}
+
+.solapas {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.solapa,
+.solapaActiva {
+  font: inherit;
+  font-size: var(--text-sm);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  background: transparent;
+  color: var(--ink-500);
+  cursor: pointer;
+}
+
+.solapaActiva {
+  border-color: var(--ink-100);
+  background: var(--surface);
+  color: var(--ink-900);
+}
+
+.mensajeAgente[data-seleccionada="true"] {
+  border-color: var(--ink-500);
+}
+
+/* La marca es el botón que selecciona la respuesta (no la burbuja entera):
+   el texto del agente queda seleccionable con el mouse y el nombre accesible
+   del control no es el mensaje completo. */
+.marca,
+.marcaAlerta {
+  font: inherit;
+  font-size: var(--text-xs);
+  color: var(--ink-500);
+  margin-top: var(--space-2);
+  display: block;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.marcaAlerta {
+  color: var(--state-warning);
+  font-weight: 600;
+}
+
+.tecnico {
+  margin-top: var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--ink-500);
+}
+
+.tecnico summary {
+  cursor: pointer;
 }
 
 @media (width <= 60rem) {

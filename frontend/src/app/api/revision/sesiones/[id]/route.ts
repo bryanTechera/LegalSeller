@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getIdentidadBoard } from "@/lib/board/identidad";
+import { construirBusquedas } from "@/lib/revision/busquedas";
 import { listarNotasDeSesion } from "@/lib/revision/notas";
 import { getCasoDeSesion, getSesionRevision, publicarSesionRevision } from "@/lib/revision/sesiones";
 import { construirTimeline } from "@/lib/revision/timeline";
@@ -17,8 +18,9 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     const sesion = await getSesionRevision(id);
     if (!sesion) return NextResponse.json({ error: "Sesión no encontrada" }, { status: 404 });
 
-    const [timeline, notas, caso] = await Promise.all([
+    const [timeline, busquedas, notas, caso] = await Promise.all([
       construirTimeline(sesion.threadId),
+      construirBusquedas(sesion.threadId),
       listarNotasDeSesion(sesion.id),
       getCasoDeSesion(sesion.id),
     ]);
@@ -31,6 +33,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
         borrador: sesion.borrador,
       },
       timeline,
+      busquedas,
       notas,
       caso,
     });

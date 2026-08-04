@@ -16,6 +16,9 @@ vi.mock("@/lib/revision/notas", () => notasMock);
 const timelineMock = vi.hoisted(() => ({ construirTimeline: vi.fn() }));
 vi.mock("@/lib/revision/timeline", () => timelineMock);
 
+const busquedasMock = vi.hoisted(() => ({ construirBusquedas: vi.fn() }));
+vi.mock("@/lib/revision/busquedas", () => busquedasMock);
+
 import { GET, PATCH } from "./route";
 
 const params = { params: Promise.resolve({ id: "s1" }) };
@@ -45,6 +48,7 @@ describe("/api/revision/sesiones/:id", () => {
     sesionesMock.publicarSesionRevision.mockResolvedValue(true);
     notasMock.listarNotasDeSesion.mockResolvedValue([]);
     timelineMock.construirTimeline.mockResolvedValue([]);
+    busquedasMock.construirBusquedas.mockResolvedValue([]);
   });
 
   it("GET incluye caso y campos de origen de la sesión", async () => {
@@ -58,6 +62,15 @@ describe("/api/revision/sesiones/:id", () => {
     expect(payload.sesion.borrador).toBe(true);
     expect(payload.caso).toEqual({ estado: "CAPTADO" });
     expect(sesionesMock.getCasoDeSesion).toHaveBeenCalledWith("s1");
+  });
+
+  it("devuelve las búsquedas al corpus de la sesión", async () => {
+    busquedasMock.construirBusquedas.mockResolvedValue([
+      { spanId: "t1", messageId: "m1", agente: "laboral", consulta: "despido", categoria: "laboral", subcategorias: [], estado: "ok", fragmentos: [], fecha: "2026-08-04T10:00:00.000Z" },
+    ]);
+    const response = await GET(new Request("http://localhost/api/revision/sesiones/s1"), { params: Promise.resolve({ id: "s1" }) });
+    const cuerpo = (await response.json()) as { busquedas: unknown[] };
+    expect(cuerpo.busquedas).toHaveLength(1);
   });
 
   it("PATCH publica la sesión", async () => {

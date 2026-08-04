@@ -119,6 +119,7 @@ export async function POST(request: Request) {
 - `trackError({ error, severity, context })` como único entrypoint de reporte; no duplicar con `logger.error`.
 - Mensaje al usuario siempre distinto del detalle técnico.
 - Boundaries: `error.tsx`, `global-error.tsx`, `not-found.tsx`, `loading.tsx` a nivel raíz y por segmento; `Suspense` con skeleton donde haya `useSearchParams`.
+- El mensaje `assistant` de `mastra_messages` se persiste ANTES que las tool calls de su propio turno (verificado 2026-08-04: 04:02:00.970 vs 04:02:01.345), así que atribuir spans de búsquedas a mensajes por orden cronológico corre todo un turno — la atribución correcta sube por `parentSpanId` hasta el `agent_run` y usa su ventana `[startedAt, endedAt]` (`frontend/src/lib/revision/busquedas.ts`).
 
 ## 10. Auth (Auth.js v5)
 
