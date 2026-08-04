@@ -140,6 +140,23 @@ describe("DetalleChat", () => {
     expect(screen.queryByText("plazo de reclamo por despido")).not.toBeInTheDocument();
   });
 
+  it("«Dejar nota» de un mensaje abre el composer aunque la solapa activa no sea Notas", () => {
+    render(<DetalleChat id="c1" />);
+
+    // Parado en la solapa por defecto (Fuentes) — no se toca la solapa a mano.
+    expect(screen.getByRole("tab", { name: "Fuentes" })).toHaveAttribute("aria-selected", "true");
+
+    const liUsuario = screen.getByText("Me despidieron sin causa").closest("li");
+    expect(liUsuario).not.toBeNull();
+    fireEvent.click(within(liUsuario as HTMLElement).getByRole("button", { name: "Dejar nota" }));
+
+    expect(screen.getByRole("tab", { name: "Notas (1)" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByLabelText("Texto de la nota")).toBeInTheDocument();
+    // El texto aparece dos veces: en el mensaje de la timeline y en la cita
+    // precargada del composer (blockquote) — confirma que se cargó la cita.
+    expect(screen.getAllByText("Me despidieron sin causa")).toHaveLength(2);
+  });
+
   it("las tres solapas existen como tabs y cambiar de solapa muestra el contenido correspondiente", () => {
     render(<DetalleChat id="c1" />);
 

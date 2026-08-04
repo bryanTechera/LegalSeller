@@ -137,7 +137,10 @@ export function DetalleChat({ id }: { id: string }) {
                   <button
                     type="button"
                     className={styles.botonNota}
-                    onClick={() => setAnotando({ messageId: item.id, cita: item.texto.slice(0, 300) })}
+                    onClick={() => {
+                      setAnotando({ messageId: item.id, cita: item.texto.slice(0, 300) });
+                      setSolapa("notas");
+                    }}
                   >
                     Dejar nota
                   </button>
