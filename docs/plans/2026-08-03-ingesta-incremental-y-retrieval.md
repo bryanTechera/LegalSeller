@@ -256,3 +256,36 @@ Explícito, para que no se cuele en la implementación:
 | Las distribuciones de positivos y negativos se solapan y no hay umbral absoluto único viable | Umbral absoluto por categoría (cada partición calibra su propio punto medio); el corte relativo no sirve de fallback porque nunca vacía un resultado |
 | Una sesión paralela ingesta durante la migración de `taskType` | El corpus completo queda en estado mezclado durante toda la corrida (~80s medidos en la Tarea 12), por documentos con `pipelineVersion` distinta rankeando contra el mismo vector de consulta — no un resultado vacío, un ranking equivocado; coordinar la corrida con las otras sesiones o repetirla al final |
 | `--reembed-stale` re-embebe desde chunks producidos con un `chunkSize` viejo | `pipelineVersion` incluye `chunkSize`/`overlap`: si cambiaron, el documento requiere el archivo y el modo lo reporta como no resoluble sin `.md` |
+
+---
+
+## 11. Hallazgos preexistentes detectados durante la implementación
+
+Ninguno de estos lo causó este trabajo. Aparecieron al correr `pnpm evals fidelidad` y
+`pnpm evals voz-fuentes` tras calibrar el umbral — evals que **nadie había corrido** en
+las tareas previas, porque los `citacion` sólo verifican que `buscar-documentos` se llame
+y pasan igual si la tool devolvió cinco chunks o cero.
+
+Las cinco fallas se diagnosticaron y **cero son atribuibles al umbral calibrado**: en
+cuatro, el documento que carga el contenido esperado queda por encima del corte de su
+categoría (top-3, márgenes 0,003 a 0,07); en la quinta se hizo el contrafáctico —
+forzando `minSimilarityPara` al 0,3 viejo se reproduce la falla idéntica.
+
+Quedan dos bugs reales, a rutear fuera de esta rama:
+
+1. **La aserción `prohibido` del harness de evals no entiende negaciones.**
+   `evalFidelidad` y `evalVozFuentes` (`backend/src/test/run-evals.ts`) hacen un chequeo
+   de substring, así que una respuesta que explica correctamente que la indemnización
+   triple **no** corresponde a un caso dispara el mismo detector que una que la inventa.
+   Esos datasets vienen reportando falsos positivos. Es un bug del harness, no de los
+   agentes.
+
+2. **Fuga del título de un documento del corpus** en una consulta de despido rural que
+   sintetiza varias fuentes. Viola la regla de que las fuentes son de uso interno y el
+   agente nunca las nombra (`conducta-laboral`, y la regla crítica de CLAUDE.md). Va por
+   el flujo de la skill `revisar-feedback-legal`, con su eval anti-regresión.
+
+Aparte, dos observaciones sin acción inmediata: `temperature: 1` produce flakiness real
+en estos evals (dos de las cinco fallas no reprodujeron al repetirlas), y
+`backend/` no tiene script de `typecheck`, así que dos errores preexistentes de `tsc`
+en `run-evals.ts` nunca estuvieron gateados.
