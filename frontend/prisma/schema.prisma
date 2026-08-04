@@ -21,6 +21,12 @@ model Document {
   /// Corpus partition (registry ids). Null = legacy/untagged document.
   categoria    String?
   subcategoria String?
+  /// sha256 del texto del archivo .md que originó el documento. NULL = ingestado
+  /// antes de que existiera el sync incremental (se completa con --backfill).
+  contentHash     String?
+  /// Huella del pipeline que produjo los embeddings: modelo|taskType|chunkSize:overlap.
+  /// Distinta de la actual = los chunks están viejos. Ver backend/src/mastra/config/embedding.ts.
+  pipelineVersion String?
   status       ProcessingStatus @default(PENDING)
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
