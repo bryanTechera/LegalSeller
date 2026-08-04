@@ -176,7 +176,8 @@ export function SesionView({ id, onVolver }: { id: string; onVolver: () => void 
                   {resumen ? (
                     <button
                       type="button"
-                      className={styles.marcaFuentes}
+                      className={resumen.vacias > 0 ? styles.marcaFuentesAlerta : styles.marcaFuentes}
+                      aria-label={`${textoDeMarca(resumen)}: ver fuentes de esta respuesta`}
                       onClick={() => setSeleccionada(mensaje.id)}
                     >
                       {textoDeMarca(resumen)}

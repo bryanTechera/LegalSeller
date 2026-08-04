@@ -188,30 +188,29 @@
   color: var(--ink-900);
 }
 
-.mensajeBoton {
-  font: inherit;
-  text-align: left;
-  width: 100%;
-  border: 0;
-  padding: 0;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-}
-
 .mensajeAgente[data-seleccionada="true"] {
   border-color: var(--ink-500);
 }
 
+/* La marca es el botón que selecciona la respuesta (no la burbuja entera):
+   el texto del agente queda seleccionable con el mouse y el nombre accesible
+   del control no es el mensaje completo. */
 .marca,
 .marcaAlerta {
+  font: inherit;
   font-size: var(--text-xs);
   color: var(--ink-500);
   margin-top: var(--space-2);
+  display: block;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
 }
 
 .marcaAlerta {
-  color: var(--warning-ink, var(--ink-900));
+  color: var(--state-warning);
   font-weight: 600;
 }
 

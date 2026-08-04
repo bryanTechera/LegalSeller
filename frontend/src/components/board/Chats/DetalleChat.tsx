@@ -119,22 +119,19 @@ export function DetalleChat({ id }: { id: string }) {
                 aria-current={esSeleccionada ? "true" : undefined}
                 data-seleccionada={esSeleccionada ? "true" : undefined}
               >
-                {item.rol === "assistant" ? (
+                <p>{item.texto}</p>
+                {resumen ? (
                   <button
                     type="button"
-                    className={styles.mensajeBoton}
+                    className={resumen.vacias > 0 ? styles.marcaAlerta : styles.marca}
+                    aria-label={`${textoDeMarca(resumen)}: ver fuentes de esta respuesta`}
                     onClick={() => {
                       setSeleccionada(item.id);
                       setSolapa("fuentes");
                     }}
                   >
-                    {item.texto}
+                    {textoDeMarca(resumen)}
                   </button>
-                ) : (
-                  <p>{item.texto}</p>
-                )}
-                {resumen ? (
-                  <p className={resumen.vacias > 0 ? styles.marcaAlerta : styles.marca}>{textoDeMarca(resumen)}</p>
                 ) : null}
                 <button
                   type="button"

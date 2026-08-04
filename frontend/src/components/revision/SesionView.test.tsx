@@ -32,6 +32,18 @@ const busquedaConFuente: BusquedaCorpus = {
   fecha: "2026-08-04T10:01:00.000Z",
 };
 
+const busquedaVacia: BusquedaCorpus = {
+  spanId: "s2",
+  messageId: "a2",
+  agente: "laboral",
+  consulta: "plazo de reclamo por despido",
+  categoria: "laboral",
+  subcategorias: [],
+  estado: "empty",
+  fragmentos: [],
+  fecha: "2026-08-04T10:02:00.000Z",
+};
+
 const detalleBase: DetalleSesion = {
   sesion: { id: "s1", titulo: "[escenario] despido", creadaPor: "Asistente técnico" },
   timeline: [
@@ -93,11 +105,35 @@ describe("SesionView", () => {
     expect(screen.getByRole("button", { name: "Ver todas las consultas" })).toBeInTheDocument();
   });
 
+  it("una respuesta con búsqueda vacía muestra la marca en estilo de alerta", () => {
+    mockDetalle({
+      ...detalleBase,
+      timeline: [
+        ...detalleBase.timeline,
+        {
+          tipo: "mensaje",
+          id: "a2",
+          rol: "assistant",
+          texto: "No encontré nada sobre ese plazo puntual",
+          fecha: "2026-08-04T10:02:00.000Z",
+        },
+      ],
+      busquedas: [...detalleBase.busquedas, busquedaVacia],
+    });
+    render(<SesionView id="s1" onVolver={() => {}} />);
+
+    const marcaAlerta = screen.getByRole("button", {
+      name: "1 consulta · sin resultados: ver fuentes de esta respuesta",
+    });
+    expect(marcaAlerta).toBeInTheDocument();
+    expect(marcaAlerta.textContent).toBe("1 consulta · sin resultados");
+  });
+
   it("sin búsquedas, no se rinde ninguna marca de fuentes", () => {
     mockDetalle({ ...detalleBase, busquedas: [] });
     render(<SesionView id="s1" onVolver={() => {}} />);
 
     expect(screen.queryByText(/consulta/)).not.toBeInTheDocument();
-    expect(screen.getByText("Este chat no consultó el corpus.")).toBeInTheDocument();
+    expect(screen.getByText("No se consultó el corpus.")).toBeInTheDocument();
   });
 });

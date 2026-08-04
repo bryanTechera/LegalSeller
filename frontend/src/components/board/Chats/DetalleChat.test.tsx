@@ -168,10 +168,22 @@ describe("DetalleChat", () => {
   it("clic en una respuesta del agente muestra su consulta en la solapa Fuentes", () => {
     render(<DetalleChat id="c1" />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Contame un poco más sobre tu antigüedad" }));
+    fireEvent.click(screen.getByRole("button", { name: /1 consulta · 1 fragmento/ }));
 
     expect(screen.getByText("despido sin causa indemnización")).toBeInTheDocument();
     expect(screen.queryByText("plazo de reclamo por despido")).not.toBeInTheDocument();
+  });
+
+  // La burbuja del agente NO es un botón: su nombre accesible ya no es el
+  // mensaje entero, y el texto queda seleccionable con el mouse. El clic que
+  // selecciona la respuesta vive en la marca (WCAG 2.5.3 — ver hallazgo 5).
+  it("la burbuja del agente es texto plano; el control que selecciona la respuesta es la marca", () => {
+    render(<DetalleChat id="c1" />);
+
+    expect(screen.queryByRole("button", { name: "Contame un poco más sobre tu antigüedad" })).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "1 consulta · 1 fragmento: ver fuentes de esta respuesta" }),
+    ).toBeInTheDocument();
   });
 
   it("«Dejar nota» de un mensaje abre el composer aunque la solapa activa no sea Notas", () => {
@@ -210,8 +222,8 @@ describe("DetalleChat", () => {
   it("anotar desde el panel de fuentes salta a la solapa Notas con el composer abierto y la cita cargada", () => {
     render(<DetalleChat id="c1" />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Contame un poco más sobre tu antigüedad" }));
-    fireEvent.click(screen.getByRole("button", { name: /Dejar nota sobre la búsqueda/ }));
+    fireEvent.click(screen.getByRole("button", { name: /1 consulta · 1 fragmento/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Dejar nota sobre esta búsqueda/ }));
 
     expect(screen.getByRole("tab", { name: "Notas (1)" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByLabelText("Texto de la nota")).toBeInTheDocument();

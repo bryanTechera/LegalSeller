@@ -349,15 +349,24 @@
   top: var(--space-6);
 }
 
-.marcaFuentes {
+.marcaFuentes,
+.marcaFuentesAlerta {
   font: inherit;
   font-size: var(--text-xs);
-  color: var(--ink-500);
   border: 0;
   background: transparent;
   padding: 0;
   margin-top: var(--space-1);
   cursor: pointer;
+}
+
+.marcaFuentes {
+  color: var(--ink-500);
+}
+
+.marcaFuentesAlerta {
+  color: var(--state-warning);
+  font-weight: 600;
 }
 
 @media (width <= 60rem) {
