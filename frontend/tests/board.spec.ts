@@ -43,7 +43,7 @@ test("el detalle del chat muestra las fuentes del corpus", async ({ page }) => {
   // La solapa Fuentes arranca en el mapa del chat: o hay consultas, o el
   // chat no consultó el corpus (PanelFuentes.tsx). Las dos son respuestas
   // válidas; lo que no puede pasar es que la solapa quede en blanco.
-  const sinCorpus = page.getByText("Este chat no consultó el corpus.");
+  const sinCorpus = page.getByText("No se consultó el corpus.");
   const mapa = page.getByText(/consultas?(,| ).*fuentes/);
   await expect(sinCorpus.or(mapa)).toBeVisible({ timeout: 15_000 });
   if (await sinCorpus.isVisible()) test.skip(true, "El chat de prueba no consultó el corpus");

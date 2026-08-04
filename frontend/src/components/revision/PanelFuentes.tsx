@@ -26,9 +26,12 @@ interface PanelFuentesProps {
 
 function Fragmento({
   fragmento,
+  indice,
   onAnotar,
 }: {
   fragmento: FragmentoRecuperado;
+  /** Posición 1-based dentro de la búsqueda: desambigua dos chunks del mismo documento/sección. */
+  indice: number;
   onAnotar: () => void;
 }) {
   const [expandido, setExpandido] = useState(false);
@@ -62,7 +65,7 @@ function Fragmento({
         <button
           type="button"
           className={styles.botonChico}
-          aria-label={`Dejar nota sobre el fragmento de ${docLabel}`}
+          aria-label={`Dejar nota sobre este fragmento: ${docLabel} (fragmento ${String(indice)})`}
           onClick={onAnotar}
         >
           Dejar nota sobre este fragmento
@@ -88,10 +91,11 @@ function Busqueda({
       {filtros ? <p className={styles.filtros}>{filtros}</p> : null}
 
       {busqueda.estado === "ok" ? (
-        busqueda.fragmentos.map((fragmento) => (
+        busqueda.fragmentos.map((fragmento, indice) => (
           <Fragmento
             key={fragmento.documentId + String(fragmento.similarity)}
             fragmento={fragmento}
+            indice={indice + 1}
             onAnotar={() => onAnotar(busqueda.messageId, citaDeFragmento(fragmento))}
           />
         ))
@@ -108,7 +112,7 @@ function Busqueda({
       <button
         type="button"
         className={styles.botonChico}
-        aria-label={`Dejar nota sobre la búsqueda: «${busqueda.consulta.length > 50 ? `${busqueda.consulta.slice(0, 50)}…` : busqueda.consulta}»`}
+        aria-label={`Dejar nota sobre esta búsqueda: «${busqueda.consulta.length > 50 ? `${busqueda.consulta.slice(0, 50)}…` : busqueda.consulta}»`}
         onClick={() => onAnotar(busqueda.messageId, citaDeBusqueda(busqueda))}
       >
         Dejar nota sobre esta búsqueda
@@ -119,7 +123,11 @@ function Busqueda({
 
 export function PanelFuentes({ busquedas, messageIdSeleccionado, onIrARespuesta, onAnotar }: PanelFuentesProps) {
   if (busquedas.length === 0) {
-    return <p className={styles.vacio}>Este chat no consultó el corpus.</p>;
+    // Redactado sin sujeto ("chat"/"sesión") a propósito: el componente se
+    // monta tal cual en el board (chats de consultante) y en /revision
+    // (sesiones de prueba) — mismo patrón que "Esta respuesta no consultó
+    // el corpus." unas líneas más abajo, que ya es agnóstico de pantalla.
+    return <p className={styles.vacio}>No se consultó el corpus.</p>;
   }
 
   if (messageIdSeleccionado === null) {
