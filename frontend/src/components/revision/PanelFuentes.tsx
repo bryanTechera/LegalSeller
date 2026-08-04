@@ -34,11 +34,12 @@ function Fragmento({
   const [expandido, setExpandido] = useState(false);
   const largo = fragmento.content.length > RECORTE;
   const texto = expandido || !largo ? fragmento.content : `${fragmento.content.slice(0, RECORTE)}…`;
+  const docLabel = fragmento.section ? `${fragmento.documentTitle} — ${fragmento.section}` : fragmento.documentTitle;
 
   return (
     <article className={styles.fragmento}>
       <header className={styles.fragmentoMeta}>
-        <span>{fragmento.section ? `${fragmento.documentTitle} — ${fragmento.section}` : fragmento.documentTitle}</span>
+        <span>{docLabel}</span>
         <span className={styles.score}>
           <span className={styles.barra} aria-hidden="true">
             <span style={{ width: `${String(Math.round(fragmento.similarity * 100))}%` }} />
@@ -49,11 +50,21 @@ function Fragmento({
       <p className={styles.fragmentoTexto}>{texto}</p>
       <div className={styles.filaAcciones}>
         {largo ? (
-          <button type="button" className={styles.botonChico} onClick={() => setExpandido(!expandido)}>
+          <button
+            type="button"
+            className={styles.botonChico}
+            aria-label={`${expandido ? "Ver menos" : "Ver más"} del fragmento de ${docLabel}`}
+            onClick={() => setExpandido(!expandido)}
+          >
             {expandido ? "Ver menos" : "Ver más"}
           </button>
         ) : null}
-        <button type="button" className={styles.botonChico} onClick={onAnotar}>
+        <button
+          type="button"
+          className={styles.botonChico}
+          aria-label={`Dejar nota sobre el fragmento de ${docLabel}`}
+          onClick={onAnotar}
+        >
           Dejar nota sobre este fragmento
         </button>
       </div>
@@ -97,6 +108,7 @@ function Busqueda({
       <button
         type="button"
         className={styles.botonChico}
+        aria-label={`Dejar nota sobre la búsqueda: «${busqueda.consulta.length > 50 ? `${busqueda.consulta.slice(0, 50)}…` : busqueda.consulta}»`}
         onClick={() => onAnotar(busqueda.messageId, citaDeBusqueda(busqueda))}
       >
         Dejar nota sobre esta búsqueda

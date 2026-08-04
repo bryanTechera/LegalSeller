@@ -96,7 +96,7 @@ describe("PanelFuentes", () => {
       />,
     );
     expect(screen.queryByText(/FINAL/)).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Ver más" }));
+    fireEvent.click(screen.getByRole("button", { name: /Ver más/ }));
     expect(screen.getByText(/FINAL/)).toBeInTheDocument();
   });
 
@@ -105,7 +105,7 @@ describe("PanelFuentes", () => {
     render(
       <PanelFuentes busquedas={[busqueda()]} messageIdSeleccionado="m1" onIrARespuesta={vi.fn()} onAnotar={onAnotar} />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Dejar nota sobre esta búsqueda" }));
+    fireEvent.click(screen.getByRole("button", { name: /Dejar nota sobre la búsqueda/ }));
     expect(onAnotar).toHaveBeenCalledWith("m1", "Búsqueda: «indemnización por despido antigüedad»");
   });
 
@@ -114,10 +114,35 @@ describe("PanelFuentes", () => {
     render(
       <PanelFuentes busquedas={[busqueda()]} messageIdSeleccionado="m1" onIrARespuesta={vi.fn()} onAnotar={onAnotar} />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Dejar nota sobre este fragmento" }));
+    fireEvent.click(screen.getByRole("button", { name: /Dejar nota sobre el fragmento de Ley 10.489/ }));
     expect(onAnotar).toHaveBeenCalledWith(
       "m1",
       "Ley 10.489 — art. 4 (0.79): «El empleador que despida sin causa deberá abonar una indemnización.»",
+    );
+  });
+
+  it("múltiples fragmentos distintos tienen botones accesibles sin ambigüedad", () => {
+    const fragmento1 = { ...fragmento, documentId: "d1", documentTitle: "Ley 10.489" };
+    const fragmento2 = { ...fragmento, documentId: "d2", documentTitle: "Resolución 123" };
+    const onAnotar = vi.fn();
+    render(
+      <PanelFuentes
+        busquedas={[busqueda({ fragmentos: [fragmento1, fragmento2] })]}
+        messageIdSeleccionado="m1"
+        onIrARespuesta={vi.fn()}
+        onAnotar={onAnotar}
+      />,
+    );
+    // Verificar que cada fragmento tiene su botón distinto
+    fireEvent.click(screen.getByRole("button", { name: /Dejar nota sobre el fragmento de Ley 10.489/ }));
+    expect(onAnotar).toHaveBeenLastCalledWith(
+      "m1",
+      "Ley 10.489 — art. 4 (0.79): «El empleador que despida sin causa deberá abonar una indemnización.»",
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Dejar nota sobre el fragmento de Resolución 123/ }));
+    expect(onAnotar).toHaveBeenLastCalledWith(
+      "m1",
+      "Resolución 123 — art. 4 (0.79): «El empleador que despida sin causa deberá abonar una indemnización.»",
     );
   });
 

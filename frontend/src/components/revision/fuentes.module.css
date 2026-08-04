@@ -39,6 +39,11 @@
   background: var(--surface);
 }
 
+.lineaMapa:disabled,
+.lineaMapaVacia:disabled {
+  cursor: not-allowed;
+}
+
 .consultaMapa {
   flex: 1;
   min-width: 0;
