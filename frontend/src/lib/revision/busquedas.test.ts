@@ -98,17 +98,38 @@ describe("agruparBusquedas", () => {
     expect(busqueda?.messageId).toBe("m1b");
   });
 
-  it("un turno sin endedAt (en curso) deja la ventana abierta", () => {
-    const enCurso: SpanLigero[] = spans.map((span) =>
+  it("un turno en curso (el último del thread, sin agent_run posterior) deja la ventana abierta", () => {
+    // Sin run2 en los spans: es el caso real de un turno vivo (streaming en
+    // /revision), no el de un turno muerto con más turnos después.
+    const soloRun1 = spans.filter((span) => span.spanId !== "run2" && span.spanId !== "t2");
+    const enCurso: SpanLigero[] = soloRun1.map((span) =>
       span.spanId === "run1" ? { ...span, endedAt: null } : span,
     );
     const [busqueda] = agruparBusquedas({
       busquedas: [spanBusqueda("t1", "run1")],
       spans: enCurso,
-      // m2 cae después de run1.startedAt y run1 no cerró: gana el último.
+      // m2 cae después de run1.startedAt y no hay turno siguiente: gana el último.
       mensajes,
     });
     expect(busqueda?.messageId).toBe("m2");
+  });
+
+  it("un turno sin endedAt que NO es el último no se roba el mensaje del turno siguiente", () => {
+    // El bug real: un turno muerto a mitad (proceso caído, timeout del
+    // gateway) con endedAt NULL, seguido por otro turno con su propio
+    // mensaje. La ventana abierta no puede colgarle a t1 el mensaje de run2.
+    const run1SinEndedAt: SpanLigero[] = spans.map((span) =>
+      span.spanId === "run1" ? { ...span, endedAt: null } : span,
+    );
+    const resultado = agruparBusquedas({
+      busquedas: [spanBusqueda("t1", "run1"), spanBusqueda("t2", "run2")],
+      spans: run1SinEndedAt,
+      mensajes,
+    });
+    expect(resultado.map((busqueda) => [busqueda.spanId, busqueda.messageId])).toEqual([
+      ["t1", "m1"],
+      ["t2", "m2"],
+    ]);
   });
 
   it("sin agent_run ancestro la búsqueda queda huérfana, no se descarta", () => {

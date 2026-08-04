@@ -113,6 +113,14 @@ export function agruparBusquedas(datos: {
 }): BusquedaCorpus[] {
   const porSpanId = new Map(datos.spans.map((span) => [span.spanId, span]));
 
+  // Agent_run ordenados por inicio: sirven para cerrar la ventana de un turno
+  // sin endedAt (proceso caído, timeout del gateway) en el arranque del
+  // siguiente turno del thread, en vez de dejarla abierta hasta +Infinity.
+  // Un turno vivo de verdad (el último, sin sucesor) sigue abierto.
+  const agentRunsOrdenados = datos.spans
+    .filter((span) => span.spanType === "agent_run")
+    .sort((a, b) => a.startedAt.getTime() - b.startedAt.getTime());
+
   const turnoDe = (parentSpanId: string | null): SpanLigero | null => {
     let actual = parentSpanId === null ? undefined : porSpanId.get(parentSpanId);
     for (let salto = 0; actual && salto < MAX_SALTOS; salto++) {
@@ -122,10 +130,17 @@ export function agruparBusquedas(datos: {
     return null;
   };
 
+  const finDeVentana = (turno: SpanLigero): number => {
+    if (turno.endedAt) return turno.endedAt.getTime();
+    const desde = turno.startedAt.getTime();
+    const siguiente = agentRunsOrdenados.find((run) => run.startedAt.getTime() > desde);
+    return siguiente ? siguiente.startedAt.getTime() : Number.POSITIVE_INFINITY;
+  };
+
   const respuestaDe = (turno: SpanLigero | null): string | null => {
     if (!turno) return null;
     const desde = turno.startedAt.getTime();
-    const hasta = turno.endedAt ? turno.endedAt.getTime() : Number.POSITIVE_INFINITY;
+    const hasta = finDeVentana(turno);
     let elegido: MensajeAsistente | null = null;
     for (const mensaje of datos.mensajes) {
       const cuando = mensaje.createdAt.getTime();
