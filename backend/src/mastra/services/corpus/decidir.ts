@@ -7,14 +7,22 @@ export interface EstadoEnBase {
   pipelineVersion: string | null;
 }
 
-interface PartesDeVersion {
+export interface PartesDeVersion {
   /** modelo|taskType — a change here is fixable from stored chunk text. */
   embed: string;
   /** chunkSize:overlap — a change here moves chunk boundaries, so it needs the file. */
   chunk: string;
 }
 
-function partesDeVersion(version: string): PartesDeVersion | null {
+/**
+ * Splits a PIPELINE_VERSION string (`modelo|taskType|chunkSize:overlap`) into
+ * its embed/chunk halves. Exported for `corpus-sync.ts --reembed-stale`, which
+ * needs the same chunk-half comparison to tell a database row that's safely
+ * re-embeddable from stored chunk text apart from one whose chunk boundaries
+ * moved (unresolvable without the source file) — reused here instead of
+ * duplicated so the two call sites can't drift on what counts as "same chunking".
+ */
+export function partesDeVersion(version: string): PartesDeVersion | null {
   const partes = version.split("|");
   if (partes.length !== 3) return null;
   return { embed: `${partes[0]}|${partes[1]}`, chunk: partes[2] };

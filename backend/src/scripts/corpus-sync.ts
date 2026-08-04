@@ -18,7 +18,7 @@ import { parseArgs } from "node:util";
 
 import { PIPELINE_VERSION } from "../mastra/config/embedding.js";
 import { getPool } from "../mastra/config/storage.js";
-import { decidirAccion, type AccionSync } from "../mastra/services/corpus/decidir.js";
+import { decidirAccion, partesDeVersion, type AccionSync } from "../mastra/services/corpus/decidir.js";
 import { upsertDocumento } from "../mastra/services/corpus/documento.js";
 import { derivarDocumento, hashContenido, type DocumentoDelCorpus } from "../mastra/services/corpus/paths.js";
 import { reembedDocument, registerDocument } from "../mastra/services/document-registry/index.js";
@@ -111,6 +111,20 @@ function reportar(items: ItemDelSync[], errores: string[], base: Map<string, Fil
   }
 }
 
+interface ResultadoBackfill {
+  marcados: number;
+  /**
+   * Rows already fingerprinted — the expected, benign shape of a *second*
+   * `--backfill` run on an already-synced corpus. Counted apart from
+   * `omitidos` so it never drives the exit code: an operator who sees this
+   * script exit 1 on every re-run learns to ignore its non-zero exit, which
+   * is the same signal a genuine partition mismatch uses.
+   */
+  yaTeniaHuella: string[];
+  /** Genuine problems: a file with no row yet, or a row whose partition/status doesn't match the file. Drive the exit code. */
+  omitidos: string[];
+}
+
 /**
  * Stamps fingerprints on rows ingested before they existed, without
  * re-embedding. Only touches rows that have never been fingerprinted
@@ -119,7 +133,8 @@ function reportar(items: ItemDelSync[], errores: string[], base: Map<string, Fil
  * chunks. Also requires the stored partition to match what the path derives —
  * a mismatch means the row was not produced by this file.
  */
-async function backfill(items: ItemDelSync[]): Promise<{ marcados: number; omitidos: string[] }> {
+async function backfill(items: ItemDelSync[]): Promise<ResultadoBackfill> {
+  const yaTeniaHuella: string[] = [];
   const omitidos: string[] = [];
   let marcados = 0;
 
@@ -129,7 +144,7 @@ async function backfill(items: ItemDelSync[]): Promise<{ marcados: number; omiti
       continue;
     }
     if (item.fila.contentHash !== null) {
-      omitidos.push(`${item.doc.rutaRelativa}: la fila ya tiene huella (no necesita backfill)`);
+      yaTeniaHuella.push(`${item.doc.rutaRelativa}: la fila ya tiene huella (no necesita backfill)`);
       continue;
     }
     const { rowCount } = await getPool().query(
@@ -145,7 +160,57 @@ async function backfill(items: ItemDelSync[]): Promise<{ marcados: number; omiti
     if (rowCount === 1) marcados += 1;
     else omitidos.push(`${item.doc.rutaRelativa}: la partición o el estado de la fila no coinciden con el archivo`);
   }
-  return { marcados, omitidos };
+  return { marcados, yaTeniaHuella, omitidos };
+}
+
+interface ResultadoReembedStale {
+  reembebidos: number;
+  /** Rows whose chunking half moved (or whose stored pipelineVersion is missing/malformed) — the stored chunks have the wrong boundaries, so only a real re-ingest from the .md can fix them. */
+  noResolubles: string[];
+  /** reembedDocument itself failed (e.g. embeddings API error) for a row that WAS resolvable. */
+  fallos: string[];
+}
+
+/**
+ * Database-driven counterpart to the file-driven sync: reaches rows whose
+ * `.md` may not exist in the current checkout (a pipeline migration on a
+ * database shared by eight worktrees). Selects every Document row whose
+ * pipelineVersion differs from the current one — including NULL, which
+ * cannot be resolved this way either, since without a previous version there
+ * is no way to confirm the chunking half is unchanged.
+ */
+async function reembedStale(): Promise<ResultadoReembedStale> {
+  const { rows } = await getPool().query<{ id: string; title: string; pipelineVersion: string | null }>(
+    `SELECT "id", "title", "pipelineVersion" FROM "Document" WHERE "pipelineVersion" IS DISTINCT FROM $1`,
+    [PIPELINE_VERSION],
+  );
+
+  const actual = partesDeVersion(PIPELINE_VERSION);
+  const noResolubles: string[] = [];
+  const fallos: string[] = [];
+  let reembebidos = 0;
+
+  for (const fila of rows) {
+    const enBase = fila.pipelineVersion === null ? null : partesDeVersion(fila.pipelineVersion);
+    if (enBase === null || actual === null) {
+      noResolubles.push(`${fila.title}: sin pipelineVersion previo o con formato inválido — requiere el .md (reingesta real)`);
+      continue;
+    }
+    if (enBase.chunk !== actual.chunk) {
+      noResolubles.push(
+        `${fila.title}: cambió el chunkeo — los chunks guardados tienen los límites viejos, requiere el .md (reingesta real)`,
+      );
+      continue;
+    }
+    const resultado = await reembedDocument(fila.id, PIPELINE_VERSION);
+    if (resultado.status === "error") {
+      fallos.push(`${fila.title}: ${resultado.error ?? "error"}`);
+    } else {
+      reembebidos += 1;
+      console.log(`  re-embebido  ${fila.title} (${String(resultado.chunksInserted)} chunks)`);
+    }
+  }
+  return { reembebidos, noResolubles, fallos };
 }
 
 async function ejecutar(items: ItemDelSync[]): Promise<string[]> {
@@ -202,10 +267,31 @@ async function main(): Promise<number> {
   }
 
   if (values.backfill) {
-    const { marcados, omitidos } = await backfill(items);
+    const { marcados, yaTeniaHuella, omitidos } = await backfill(items);
     console.log(`\nbackfill: ${String(marcados)} filas marcadas sin re-embeber.`);
-    for (const omitido of omitidos) console.log(`  OMITIDO ${omitido}`);
+    if (yaTeniaHuella.length > 0) {
+      console.log(`  ya tenían huella (esperado en una segunda corrida, no cuenta como problema): ${String(yaTeniaHuella.length)}`);
+      for (const item of yaTeniaHuella) console.log(`    ${item}`);
+    }
+    if (omitidos.length > 0) {
+      console.log(`  OMITIDOS (${String(omitidos.length)}):`);
+      for (const omitido of omitidos) console.log(`    ${omitido}`);
+    }
     return errores.length > 0 || omitidos.length > 0 ? 1 : 0;
+  }
+
+  if (values["reembed-stale"]) {
+    const { reembebidos, noResolubles, fallos } = await reembedStale();
+    console.log(`\nreembed-stale: ${String(reembebidos)} documentos re-embebidos.`);
+    if (noResolubles.length > 0) {
+      console.log(`  NO RESOLUBLE SIN .md (${String(noResolubles.length)}):`);
+      for (const item of noResolubles) console.log(`    ${item}`);
+    }
+    if (fallos.length > 0) {
+      console.log(`  FALLOS (${String(fallos.length)}):`);
+      for (const fallo of fallos) console.log(`    ${fallo}`);
+    }
+    return errores.length > 0 || noResolubles.length > 0 || fallos.length > 0 ? 1 : 0;
   }
 
   console.log("");
