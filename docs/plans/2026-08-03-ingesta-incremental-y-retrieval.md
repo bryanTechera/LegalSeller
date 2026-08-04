@@ -182,7 +182,7 @@ Sin cambios / re-ingestados / nuevos / fallidos, más el **drift como advertenci
 
 ### Calibración del umbral
 
-Se comparan dos distribuciones sobre el golden set: la similitud del primer documento esperado en cada positivo, y la del top-1 en cada negativo. El umbral vive entre el techo de los negativos y el piso de los positivos. Si las nubes se solapan, ningún número absoluto sirve y hay que ir a un **corte relativo al top-1** (descartar lo que quede por debajo de cierto porcentaje del mejor resultado). Se implementa el absoluto primero — es un cambio de constante — y el relativo se prueba contra él.
+Se comparan dos distribuciones sobre el golden set: la similitud del primer documento esperado en cada positivo, y la del top-1 en cada negativo. El umbral vive entre el techo de los negativos y el piso de los positivos. Si las nubes se solapan, ningún número absoluto único sirve — pero el fallback no puede ser un corte relativo al top-1 (descartar lo que quede por debajo de cierto porcentaje del mejor resultado): un corte relativo nunca vacía un resultado, porque el top-1 siempre sobrevive a ser el 100% de sí mismo, y los negativos miden justamente si la consulta devuelve *nada*. Un corte relativo sirve para recortar la cola de un resultado, no para rechazarlo entero. El fallback real, aplicado cuando la Tarea 12 confirmó que la ventana global es de apenas 0.002, es un **umbral absoluto por categoría**: las escalas difieren entre particiones (el techo de negativos de relaciones-consumo es 0.587, el de laboral 0.683), así que cada categoría se calibra con su propio punto medio en vez de un solo número global.
 
 El criterio es **asimétrico a propósito**: maximizar los negativos que salen vacíos *sin perder recall* en los positivos. Un chunk de más lo descarta `gpt-5.6-luna` leyendo; un chunk faltante produce un "no encontré" o una respuesta armada sobre material que no venía al caso.
 
@@ -194,7 +194,7 @@ El criterio es **asimétrico a propósito**: maximizar los negativos que salen v
 
 Procedimiento: medir baseline con el golden set → cambiar → re-embeber → volver a medir. Se adopta si mejora, se revierte si no, y revertir es simétrico (otra corrida de `--reembed-stale`, ~150k tokens).
 
-Para no dejar la base con dos espacios de embedding conviviendo, la corrida **embebe todo primero sin escribir y commitea los 385 chunks en una transacción**. La ventana de estado mezclado son segundos, no minutos — importa porque la base es compartida entre worktrees.
+La corrida re-embebe documento por documento: `reembedDocument` abre `BEGIN`/`COMMIT` por documento, así que ningún documento individual queda nunca a medio escribir. Pero no hay una transacción de lote — el corpus como conjunto atraviesa un estado mezclado durante toda la corrida (los ~80 segundos medidos en la Tarea 12), con algunos documentos ya en el `pipelineVersion` nuevo y otros todavía en el viejo. La consecuencia de concurrencia no es un resultado vacío: una sesión paralela que llame a `buscar-documentos` en esa ventana rankea chunks de dos espacios de embedding incompatibles contra un mismo vector de consulta, lo que produce un ranking silenciosamente equivocado — el peor tipo de falla en un producto legal, porque no se nota como error. La mitigación es coordinar la corrida con las otras sesiones (o repetirla al final), no confiar en que la ventana sea corta.
 
 **Resultado (2026-08-04)**: revertido. Con los umbrales neutralizados (`minSimilarityPara` devolviendo 0 temporalmente) se midió la separación piso-de-positivos menos techo-de-negativos en las dos escalas, ambas con `pnpm evals retrieval` corriendo el mismo código:
 
@@ -249,6 +249,6 @@ Explícito, para que no se cuele en la implementación:
 | Riesgo | Mitigación |
 |---|---|
 | El golden set queda sesgado a lo que el corpus ya cubre bien | Los negativos "dentro de la categoría, fuera del corpus" los revisa el equipo legal, que sabe qué se decidió no cubrir |
-| Las distribuciones de positivos y negativos se solapan y no hay umbral absoluto viable | El corte relativo al top-1 está previsto como alternativa; ambos son cambios de pocas líneas |
-| Una sesión paralela ingesta durante la migración de `taskType` | La ventana de estado mezclado es de segundos (una transacción); coordinar la corrida o repetirla al final |
+| Las distribuciones de positivos y negativos se solapan y no hay umbral absoluto único viable | Umbral absoluto por categoría (cada partición calibra su propio punto medio); el corte relativo no sirve de fallback porque nunca vacía un resultado |
+| Una sesión paralela ingesta durante la migración de `taskType` | El corpus completo queda en estado mezclado durante toda la corrida (~80s medidos en la Tarea 12), por documentos con `pipelineVersion` distinta rankeando contra el mismo vector de consulta — no un resultado vacío, un ranking equivocado; coordinar la corrida con las otras sesiones o repetirla al final |
 | `--reembed-stale` re-embebe desde chunks producidos con un `chunkSize` viejo | `pipelineVersion` incluye `chunkSize`/`overlap`: si cambiaron, el documento requiere el archivo y el modo lo reporta como no resoluble sin `.md` |
