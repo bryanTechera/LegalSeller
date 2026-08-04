@@ -1,0 +1,94 @@
+[
+  {
+    "consulta": "trabajo hace 5 años cobrando un sueldo mensual fijo y me despidieron sin causa, ¿cómo calculo la indemnización?",
+    "categoria": "laboral",
+    "subcategorias": ["despido"],
+    "esperado": ["Despido — Cálculo de la indemnización: trabajador mensual"]
+  },
+  {
+    "consulta": "estoy embarazada y me despidieron, ¿qué protecciones tengo?",
+    "categoria": "laboral",
+    "subcategorias": ["despido"],
+    "esperado": ["Despido — Protección de la maternidad ante el despido: normativa"]
+  },
+  {
+    "consulta": "el empleador dice que me echó por notoria mala conducta, ¿qué significa eso?",
+    "categoria": "laboral",
+    "subcategorias": ["despido"],
+    "esperado": ["Despido — Notoria mala conducta"]
+  },
+  {
+    "consulta": "cuándo me tienen que pagar el aguinaldo y cómo se calcula",
+    "categoria": "laboral",
+    "subcategorias": ["rubros-laborales"],
+    "esperado": ["Rubros laborales — Aguinaldo: concepto, cálculo y beneficiarios"]
+  },
+  {
+    "consulta": "trabajo más de las 8 horas diarias, ¿me tienen que pagar las horas extra con recargo?",
+    "categoria": "laboral",
+    "subcategorias": ["rubros-laborales"],
+    "esperado": ["Rubros laborales — Horas extras: régimen y recargos"]
+  },
+  {
+    "consulta": "cuántos días de licencia me corresponden por año trabajado",
+    "categoria": "laboral",
+    "subcategorias": ["rubros-laborales"],
+    "esperado": ["Rubros laborales — Licencia anual: duración, antigüedad, goce y fraccionamiento"]
+  },
+  {
+    "consulta": "voy a ser padre, ¿tengo derecho a licencia por paternidad?",
+    "categoria": "laboral",
+    "subcategorias": ["licencias-especiales"],
+    "esperado": ["Licencias especiales — Licencia por paternidad"]
+  },
+  {
+    "consulta": "se murió mi papá, ¿tengo derecho a licencia por duelo en el trabajo?",
+    "categoria": "laboral",
+    "subcategorias": ["licencias-especiales"],
+    "esperado": ["Licencias especiales — Matrimonio y duelo"]
+  },
+  {
+    "consulta": "trabajo en el campo y me despidieron, ¿se aplican las mismas reglas que a cualquier trabajador?",
+    "categoria": "laboral",
+    "subcategorias": ["trabajador-rural"],
+    "esperado": ["Trabajador rural — Despido"]
+  },
+  {
+    "consulta": "trabajo y vivo en el establecimiento rural donde trabajo, ¿qué obligaciones tiene el patrón sobre mi vivienda y comida?",
+    "categoria": "laboral",
+    "subcategorias": ["trabajador-rural"],
+    "esperado": ["Trabajador rural — Vivienda, alimentación y asistencia médica"]
+  },
+  {
+    "consulta": "trabajo en un call center y quiero saber cuánto puede durar mi jornada y qué descansos tengo",
+    "categoria": "laboral",
+    "subcategorias": ["call-center"],
+    "esperado": ["Call center — Jornada de trabajo, descansos y pausas"]
+  },
+  {
+    "consulta": "hace cuánto tiempo tengo para reclamarle a mi expatrón un crédito laboral que me debe",
+    "categoria": "laboral",
+    "esperado": ["Laboral — Prescripción de acciones y créditos laborales (Ley 18.091)"]
+  },
+  {
+    "consulta": "mi inquilino no me paga el alquiler hace tres meses y quiero desalojarlo",
+    "categoria": "laboral",
+    "subcategorias": ["despido"],
+    "esperado": []
+  },
+  {
+    "consulta": "cuál es la mejor receta para hacer un asado los domingos",
+    "categoria": "laboral",
+    "esperado": []
+  },
+  {
+    "consulta": "trabajo en relación de dependencia para una empresa extranjera 100% remota, ¿qué legislación laboral me aplica?",
+    "categoria": "laboral",
+    "esperado": []
+  },
+  {
+    "consulta": "me contrataron como pasante en una empresa, ¿qué derechos laborales tengo como pasante?",
+    "categoria": "laboral",
+    "esperado": []
+  }
+]

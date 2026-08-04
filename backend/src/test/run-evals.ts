@@ -40,6 +40,8 @@ import { recepcionAgent } from "../mastra/dominios/recepcion/index.js";
 import { relacionesConsumoAgent } from "../mastra/dominios/relaciones-consumo/index.js";
 import { transitoAgent } from "../mastra/dominios/transito/index.js";
 
+import { evalRetrieval } from "./retrieval/run-retrieval.js";
+
 const THRESHOLD = 0.9;
 
 interface EvalItem {
@@ -352,7 +354,7 @@ async function evalFidelidad(agent: CategoriaAgent, agentDir: string, label: str
   return precision;
 }
 
-const EVALS: readonly { nombre: string; run: () => Promise<number> }[] = [
+const EVALS: readonly { nombre: string; run: () => Promise<number>; umbral?: number }[] = [
   { nombre: "receptor", run: evalReceptorClasificacion },
   { nombre: "laboral-citacion", run: () => evalCitacion(laboralAgent, "laboral", "Laboral") },
   { nombre: "laboral-voz-fuentes", run: () => evalVozFuentes(laboralAgent, "laboral", "Laboral") },
@@ -393,6 +395,17 @@ const EVALS: readonly { nombre: string; run: () => Promise<number> }[] = [
     nombre: "consumo-captacion",
     run: () => evalCaptacion(relacionesConsumoAgent, "relaciones-consumo", "Consumo"),
   },
+  // Umbral 0 mientras se calibra MIN_SIMILARITY: los negativos fallan todos por
+  // construcción hasta la Tarea 10, y un gate acá bloquearía todo el runner.
+  { nombre: "retrieval-laboral", run: () => evalRetrieval("laboral", "Laboral"), umbral: 0 },
+  { nombre: "retrieval-familia", run: () => evalRetrieval("familia", "Familia"), umbral: 0 },
+  {
+    nombre: "retrieval-arrendamiento",
+    run: () => evalRetrieval("arrendamiento-desalojo", "Arrendamiento"),
+    umbral: 0,
+  },
+  { nombre: "retrieval-consumo", run: () => evalRetrieval("relaciones-consumo", "Consumo"), umbral: 0 },
+  { nombre: "retrieval-transito", run: () => evalRetrieval("transito", "Tránsito"), umbral: 0 },
 ];
 
 /** `pnpm evals [filtro]` — sin filtro corre todo; con filtro, los datasets cuyo nombre lo contenga. */
@@ -406,9 +419,15 @@ async function main(): Promise<number> {
     );
     return 1;
   }
-  const resultados: number[] = [];
-  for (const evalDef of seleccion) resultados.push(await evalDef.run());
-  return resultados.every((precision) => precision >= THRESHOLD) ? 0 : 1;
+  const resultados: { nombre: string; precision: number; umbral: number }[] = [];
+  for (const evalDef of seleccion) {
+    resultados.push({ nombre: evalDef.nombre, precision: await evalDef.run(), umbral: evalDef.umbral ?? THRESHOLD });
+  }
+  const reprobados = resultados.filter((r) => r.precision < r.umbral);
+  for (const r of reprobados) {
+    console.log(`\nGATE FALLADO: ${r.nombre} — ${r.precision.toFixed(3)} < ${r.umbral.toFixed(3)}`);
+  }
+  return reprobados.length === 0 ? 0 : 1;
 }
 
 main()

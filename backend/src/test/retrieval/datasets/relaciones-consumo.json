@@ -1,0 +1,26 @@
+[
+  {
+    "consulta": "compré algo por internet y me arrepentí, ¿puedo devolverlo?",
+    "categoria": "relaciones-consumo",
+    "subcategorias": ["derechos-del-consumidor"],
+    "esperado": ["Relaciones de consumo — Compras a distancia y derecho a arrepentirse (retracto)"]
+  },
+  {
+    "consulta": "el vendedor no me quiere dar garantía de un producto que compré usado",
+    "categoria": "relaciones-consumo",
+    "subcategorias": ["derechos-del-consumidor"],
+    "esperado": ["Relaciones de consumo — Garantía, repuestos y productos usados"]
+  },
+  {
+    "consulta": "quiero hacer una denuncia por un producto defectuoso, ¿ante quién reclamo?",
+    "categoria": "relaciones-consumo",
+    "subcategorias": ["procedimiento-mef-judicial"],
+    "esperado": ["Relaciones de consumo — Reclamo ante el Área Defensa del Consumidor (MEF)"]
+  },
+  {
+    "consulta": "quiero saber si mi jefe me puede despedir estando de licencia médica",
+    "categoria": "relaciones-consumo",
+    "subcategorias": ["derechos-del-consumidor"],
+    "esperado": []
+  }
+]

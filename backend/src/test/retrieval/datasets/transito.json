@@ -1,0 +1,17 @@
+[
+  {
+    "consulta": "me multaron por exceso de velocidad, ¿cómo funciona el sistema de reincidencia?",
+    "categoria": "transito",
+    "esperado": ["Tránsito — Infracciones, multas y sanciones: clasificación, notificación, reincidencia y prescripción"]
+  },
+  {
+    "consulta": "tuve un choque y no sé cómo reclamarle al seguro obligatorio",
+    "categoria": "transito",
+    "esperado": ["Tránsito — Reclamo al seguro obligatorio: procedimiento, plazos y prescripción"]
+  },
+  {
+    "consulta": "choqué a un peatón mientras conducía, ¿puedo tener consecuencias penales por eso?",
+    "categoria": "transito",
+    "esperado": []
+  }
+]

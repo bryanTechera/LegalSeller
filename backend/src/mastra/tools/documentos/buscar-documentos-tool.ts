@@ -5,8 +5,8 @@ import { fallbackLogger } from "../../common/logger.js";
 import { generateEmbedding, toVectorLiteral } from "../../config/embedding.js";
 import { getPool } from "../../config/storage.js";
 
-/** Minimum cosine similarity for a chunk to be considered relevant. Calibrate with evals. */
-const MIN_SIMILARITY = 0.3;
+/** Minimum cosine similarity for a chunk to be considered relevant. Calibrated with src/test/retrieval. */
+export const MIN_SIMILARITY = 0.3;
 
 export const ChunkResultSchema = z.object({
   documentId: z.string().meta({ description: "Id del documento de origen" }),
