@@ -16,7 +16,8 @@
     "lint": "eslint src/",
     "lint:fix": "eslint --fix src/",
     "evals": "tsx src/test/run-evals.ts",
-    "ingest": "tsx src/scripts/ingest.ts"
+    "ingest": "tsx src/scripts/ingest.ts",
+    "corpus:sync": "tsx src/scripts/corpus-sync.ts"
   },
   "dependencies": {
     "@ai-sdk/gateway": "^3.0.125",
