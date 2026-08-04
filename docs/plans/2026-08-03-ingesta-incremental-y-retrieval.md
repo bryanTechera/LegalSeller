@@ -141,6 +141,7 @@ Si un embedding falla, la transacción no llega a abrirse y el documento queda i
 - **default** — incremental: salta lo que tiene hash y versión coincidentes.
 - **`--dry-run`** — reporta qué haría, no toca nada.
 - **`--reembed-stale`** — modo migración: recorre la base por `pipelineVersion` vieja y re-embebe desde el contenido almacenado, sin depender de los archivos.
+- **`--backfill`** — de un solo uso: estampa `contentHash` y `pipelineVersion` en las 155 filas ya cargadas **sin re-embeber**, para que el primer sync incremental no vea todo el corpus como nuevo. Sólo toca filas cuya partición almacenada coincide con la que deriva el path; cualquier discrepancia se reporta y se omite.
 
 ### Reporte
 
