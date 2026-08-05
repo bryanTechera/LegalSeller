@@ -141,7 +141,11 @@
   gap: var(--space-4);
   position: sticky;
   top: var(--space-6);
-  max-height: calc(100vh - var(--space-6) * 2);
+  /* Alto fijo, no `max-height`: la columna es un grid item con
+     `align-items: start`, así que sin esto mide lo que mide su contenido y
+     el panel de fuentes no puede crecer más allá de sus propios fragmentos,
+     dejando el resto del alto en blanco. */
+  height: calc(100dvh - var(--space-6) * 2);
   min-height: 0;
 }
 
@@ -301,7 +305,7 @@
 
   .panel {
     position: static;
-    max-height: none;
+    height: auto;
   }
 
   .bloqueLateral,
