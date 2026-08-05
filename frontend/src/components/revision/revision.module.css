@@ -141,6 +141,36 @@
   color: var(--navy);
 }
 
+.botonSecundario:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* --- Notas de a una (bloque fijo del board) --- */
+
+.notasPaginadas {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.navNotas {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.navNotas .botonSecundario {
+  font-size: var(--text-xs);
+  padding: var(--space-1) var(--space-2);
+}
+
+.contadorNotas {
+  font-size: var(--text-xs);
+  color: var(--ink-500);
+  font-variant-numeric: tabular-nums;
+}
+
 /* --- Acceso --- */
 
 .formAcceso {
@@ -402,6 +432,15 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+}
+
+/* El mensaje elegido gobierna lo que muestra la columna de fuentes: se marca
+   con una barra de acento en vez de tocar el color de la burbuja, que ya
+   codifica quién habló. */
+.bloqueMensaje[data-seleccionada="true"] {
+  border-left: 3px solid var(--accent);
+  padding-left: var(--space-3);
+  margin-left: calc(var(--space-3) * -1);
 }
 
 .mensajeConGutter {

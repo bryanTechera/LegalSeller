@@ -29,29 +29,22 @@ function busqueda(sobreescribir: Partial<BusquedaCorpus> = {}): BusquedaCorpus {
 }
 
 describe("PanelFuentes", () => {
-  it("sin búsquedas dice que el chat no consultó el corpus", () => {
-    render(<PanelFuentes busquedas={[]} messageIdSeleccionado={null} onIrARespuesta={vi.fn()} onAnotar={vi.fn()} />);
-    expect(screen.getByText("No se consultó el corpus.")).toBeInTheDocument();
-  });
-
-  it("sin respuesta seleccionada muestra el mapa con el contador y las vacías", () => {
-    const onIrARespuesta = vi.fn();
+  it("sin mensaje elegido no carga ninguna fuente", () => {
     render(
       <PanelFuentes
-        busquedas={[busqueda(), busqueda({ spanId: "t2", messageId: "m3", consulta: "despido en licencia médica", estado: "empty", fragmentos: [] })]}
+        busquedas={[busqueda(), busqueda({ spanId: "t2", messageId: "m3", consulta: "despido en licencia médica" })]}
         messageIdSeleccionado={null}
-        onIrARespuesta={onIrARespuesta}
         onAnotar={vi.fn()}
       />,
     );
-    expect(screen.getByText("1 de 2 consultas volvió sin fuentes")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /despido en licencia médica/ }));
-    expect(onIrARespuesta).toHaveBeenCalledWith("m3");
+    expect(screen.getByText(/Elegí una respuesta del agente/)).toBeInTheDocument();
+    expect(screen.queryByText("indemnización por despido antigüedad")).not.toBeInTheDocument();
+    expect(screen.queryByText("despido en licencia médica")).not.toBeInTheDocument();
   });
 
   it("con una respuesta seleccionada muestra su consulta y sus fragmentos con score", () => {
     render(
-      <PanelFuentes busquedas={[busqueda()]} messageIdSeleccionado="m1" onIrARespuesta={vi.fn()} onAnotar={vi.fn()} />,
+      <PanelFuentes busquedas={[busqueda()]} messageIdSeleccionado="m1" onAnotar={vi.fn()} />,
     );
     expect(screen.getByText("indemnización por despido antigüedad")).toBeInTheDocument();
     expect(screen.getByText("Ley 10.489 — art. 4")).toBeInTheDocument();
@@ -63,7 +56,7 @@ describe("PanelFuentes", () => {
       <PanelFuentes
         busquedas={[busqueda({ estado: "empty", fragmentos: [] })]}
         messageIdSeleccionado="m1"
-        onIrARespuesta={vi.fn()}
+       
         onAnotar={vi.fn()}
       />,
     );
@@ -77,7 +70,7 @@ describe("PanelFuentes", () => {
       <PanelFuentes
         busquedas={[busqueda({ estado: "ilegible", fragmentos: [] }), busqueda({ spanId: "t2" })]}
         messageIdSeleccionado="m1"
-        onIrARespuesta={vi.fn()}
+       
         onAnotar={vi.fn()}
       />,
     );
@@ -91,7 +84,7 @@ describe("PanelFuentes", () => {
       <PanelFuentes
         busquedas={[busqueda({ fragmentos: [largo] })]}
         messageIdSeleccionado="m1"
-        onIrARespuesta={vi.fn()}
+       
         onAnotar={vi.fn()}
       />,
     );
@@ -103,7 +96,7 @@ describe("PanelFuentes", () => {
   it("anotar una búsqueda manda la consulta como cita", () => {
     const onAnotar = vi.fn();
     render(
-      <PanelFuentes busquedas={[busqueda()]} messageIdSeleccionado="m1" onIrARespuesta={vi.fn()} onAnotar={onAnotar} />,
+      <PanelFuentes busquedas={[busqueda()]} messageIdSeleccionado="m1" onAnotar={onAnotar} />,
     );
     fireEvent.click(screen.getByRole("button", { name: /Dejar nota sobre esta búsqueda/ }));
     expect(onAnotar).toHaveBeenCalledWith("m1", "Búsqueda: «indemnización por despido antigüedad»");
@@ -112,7 +105,7 @@ describe("PanelFuentes", () => {
   it("anotar un fragmento manda documento, sección y score como cita", () => {
     const onAnotar = vi.fn();
     render(
-      <PanelFuentes busquedas={[busqueda()]} messageIdSeleccionado="m1" onIrARespuesta={vi.fn()} onAnotar={onAnotar} />,
+      <PanelFuentes busquedas={[busqueda()]} messageIdSeleccionado="m1" onAnotar={onAnotar} />,
     );
     fireEvent.click(screen.getByRole("button", { name: /Dejar nota sobre este fragmento: Ley 10.489/ }));
     expect(onAnotar).toHaveBeenCalledWith(
@@ -129,7 +122,7 @@ describe("PanelFuentes", () => {
       <PanelFuentes
         busquedas={[busqueda({ fragmentos: [fragmento1, fragmento2] })]}
         messageIdSeleccionado="m1"
-        onIrARespuesta={vi.fn()}
+       
         onAnotar={onAnotar}
       />,
     );
@@ -148,7 +141,7 @@ describe("PanelFuentes", () => {
 
   it("una sola búsqueda muestra sus fragmentos sin colapsar", () => {
     render(
-      <PanelFuentes busquedas={[busqueda()]} messageIdSeleccionado="m1" onIrARespuesta={vi.fn()} onAnotar={vi.fn()} />,
+      <PanelFuentes busquedas={[busqueda()]} messageIdSeleccionado="m1" onAnotar={vi.fn()} />,
     );
     expect(screen.getByText("Ley 10.489 — art. 4")).toBeVisible();
   });
@@ -163,7 +156,7 @@ describe("PanelFuentes", () => {
       <PanelFuentes
         busquedas={[busqueda(), otra]}
         messageIdSeleccionado="m1"
-        onIrARespuesta={vi.fn()}
+       
         onAnotar={vi.fn()}
       />,
     );
@@ -186,7 +179,7 @@ describe("PanelFuentes", () => {
       <PanelFuentes
         busquedas={[busqueda({ fragmentos: [bajo, fragmento] })]}
         messageIdSeleccionado="m1"
-        onIrARespuesta={vi.fn()}
+       
         onAnotar={vi.fn()}
       />,
     );
@@ -200,23 +193,22 @@ describe("PanelFuentes", () => {
     expect(within(segundo).getByText("Resolución 123 — art. 4")).toBeInTheDocument();
   });
 
-  it("una respuesta sin búsquedas lo dice y deja volver al mapa", () => {
-    const onIrARespuesta = vi.fn();
-    render(
-      <PanelFuentes busquedas={[busqueda()]} messageIdSeleccionado="m9" onIrARespuesta={onIrARespuesta} onAnotar={vi.fn()} />,
-    );
+  it("una respuesta sin búsquedas lo dice", () => {
+    render(<PanelFuentes busquedas={[busqueda()]} messageIdSeleccionado="m9" onAnotar={vi.fn()} />);
     expect(screen.getByText("Esta respuesta no consultó el corpus.")).toBeInTheDocument();
   });
 
-  it("las búsquedas huérfanas aparecen en el mapa marcadas", () => {
+  // Una búsqueda huérfana (span sin mensaje) no pertenece a ninguna respuesta:
+  // el panel no la muestra por error bajo la que esté elegida. Que exista se
+  // reporta aparte, en el detalle técnico del board.
+  it("una búsqueda huérfana no se cuela en la respuesta elegida", () => {
     render(
       <PanelFuentes
-        busquedas={[busqueda({ messageId: null })]}
-        messageIdSeleccionado={null}
-        onIrARespuesta={vi.fn()}
+        busquedas={[busqueda({ messageId: null }), busqueda({ spanId: "t2", messageId: "m1" })]}
+        messageIdSeleccionado="m1"
         onAnotar={vi.fn()}
       />,
     );
-    expect(screen.getByText("sin respuesta asociada")).toBeInTheDocument();
+    expect(screen.getAllByText("indemnización por despido antigüedad")).toHaveLength(1);
   });
 });

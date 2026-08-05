@@ -97,11 +97,3 @@ export function textoDeMarca(resumen: ResumenFuentes): string {
   if (resumen.vacias === resumen.consultas) return `${consultas} · sin resultados`;
   return `${consultas} · ${String(resumen.vacias)} sin resultados`;
 }
-
-export function textoDelMapa(busquedas: BusquedaCorpus[]): string {
-  const vacias = busquedas.filter((busqueda) => busqueda.estado !== "ok").length;
-  const total = plural(busquedas.length, "consulta", "consultas");
-  if (vacias === 0) return `${total}, con fuentes`;
-  const verbo = vacias === 1 ? "volvió" : "volvieron";
-  return `${String(vacias)} de ${total} ${verbo} sin fuentes`;
-}

@@ -7,7 +7,6 @@ import {
   citaDeFragmento,
   fragmentosPorScore,
   resumenDeBusqueda,
-  textoDelMapa,
   type BusquedaCorpus,
   type FragmentoRecuperado,
 } from "@/lib/revision/fuentes";
@@ -18,11 +17,10 @@ import styles from "./fuentes.module.css";
 const RECORTE = 400;
 
 interface PanelFuentesProps {
+  /** Búsquedas de toda la conversación; el panel muestra las del mensaje elegido. */
   busquedas: BusquedaCorpus[];
-  /** Respuesta seleccionada; null muestra el mapa de todo el chat. */
+  /** Respuesta seleccionada; sin selección el panel no carga fuentes. */
   messageIdSeleccionado: string | null;
-  /** Clic en una línea del mapa: el padre selecciona esa respuesta. */
-  onIrARespuesta: (messageId: string) => void;
   onAnotar: (messageId: string | null, cita: string) => void;
 }
 
@@ -179,44 +177,11 @@ function Busqueda({
   );
 }
 
-export function PanelFuentes({ busquedas, messageIdSeleccionado, onIrARespuesta, onAnotar }: PanelFuentesProps) {
-  if (busquedas.length === 0) {
-    // Redactado sin sujeto ("chat"/"sesión") a propósito: el componente se
-    // monta tal cual en el board (chats de consultante) y en /revision
-    // (sesiones de prueba) — mismo patrón que "Esta respuesta no consultó
-    // el corpus." unas líneas más abajo, que ya es agnóstico de pantalla.
-    return <p className={styles.vacio}>No se consultó el corpus.</p>;
-  }
-
+export function PanelFuentes({ busquedas, messageIdSeleccionado, onAnotar }: PanelFuentesProps) {
+  // Sin mensaje elegido no se carga ninguna fuente: el panel es el detalle de
+  // una respuesta, no un índice de la conversación.
   if (messageIdSeleccionado === null) {
-    return (
-      <div className={styles.mapa}>
-        <p className={styles.contador}>{textoDelMapa(busquedas)}</p>
-        <ul className={styles.listaMapa}>
-          {busquedas.map((busqueda) => (
-            <li key={busqueda.spanId}>
-              <button
-                type="button"
-                className={busqueda.estado === "ok" ? styles.lineaMapa : styles.lineaMapaVacia}
-                disabled={busqueda.messageId === null}
-                onClick={() => {
-                  if (busqueda.messageId !== null) onIrARespuesta(busqueda.messageId);
-                }}
-              >
-                <span className={styles.consultaMapa}>{busqueda.consulta || "(consulta ilegible)"}</span>
-                <span className={styles.etiqueta}>
-                  {busqueda.messageId === null
-                    ? "sin respuesta asociada"
-                    : busqueda.estado === "ok"
-                      ? `${String(busqueda.fragmentos.length)} · ${(busqueda.fragmentos[0]?.similarity ?? 0).toFixed(2)}`
-                      : "sin resultados"}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
-    );
+    return <p className={styles.vacio}>Elegí una respuesta del agente para ver qué consultó al corpus.</p>;
   }
 
   const deLaRespuesta = busquedas.filter((busqueda) => busqueda.messageId === messageIdSeleccionado);

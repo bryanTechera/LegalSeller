@@ -7,7 +7,6 @@ import {
   resumenDeBusqueda,
   resumirPorRespuesta,
   textoDeMarca,
-  textoDelMapa,
   type BusquedaCorpus,
   type FragmentoRecuperado,
 } from "./fuentes";
@@ -129,29 +128,5 @@ describe("textoDeMarca", () => {
 
   it("algunas vacías informa cuántas", () => {
     expect(textoDeMarca({ consultas: 3, fragmentos: 4, vacias: 1 })).toBe("3 consultas · 1 sin resultados");
-  });
-});
-
-describe("textoDelMapa", () => {
-  it("cuenta cuántas consultas quedaron sin fuentes", () => {
-    const texto = textoDelMapa([
-      busqueda({ spanId: "t1" }),
-      busqueda({ spanId: "t2" }),
-      busqueda({ spanId: "t3", estado: "empty", fragmentos: [] }),
-    ]);
-    expect(texto).toBe("1 de 3 consultas volvió sin fuentes");
-  });
-
-  it("concordancia verbal con múltiples búsquedas vacías", () => {
-    const texto = textoDelMapa([
-      busqueda({ spanId: "t1", estado: "empty", fragmentos: [] }),
-      busqueda({ spanId: "t2", estado: "error", fragmentos: [] }),
-      busqueda({ spanId: "t3" }),
-    ]);
-    expect(texto).toBe("2 de 3 consultas volvieron sin fuentes");
-  });
-
-  it("todas con fuentes lo dice en positivo", () => {
-    expect(textoDelMapa([busqueda()])).toBe("1 consulta, con fuentes");
   });
 });

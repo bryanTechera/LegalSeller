@@ -5,6 +5,7 @@ import { useState } from "react";
 import useSWR from "swr";
 
 import { NotaComposer } from "@/components/revision/NotaComposer";
+import { NotasPaginadas } from "@/components/revision/NotasPaginadas";
 import { NotaThread } from "@/components/revision/NotaThread";
 import { PanelFuentes } from "@/components/revision/PanelFuentes";
 import type { DetalleConversacion } from "@/lib/board/conversaciones";
@@ -33,8 +34,10 @@ export function DetalleChat({ id }: { id: string }) {
   const [anotando, setAnotando] = useState<{ messageId: string | null; cita: string | null } | null>(
     null,
   );
-  const [solapa, setSolapa] = useState<"fuentes" | "caso" | "notas">("fuentes");
-  const [seleccionada, setSeleccionada] = useState<string | null>(null);
+  // Las solapas son el detalle del mensaje elegido. El caso y las notas de la
+  // conversación son globales y viven fuera de ellas, siempre a la vista.
+  const [solapa, setSolapa] = useState<"fuentes" | "notas">("fuentes");
+  const [seleccionado, setSeleccionado] = useState<string | null>(null);
 
   // try/catch como en SesionView: sin él, una excepción de red (conexión
   // cortada, no un status !== 2xx) sube sin manejar hasta NotaComposer y el
@@ -96,6 +99,22 @@ export function DetalleChat({ id }: { id: string }) {
   const resumenes = resumirPorRespuesta(data.busquedas);
   const tecnico = resumirTecnico(data.timeline);
 
+  const mensajes = data.timeline.filter((item) => item.tipo === "mensaje");
+  const idsMensajes = new Set(mensajes.map((mensaje) => mensaje.id));
+  // Generales + huérfanas (messageId que no matchea el transcript): mismo
+  // criterio que SesionView — una nota jamás queda invisible.
+  const notasDeLaConversacion = data.notas.filter(
+    (nota) => nota.messageId === null || !idsMensajes.has(nota.messageId),
+  );
+  const notasDelMensaje = data.notas.filter((nota) => nota.messageId === seleccionado);
+  const huerfanas = data.busquedas.filter((busqueda) => busqueda.messageId === null).length;
+  const anotandoConversacion = anotando !== null && anotando.messageId === null;
+
+  const seleccionar = (messageId: string, destino: "fuentes" | "notas") => {
+    setSeleccionado(messageId);
+    setSolapa(destino);
+  };
+
   return (
     <section className={styles.detalle}>
       <div>
@@ -108,41 +127,54 @@ export function DetalleChat({ id }: { id: string }) {
         </header>
 
         <ol className={styles.timeline}>
-          {data.timeline.map((item) => {
-            if (item.tipo !== "mensaje") return null;
+          {mensajes.map((item) => {
             const resumen = item.rol === "assistant" ? resumenes.get(item.id) : undefined;
-            const esSeleccionada = seleccionada === item.id;
+            const esSeleccionado = seleccionado === item.id;
+            const notas = data.notas.filter((nota) => nota.messageId === item.id).length;
             return (
               <li
                 key={item.id}
                 className={item.rol === "user" ? styles.mensajeUsuario : styles.mensajeAgente}
-                aria-current={esSeleccionada ? "true" : undefined}
-                data-seleccionada={esSeleccionada ? "true" : undefined}
+                aria-current={esSeleccionado ? "true" : undefined}
+                data-seleccionada={esSeleccionado ? "true" : undefined}
               >
                 <p>{item.texto}</p>
-                {resumen ? (
+                <div className={styles.filaMensaje}>
+                  {item.rol === "assistant" ? (
+                    <button
+                      type="button"
+                      className={resumen && resumen.vacias > 0 ? styles.marcaAlerta : styles.marca}
+                      aria-label={
+                        resumen
+                          ? `${textoDeMarca(resumen)}: ver fuentes de esta respuesta`
+                          : "Sin consultas al corpus: elegir esta respuesta"
+                      }
+                      onClick={() => seleccionar(item.id, "fuentes")}
+                    >
+                      {resumen ? textoDeMarca(resumen) : "Sin consultas al corpus"}
+                    </button>
+                  ) : null}
                   <button
                     type="button"
-                    className={resumen.vacias > 0 ? styles.marcaAlerta : styles.marca}
-                    aria-label={`${textoDeMarca(resumen)}: ver fuentes de esta respuesta`}
+                    className={styles.botonNota}
                     onClick={() => {
-                      setSeleccionada(item.id);
-                      setSolapa("fuentes");
+                      setAnotando({ messageId: item.id, cita: item.texto.slice(0, 300) });
+                      seleccionar(item.id, "notas");
                     }}
                   >
-                    {textoDeMarca(resumen)}
+                    Dejar nota
                   </button>
-                ) : null}
-                <button
-                  type="button"
-                  className={styles.botonNota}
-                  onClick={() => {
-                    setAnotando({ messageId: item.id, cita: item.texto.slice(0, 300) });
-                    setSolapa("notas");
-                  }}
-                >
-                  Dejar nota
-                </button>
+                  {notas > 0 ? (
+                    <button
+                      type="button"
+                      className={styles.botonNota}
+                      aria-label={`Ver ${notas === 1 ? "la nota" : `las ${String(notas)} notas`} de este mensaje`}
+                      onClick={() => seleccionar(item.id, "notas")}
+                    >
+                      {notas === 1 ? "1 nota" : `${String(notas)} notas`}
+                    </button>
+                  ) : null}
+                </div>
               </li>
             );
           })}
@@ -150,11 +182,94 @@ export function DetalleChat({ id }: { id: string }) {
       </div>
 
       <aside className={styles.panel}>
-        <div className={styles.solapas} role="tablist" aria-label="Detalle de la conversación">
+        <section className={styles.bloqueFijo} aria-labelledby="board-caso">
+          <h2 className={styles.subtitulo} id="board-caso">
+            Caso
+          </h2>
+          {data.caso ? (
+            <dl className={styles.datos}>
+              <dt>Estado</dt>
+              <dd>{data.caso.estado.replace(/_/g, " ").toLowerCase()}</dd>
+              <dt>Categoría</dt>
+              <dd>{data.caso.categoria ?? "—"}</dd>
+              <dt>Subcategorías</dt>
+              <dd>{data.caso.subcategorias.join(", ") || "—"}</dd>
+              <dt>Contacto</dt>
+              <dd>
+                {[data.caso.contactoNombre, data.caso.contactoTelefono, data.caso.contactoEmail]
+                  .filter(Boolean)
+                  .join(" · ") || "Sin contacto registrado"}
+              </dd>
+            </dl>
+          ) : (
+            <p className={styles.etiqueta}>Todavía no se abrió un caso.</p>
+          )}
+          <details className={styles.tecnico}>
+            <summary>Detalle técnico</summary>
+            <dl className={styles.datos}>
+              <dt>Agentes</dt>
+              <dd>{tecnico.agentes.join(" · ") || "—"}</dd>
+              <dt>Modelos</dt>
+              <dd>{tecnico.modelos.join(" · ") || "—"}</dd>
+              <dt>Tokens</dt>
+              <dd>
+                {tecnico.tokensEntrada} entrada / {tecnico.tokensSalida} salida
+              </dd>
+              <dt>Costo estimado</dt>
+              <dd>{tecnico.costoUsd === null ? "sin dato" : `US$ ${tecnico.costoUsd.toFixed(4)}`}</dd>
+              <dt>Otras herramientas</dt>
+              <dd>
+                {tecnico.tools.length === 0
+                  ? "—"
+                  : tecnico.tools.map((tool) => `${tool.tool}${tool.conError ? " (con error)" : ""}`).join(" · ")}
+              </dd>
+              {/* Sin el mapa de consultas, una búsqueda sin respuesta asociada
+                  no se ve en ningún lado: que al menos quede contada. */}
+              {huerfanas > 0 ? (
+                <>
+                  <dt>Consultas sin respuesta</dt>
+                  <dd>{huerfanas}</dd>
+                </>
+              ) : null}
+            </dl>
+          </details>
+        </section>
+
+        <section className={styles.bloqueFijo} aria-labelledby="board-notas-conversacion">
+          <div className={styles.filaTitulo}>
+            <h2 className={styles.subtitulo} id="board-notas-conversacion">
+              Notas de la conversación
+            </h2>
+            <button
+              type="button"
+              className={styles.botonNota}
+              onClick={() => setAnotando({ messageId: null, cita: null })}
+            >
+              Nota sobre la conversación
+            </button>
+          </div>
+          {anotandoConversacion ? (
+            <NotaComposer cita={null} onCancelar={() => setAnotando(null)} onGuardar={guardarNota} />
+          ) : null}
+          {notasDeLaConversacion.length === 0 ? (
+            <p className={styles.etiqueta}>Todavía no hay notas sobre la conversación.</p>
+          ) : (
+            <NotasPaginadas
+              notas={notasDeLaConversacion}
+              onResponder={responderNota}
+              onResolver={resolverNota}
+            />
+          )}
+        </section>
+
+        <div className={styles.filaSolapas}>
+          <div className={styles.solapas} role="tablist" aria-label="Detalle del mensaje elegido">
           <button
             type="button"
             role="tab"
+            id="solapa-fuentes"
             aria-selected={solapa === "fuentes"}
+            aria-controls="panel-mensaje"
             className={solapa === "fuentes" ? styles.solapaActiva : styles.solapa}
             onClick={() => setSolapa("fuentes")}
           >
@@ -163,114 +278,69 @@ export function DetalleChat({ id }: { id: string }) {
           <button
             type="button"
             role="tab"
-            aria-selected={solapa === "caso"}
-            className={solapa === "caso" ? styles.solapaActiva : styles.solapa}
-            onClick={() => setSolapa("caso")}
-          >
-            Caso
-          </button>
-          <button
-            type="button"
-            role="tab"
+            id="solapa-notas"
             aria-selected={solapa === "notas"}
+            aria-controls="panel-mensaje"
             className={solapa === "notas" ? styles.solapaActiva : styles.solapa}
             onClick={() => setSolapa("notas")}
           >
-            Notas ({data.notas.length})
-          </button>
+            Notas del mensaje ({notasDelMensaje.length})
+            </button>
+          </div>
+          {seleccionado !== null ? (
+            <button
+              type="button"
+              className={styles.quitarSeleccion}
+              onClick={() => {
+                setSeleccionado(null);
+                if (!anotandoConversacion) setAnotando(null);
+              }}
+            >
+              Quitar selección
+            </button>
+          ) : null}
         </div>
 
-        {solapa === "fuentes" ? (
-          <section className={styles.bloqueLateral}>
-            {seleccionada !== null ? (
-              <button type="button" className={styles.botonNota} onClick={() => setSeleccionada(null)}>
-                Ver todas las consultas
-              </button>
-            ) : null}
+        <section
+          className={styles.bloqueLateral}
+          id="panel-mensaje"
+          role="tabpanel"
+          aria-labelledby={solapa === "fuentes" ? "solapa-fuentes" : "solapa-notas"}
+        >
+          {solapa === "fuentes" ? (
             <PanelFuentes
               busquedas={data.busquedas}
-              messageIdSeleccionado={seleccionada}
-              onIrARespuesta={(messageId) => setSeleccionada(messageId)}
+              messageIdSeleccionado={seleccionado}
               onAnotar={(messageId, cita) => {
                 setAnotando({ messageId, cita });
                 setSolapa("notas");
               }}
             />
-          </section>
-        ) : null}
-
-        {solapa === "caso" ? (
-          <section className={styles.bloqueLateral}>
-            <h2 className={styles.subtitulo}>Caso</h2>
-            {data.caso ? (
-              <dl className={styles.datos}>
-                <dt>Estado</dt>
-                <dd>{data.caso.estado.replace(/_/g, " ").toLowerCase()}</dd>
-                <dt>Categoría</dt>
-                <dd>{data.caso.categoria ?? "—"}</dd>
-                <dt>Subcategorías</dt>
-                <dd>{data.caso.subcategorias.join(", ") || "—"}</dd>
-                <dt>Contacto</dt>
-                <dd>
-                  {[data.caso.contactoNombre, data.caso.contactoTelefono, data.caso.contactoEmail]
-                    .filter(Boolean)
-                    .join(" · ") || "Sin contacto registrado"}
-                </dd>
-              </dl>
-            ) : (
-              <p className={styles.etiqueta}>Todavía no se abrió un caso.</p>
-            )}
-            <details className={styles.tecnico}>
-              <summary>Detalle técnico</summary>
-              <dl className={styles.datos}>
-                <dt>Agentes</dt>
-                <dd>{tecnico.agentes.join(" · ") || "—"}</dd>
-                <dt>Modelos</dt>
-                <dd>{tecnico.modelos.join(" · ") || "—"}</dd>
-                <dt>Tokens</dt>
-                <dd>
-                  {tecnico.tokensEntrada} entrada / {tecnico.tokensSalida} salida
-                </dd>
-                <dt>Costo estimado</dt>
-                <dd>{tecnico.costoUsd === null ? "sin dato" : `US$ ${tecnico.costoUsd.toFixed(4)}`}</dd>
-                <dt>Otras herramientas</dt>
-                <dd>
-                  {tecnico.tools.length === 0
-                    ? "—"
-                    : tecnico.tools.map((tool) => `${tool.tool}${tool.conError ? " (con error)" : ""}`).join(" · ")}
-                </dd>
-              </dl>
-            </details>
-          </section>
-        ) : null}
-
-        {solapa === "notas" ? (
-          <section className={styles.bloqueLateral}>
-            {anotando ? (
-              <NotaComposer
-                cita={anotando.cita}
-                onCancelar={() => setAnotando(null)}
-                onGuardar={guardarNota}
-              />
-            ) : (
-              <button
-                type="button"
-                className={styles.botonNota}
-                onClick={() => setAnotando({ messageId: null, cita: null })}
-              >
-                Nota sobre la conversación
-              </button>
-            )}
-            {data.notas.map((nota) => (
-              <NotaThread
-                key={nota.id}
-                nota={nota}
-                onResponder={responderNota}
-                onResolver={resolverNota}
-              />
-            ))}
-          </section>
-        ) : null}
+          ) : seleccionado === null ? (
+            <p className={styles.etiqueta}>Elegí un mensaje para ver o dejar notas sobre él.</p>
+          ) : (
+            <>
+              {anotando !== null && anotando.messageId === seleccionado ? (
+                <NotaComposer cita={anotando.cita} onCancelar={() => setAnotando(null)} onGuardar={guardarNota} />
+              ) : (
+                <button
+                  type="button"
+                  className={styles.botonNota}
+                  onClick={() => setAnotando({ messageId: seleccionado, cita: null })}
+                >
+                  Nota sobre este mensaje
+                </button>
+              )}
+              {notasDelMensaje.length === 0 ? (
+                <p className={styles.etiqueta}>Este mensaje todavía no tiene notas.</p>
+              ) : (
+                notasDelMensaje.map((nota) => (
+                  <NotaThread key={nota.id} nota={nota} onResponder={responderNota} onResolver={resolverNota} />
+                ))
+              )}
+            </>
+          )}
+        </section>
       </aside>
     </section>
   );

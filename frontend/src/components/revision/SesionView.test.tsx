@@ -94,15 +94,15 @@ describe("SesionView", () => {
   it("clic en la marca de fuentes muestra la consulta de esa respuesta en el panel lateral", () => {
     render(<SesionView id="s1" onVolver={() => {}} />);
 
-    // Antes del clic, el panel muestra el mapa de toda la sesión (contador
-    // "con fuentes"), no el detalle de una respuesta puntual.
-    expect(screen.getByText(/con fuentes/)).toBeInTheDocument();
+    // Antes del clic no hay respuesta elegida: el panel no carga fuentes.
+    expect(screen.getByText(/Elegí una respuesta del agente/)).toBeInTheDocument();
+    expect(screen.queryByText("despido sin causa indemnización")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByText("1 consulta · 1 fragmento"));
 
     expect(screen.getByText("Consulta del agente")).toBeInTheDocument();
     expect(screen.getByText("despido sin causa indemnización")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Ver todas las consultas" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Quitar selección" })).toBeInTheDocument();
   });
 
   it("una respuesta con búsqueda vacía muestra la marca en estilo de alerta", () => {
@@ -133,7 +133,16 @@ describe("SesionView", () => {
     mockDetalle({ ...detalleBase, busquedas: [] });
     render(<SesionView id="s1" onVolver={() => {}} />);
 
-    expect(screen.queryByText(/consulta/)).not.toBeInTheDocument();
-    expect(screen.getByText("No se consultó el corpus.")).toBeInTheDocument();
+    expect(screen.queryByText(/consulta al corpus/)).not.toBeInTheDocument();
+    expect(screen.getByText(/Elegí una respuesta del agente/)).toBeInTheDocument();
+  });
+
+  it("el mensaje elegido queda marcado en la conversación", () => {
+    render(<SesionView id="s1" onVolver={() => {}} />);
+
+    fireEvent.click(screen.getByText("1 consulta · 1 fragmento"));
+
+    const bloque = screen.getByText("Contame un poco más sobre tu antigüedad").closest("[data-seleccionada]");
+    expect(bloque).not.toBeNull();
   });
 });

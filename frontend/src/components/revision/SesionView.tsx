@@ -161,7 +161,11 @@ export function SesionView({ id, onVolver }: { id: string; onVolver: () => void 
             {mensajes.map((mensaje) => {
               const resumen = mensaje.rol === "assistant" ? resumenes.get(mensaje.id) : undefined;
               return (
-                <div key={mensaje.id} className={styles.bloqueMensaje}>
+                <div
+                  key={mensaje.id}
+                  className={styles.bloqueMensaje}
+                  data-seleccionada={seleccionada === mensaje.id ? "true" : undefined}
+                >
                   <div className={styles.mensajeConGutter}>
                     <MessageBubble role={mensaje.rol} content={mensaje.texto} anchorId={mensaje.id} />
                     <button
@@ -218,13 +222,12 @@ export function SesionView({ id, onVolver }: { id: string; onVolver: () => void 
           <aside className={styles.columnaFuentes} aria-label="Fuentes del corpus">
             {seleccionada !== null ? (
               <button type="button" className={styles.botonSecundario} onClick={() => setSeleccionada(null)}>
-                Ver todas las consultas
+                Quitar selección
               </button>
             ) : null}
             <PanelFuentes
               busquedas={busquedas}
               messageIdSeleccionado={seleccionada}
-              onIrARespuesta={(messageId) => setSeleccionada(messageId)}
               onAnotar={(messageId, cita) => abrirComposer(messageId, cita)}
             />
           </aside>

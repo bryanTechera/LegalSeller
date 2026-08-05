@@ -124,7 +124,6 @@
 .botonNota {
   font: inherit;
   font-size: var(--text-xs);
-  margin-top: var(--space-2);
   padding: var(--space-1) var(--space-2);
   border: 1px solid var(--ink-300);
   border-radius: var(--radius-sm);
@@ -146,21 +145,76 @@
   min-height: 0;
 }
 
-.bloqueLateral {
+/* Bloques siempre visibles (caso y notas de la conversación): no se encogen
+   ni se esconden detrás de una solapa — son datos de toda la conversación. */
+.bloqueFijo {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
   padding: var(--space-4);
   background: var(--surface);
   border: 1px solid var(--ink-100);
   border-radius: var(--radius-md);
-  min-height: 0;
+  max-height: 40vh;
   overflow-y: auto;
   overscroll-behavior: contain;
+}
+
+/* Panel del mensaje elegido: se queda con el alto sobrante y scrollea solo. */
+.bloqueLateral {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--ink-100);
+  border-radius: var(--radius-md);
+  min-height: 8rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.filaTitulo {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.filaSolapas {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.quitarSeleccion {
+  font: inherit;
+  font-size: var(--text-xs);
+  border: 0;
+  background: transparent;
+  color: var(--ink-500);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Fila de acciones bajo el texto del mensaje (elegir respuesta, notas). */
+.filaMensaje {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-top: var(--space-2);
 }
 
 .subtitulo {
   font-family: var(--font-family-display);
   font-size: var(--text-base);
   color: var(--ink-900);
-  margin-bottom: var(--space-3);
 }
 
 .datos {
@@ -197,8 +251,12 @@
   color: var(--ink-900);
 }
 
+/* El mensaje elegido queda resaltado: es el que gobierna lo que muestra la
+   columna lateral, así que tiene que ser obvio cuál es. */
+.mensajeUsuario[data-seleccionada="true"],
 .mensajeAgente[data-seleccionada="true"] {
-  border-color: var(--ink-500);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
 /* La marca es el botón que selecciona la respuesta (no la burbuja entera):
@@ -209,8 +267,6 @@
   font: inherit;
   font-size: var(--text-xs);
   color: var(--ink-500);
-  margin-top: var(--space-2);
-  display: block;
   border: 0;
   padding: 0;
   background: transparent;
@@ -224,7 +280,6 @@
 }
 
 .tecnico {
-  margin-top: var(--space-3);
   font-size: var(--text-xs);
   color: var(--ink-500);
 }
@@ -243,7 +298,9 @@
     max-height: none;
   }
 
-  .bloqueLateral {
+  .bloqueLateral,
+  .bloqueFijo {
+    max-height: none;
     overflow-y: visible;
   }
 }
