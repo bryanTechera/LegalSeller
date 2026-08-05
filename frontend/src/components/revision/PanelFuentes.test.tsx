@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { BusquedaCorpus } from "@/lib/revision/fuentes";
@@ -191,9 +191,13 @@ describe("PanelFuentes", () => {
       />,
     );
 
-    const numeros = screen.getAllByRole("article").map((articulo) => articulo.textContent ?? "");
-    expect(numeros[0]).toMatch(/^1Ley 10\.489 — art\. 40\.79/);
-    expect(numeros[1]).toMatch(/^2Resolución 123 — art\. 40\.41/);
+    const [primero, segundo] = screen.getAllByRole("article");
+    expect(within(primero).getByText("1")).toBeInTheDocument();
+    expect(within(primero).getByText("0.79")).toBeInTheDocument();
+    expect(within(primero).getByText("Ley 10.489 — art. 4")).toBeInTheDocument();
+    expect(within(segundo).getByText("2")).toBeInTheDocument();
+    expect(within(segundo).getByText("0.41")).toBeInTheDocument();
+    expect(within(segundo).getByText("Resolución 123 — art. 4")).toBeInTheDocument();
   });
 
   it("una respuesta sin búsquedas lo dice y deja volver al mapa", () => {

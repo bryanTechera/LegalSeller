@@ -44,16 +44,18 @@ function Fragmento({
   return (
     <article className={styles.fragmento}>
       <header className={styles.fragmentoMeta}>
-        <span className={styles.numero} aria-hidden="true">
-          {indice}
-        </span>
-        <span className={styles.documento}>{docLabel}</span>
-        <span className={styles.score}>
-          <span className={styles.scoreValor}>{fragmento.similarity.toFixed(2)}</span>
-          <span className={styles.barra} aria-hidden="true">
-            <span style={{ width: `${String(Math.round(fragmento.similarity * 100))}%` }} />
+        <div className={styles.filaMeta}>
+          <span className={styles.numero} aria-hidden="true">
+            {indice}
           </span>
-        </span>
+          <span className={styles.score}>
+            <span className={styles.scoreValor}>{fragmento.similarity.toFixed(2)}</span>
+            <span className={styles.barra} aria-hidden="true">
+              <span style={{ width: `${String(Math.round(fragmento.similarity * 100))}%` }} />
+            </span>
+          </span>
+        </div>
+        <span className={styles.documento}>{docLabel}</span>
       </header>
       <p className={styles.fragmentoTexto}>{texto}</p>
       <div className={styles.filaAcciones}>
@@ -168,6 +170,9 @@ function Busqueda({
     <details className={styles.busqueda} open={abierta} onToggle={(event) => setAbierta(event.currentTarget.open)}>
       <summary className={styles.cabecera}>
         <Cabecera busqueda={busqueda} />
+        {/* La cabecera de un `details` no anuncia sola que se despliega:
+            el texto lo dice, en vez de confiar en un triángulo. */}
+        <span className={styles.desplegar}>{abierta ? "Ocultar resultados" : "Ver resultados"}</span>
       </summary>
       <Cuerpo busqueda={busqueda} onAnotar={onAnotar} />
     </details>
