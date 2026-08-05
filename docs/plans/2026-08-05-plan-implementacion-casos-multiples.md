@@ -629,6 +629,8 @@ La búsqueda del caso existente pasa a la clave compuesta, salvo para escapes (P
 
 El `catch` de P2002 re-lee por la misma clave compuesta.
 
+**Resolución del 2026-08-05 (escapes repetidos)**: en el camino inaugural, un escape **reusa** el Caso `FUERA_DE_COBERTURA` que ya está activo en vez de crear uno nuevo. El criterio es de qué información dispone cada camino: acá nadie afirmó que el tema sea distinto (puede ser la misma consulta reformulada), mientras que en la derivación de Task 4 el agente lo marcó explícitamente con `derivar-tema` — por eso `abrirCasoFueraDeCobertura` sí crea siempre. Crear siempre en los dos lados inflaría la métrica de demanda no cubierta, que es justamente la que el producto quiere medir bien.
+
 - [ ] **Step 6: Quitar `interesAdicional` del schema del BFF**
 
 En `frontend/src/lib/chat-orchestrator-schemas.ts`, borrar la línea `interesAdicional: z.string().optional(),` de `registrarCasoArgsSchema`.
@@ -919,10 +921,13 @@ git commit -m "feat(casos): abrirOReactivarCaso con herencia de contacto"
 - Create: `backend/src/mastra/tools/casos/derivar-tema-tool.ts`
 - Create: `backend/src/mastra/tools/casos/derivar-tema-tool.test.ts`
 - Modify: `backend/src/mastra/dominios/{laboral,familia,transito,arrendamiento-desalojo,relaciones-consumo}/index.ts`
+- Modify: `backend/src/mastra/tools/casos/registrar-caso-tool.ts` (sacar `interesAdicional`)
 
 **Interfaces:**
 - Consumes: nada.
 - Produces: `derivarTemaTool` con `id: "derivar-tema"`, `inputSchema: z.object({ tema: z.string().min(1) })`, `outputSchema: z.object({ status: z.enum(["ok", "error"]), mensaje: z.string() })`.
+
+**Agregado el 2026-08-05 (hueco detectado ejecutando Task 3):** el plan original sacaba `interesAdicional` del schema Zod del BFF (Task 3 Step 6) pero **no** del `inputSchema` de la tool en el backend. Sin este paso la tool le sigue ofreciendo el campo al agente y el BFF lo descarta en silencio — el peor de los dos mundos. Va acá, con la tool nueva, porque es un cambio de contrato de tool y no de prompt.
 
 - [ ] **Step 1: Escribir el test que falla**
 
@@ -1007,6 +1012,18 @@ Y en `buildTools`, después de `corregirClasificacionTool` y antes del spread:
 ```
 
 El receptor (`dominios/recepcion/index.ts`) **no** lleva esta tool.
+
+- [ ] **Step 4b: Sacar `interesAdicional` de `registrar-caso-tool.ts`**
+
+Borrar del `inputSchema` la línea:
+
+```ts
+      interesAdicional: z.string().optional().meta({ description: "Tema extra fuera de la categoría de la conversación" }),
+```
+
+Y de la `description` de la tool, sacar `intereses adicionales` de la enumeración, que queda: `Registrá datos del caso APENAS aparezcan en la conversación: hechos relevantes, subcategorías detectadas y datos de contacto.`
+
+Ojo con el `.refine()` que sigue al objeto: valida que venga al menos un campo. Verificá que su lógica no nombre `interesAdicional`; si lo nombra, sacarlo de ahí también. Los cuatro tests de `registrar-caso-tool.test.ts` cubren ese refine — corrélos.
 
 - [ ] **Step 5: Correr los tests y el lint**
 
