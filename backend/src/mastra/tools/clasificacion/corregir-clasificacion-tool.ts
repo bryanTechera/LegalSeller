@@ -8,8 +8,9 @@ const categoriaHabilitadaSchema = z.enum(
 );
 
 /**
- * Signal tool: bounded reclassification (max one per conversation — the BFF
- * enforces the limit and records the audit trail, spec §6).
+ * Signal tool: bounded reclassification (max one per case — the guard lives
+ * on `Caso.correccionAplicada`; the BFF enforces the limit and records the
+ * audit trail, spec §6).
  */
 export const corregirClasificacionTool = createTool({
   id: "corregir-clasificacion",
