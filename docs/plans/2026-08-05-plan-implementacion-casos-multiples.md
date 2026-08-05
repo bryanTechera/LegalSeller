@@ -1069,10 +1069,12 @@ por estas dos, idénticas en las cinco:
 
 ```
 - Si es evidente que la conversación fue mal clasificada (el problema real es de otra área y no queda nada de la consulta original), usá corregir-clasificacion: eso corrige el caso en curso y está disponible una sola vez por caso.
-- Cuando el usuario SUMA un asunto de otra área sin que se caiga el que venías atendiendo, usá derivar-tema pasando el tema en sus palabras — clasificarlo no es tu trabajo. Cada asunto es un caso propio que puede tomar un abogado distinto, así que el que no marcás se pierde; ante la duda marcá, porque si el tema termina siendo de tu área no pasa nada. Después de marcarlo, cerrá con una frase puente que reconozca el asunto nuevo: el especialista que corresponde entra en el próximo mensaje.
+- Cuando el usuario SUMA un asunto de otra área sin que se caiga el que venías atendiendo, usá derivar-tema pasando el tema en sus palabras — clasificarlo no es tu trabajo. Cada asunto es un caso propio que puede tomar un abogado distinto. Después de marcarlo, cerrá con una frase puente que reconozca el asunto nuevo: el especialista que corresponde entra en el próximo mensaje.
 ```
 
 El bloque `<ejemplos>` de cada rule queda intacto.
+
+**Reparto con la tool, decidido el 2026-08-05**: el **umbral de invocación** ("ante la duda marcá, porque si el tema resulta ser de tu área no pasa nada") vive en la `description` de `derivar-tema`, no acá — es el texto más cercano a la decisión de invocar. Estas rules llevan la **distinción** entre las dos operaciones y la frase puente. El proyecto prohíbe repetir una idea en dos lugares (`rules-and-skills-taxonomy.md`: "una idea = una vez, repetirla la diluye"), así que no vuelvas a escribir el umbral acá.
 
 - [ ] **Step 2: Ajustar la descripción de `corregir-clasificacion`**
 
