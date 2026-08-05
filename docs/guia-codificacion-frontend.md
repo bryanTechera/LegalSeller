@@ -112,6 +112,7 @@ export async function POST(request: Request) {
 - LegalSeller define su propia identidad visual (dominio legal: sobria, alta legibilidad); las reglas de legibilidad se heredan: texto mínimo 13px, contraste WCAG 2.1 AA (4.5:1), line-height >= 1.5, foco visible en todo interactivo, touch targets >= 44px.
 - Iconografía: una sola familia de iconos (Phosphor probado), `currentColor`, un solo weight.
 - Sanitizar con DOMPurify (isomorphic-dompurify) todo contenido markdown/HTML generado por el LLM antes de renderizar.
+- `overflow-x: auto` en un contenedor mata el `position: sticky` de todo lo que tenga adentro: por CSS Overflow, un eje no-`visible` hace computar el otro a `auto`, el contenedor pasa a ser el scroll container más cercano y, si su alto es automático, nunca scrollea — el sticky queda anclado a un scrollport inmóvil y se comporta como `relative`, sin error ni aviso. Para que un hijo ancho no estire una grilla va `min-width: 0` en el item, no `overflow-x`. Lo pagó el panel lateral de `/board/chats/[id]` (`.contenido` de `board.module.css`).
 
 ## 9. Errores, logging y observabilidad
 
