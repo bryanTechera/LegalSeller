@@ -15,7 +15,7 @@ vi.mock("@/lib/revision/timeline", async (importOriginal) => {
   return { ...actual, construirTimeline: timelineMock.construirTimeline };
 });
 
-const sesionesMock = vi.hoisted(() => ({ getCasoDeSesion: vi.fn() }));
+const sesionesMock = vi.hoisted(() => ({ getCasosDeSesion: vi.fn() }));
 vi.mock("@/lib/revision/sesiones", () => sesionesMock);
 
 const notasMock = vi.hoisted(() => ({ listarNotasDeSesion: vi.fn() }));
@@ -32,7 +32,7 @@ function filaConversacion(id: string) {
     threadId: `chat-${id}`,
     categoria: "laboral",
     createdAt: new Date("2026-07-30T10:00:00.000Z"),
-    caso: { estado: "CAPTADO" },
+    casos: [{ estado: "CAPTADO" }],
     _count: { notas: 2 },
   };
 }
@@ -76,7 +76,7 @@ describe("listarConversaciones", () => {
   it("el filtro de estado se aplica sobre el caso", async () => {
     await listarConversaciones({ rango: "30d", estado: "CAPTADO" });
     const where = prismaMock.prisma.conversation.findMany.mock.calls[0][0].where;
-    expect(where.caso).toMatchObject({ estado: "CAPTADO" });
+    expect(where.casos).toMatchObject({ some: { estado: "CAPTADO" } });
   });
 
   it("devuelve cursor null cuando la página no está llena", async () => {
@@ -145,7 +145,7 @@ describe("obtenerConversacion", () => {
       createdAt: new Date("2026-07-30T10:00:00.000Z"),
     });
     timelineMock.construirTimeline.mockResolvedValue([{ tipo: "mensaje", id: "m1" }]);
-    sesionesMock.getCasoDeSesion.mockResolvedValue({ estado: "CAPTADO" });
+    sesionesMock.getCasosDeSesion.mockResolvedValue([{ id: "k1", esActivo: true, estado: "CAPTADO" }]);
     notasMock.listarNotasDeSesion.mockResolvedValue([]);
     busquedasMock.construirBusquedas.mockResolvedValue([
       { spanId: "t1", messageId: "m1", agente: "laboral", consulta: "indemnización por despido", categoria: "laboral", subcategorias: ["despido"], estado: "ok", fragmentos: [], fecha: "2026-07-30T10:00:04.000Z" },
@@ -159,7 +159,7 @@ describe("obtenerConversacion", () => {
       threadId: "chat-c1",
       categoria: "laboral",
       timeline: [{ tipo: "mensaje", id: "m1" }],
-      caso: { estado: "CAPTADO" },
+      casos: [{ id: "k1", esActivo: true, estado: "CAPTADO" }],
       notas: [],
     });
   });

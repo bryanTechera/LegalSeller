@@ -255,6 +255,25 @@
   color: var(--ink-500);
 }
 
+/* Un caso dentro del bloque «Caso»: solo lleva separación propia cuando hay
+   más de uno (el título por caso ya la deja implícita con el margen). */
+.caso + .caso {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--ink-100);
+}
+
+.casoTitulo {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--ink-900);
+}
+
+.casoActivo {
+  font-weight: 400;
+  color: var(--accent-strong);
+}
+
 .solapas {
   display: flex;
   gap: var(--space-1);

@@ -6,7 +6,7 @@ vi.mock("@/lib/board/identidad", () => identidadMock);
 const sesionesMock = vi.hoisted(() => ({
   getSesionRevision: vi.fn(),
   publicarSesionRevision: vi.fn(),
-  getCasoDeSesion: vi.fn(),
+  getCasosDeSesion: vi.fn(),
 }));
 vi.mock("@/lib/revision/sesiones", () => sesionesMock);
 
@@ -44,24 +44,24 @@ describe("/api/revision/sesiones/:id", () => {
       origenRevision: "AUTONOMA",
       borrador: true,
     });
-    sesionesMock.getCasoDeSesion.mockResolvedValue({ estado: "CAPTADO" });
+    sesionesMock.getCasosDeSesion.mockResolvedValue([{ id: "k1", esActivo: true, estado: "CAPTADO" }]);
     sesionesMock.publicarSesionRevision.mockResolvedValue(true);
     notasMock.listarNotasDeSesion.mockResolvedValue([]);
     timelineMock.construirTimeline.mockResolvedValue([]);
     busquedasMock.construirBusquedas.mockResolvedValue([]);
   });
 
-  it("GET incluye caso y campos de origen de la sesión", async () => {
+  it("GET incluye los casos y campos de origen de la sesión", async () => {
     const response = await GET(new Request("http://localhost/api/revision/sesiones/s1"), params);
     expect(response.status).toBe(200);
     const payload = (await response.json()) as {
       sesion: { origenRevision: string; borrador: boolean };
-      caso: { estado: string } | null;
+      casos: { estado: string }[];
     };
     expect(payload.sesion.origenRevision).toBe("AUTONOMA");
     expect(payload.sesion.borrador).toBe(true);
-    expect(payload.caso).toEqual({ estado: "CAPTADO" });
-    expect(sesionesMock.getCasoDeSesion).toHaveBeenCalledWith("s1");
+    expect(payload.casos).toEqual([{ id: "k1", esActivo: true, estado: "CAPTADO" }]);
+    expect(sesionesMock.getCasosDeSesion).toHaveBeenCalledWith("s1");
   });
 
   it("devuelve las búsquedas al corpus de la sesión", async () => {

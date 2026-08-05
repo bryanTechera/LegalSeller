@@ -7,7 +7,7 @@ import type { FiltrosChats } from "@/lib/validations/board";
 import { prisma } from "@/lib/prisma";
 
 import { listarNotasDeSesion, type NotaConRespuestas } from "@/lib/revision/notas";
-import { getCasoDeSesion, type CasoSnapshot } from "@/lib/revision/sesiones";
+import { getCasosDeSesion, type CasoSnapshot } from "@/lib/revision/sesiones";
 import { construirTimeline, extraerTexto, type ItemTimeline } from "@/lib/revision/timeline";
 import { construirBusquedas } from "@/lib/revision/busquedas";
 import type { BusquedaCorpus } from "@/lib/revision/fuentes";
@@ -65,7 +65,7 @@ export async function listarConversaciones(filtros: FiltrosChats): Promise<Pagin
   const where: Prisma.ConversationWhereInput = {
     ...conversacionesReales(desde),
     ...(filtros.categoria ? { categoria: filtros.categoria } : {}),
-    ...(filtros.estado ? { caso: { estado: filtros.estado } } : {}),
+    ...(filtros.estado ? { casos: { some: { estado: filtros.estado } } } : {}),
     ...(threadsCoincidentes ? { threadId: { in: threadsCoincidentes } } : {}),
   };
 
@@ -76,7 +76,7 @@ export async function listarConversaciones(filtros: FiltrosChats): Promise<Pagin
       threadId: true,
       categoria: true,
       createdAt: true,
-      caso: { select: { estado: true } },
+      casos: { select: { estado: true } },
       _count: { select: { notas: true } },
     },
     orderBy: { createdAt: "desc" },
@@ -110,7 +110,10 @@ export async function listarConversaciones(filtros: FiltrosChats): Promise<Pagin
       id: fila.id,
       fecha: fila.createdAt.toISOString(),
       categoria: fila.categoria,
-      estadoCaso: fila.caso?.estado ?? null,
+      // Con varios Caso por conversación, el listado muestra el primero como
+      // proxy provisorio: el criterio de cuál estado destacar en una fila con
+      // N casos queda para la Task que agrega la columna de conteo.
+      estadoCaso: fila.casos[0]?.estado ?? null,
       mensajes: resumen?.mensajes ?? 0,
       preview: recortar(resumen?.preview ?? ""),
       notas: fila._count.notas,
@@ -143,7 +146,7 @@ export interface DetalleConversacion {
   fecha: string;
   timeline: ItemTimeline[];
   busquedas: BusquedaCorpus[];
-  caso: CasoSnapshot | null;
+  casos: CasoSnapshot[];
   notas: NotaConRespuestas[];
 }
 
@@ -173,10 +176,10 @@ export async function obtenerConversacion(id: string): Promise<DetalleConversaci
   });
   if (!conversacion) return null;
 
-  const [timeline, busquedas, caso, notas] = await Promise.all([
+  const [timeline, busquedas, casos, notas] = await Promise.all([
     construirTimeline(conversacion.threadId, { conSpans: true }),
     construirBusquedas(conversacion.threadId),
-    getCasoDeSesion(conversacion.id),
+    getCasosDeSesion(conversacion.id),
     listarNotasDeSesion(conversacion.id),
   ]);
 
@@ -187,7 +190,7 @@ export async function obtenerConversacion(id: string): Promise<DetalleConversaci
     fecha: conversacion.createdAt.toISOString(),
     timeline: sinPayloadDeTools(timeline),
     busquedas,
-    caso,
+    casos,
     notas,
   };
 }

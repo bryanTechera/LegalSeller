@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const db = vi.hoisted(() => ({
-  conversation: { create: vi.fn(), findMany: vi.fn(), findFirst: vi.fn(), updateMany: vi.fn() },
-  caso: { findUnique: vi.fn() },
+  conversation: { create: vi.fn(), findMany: vi.fn(), findFirst: vi.fn(), findUnique: vi.fn(), updateMany: vi.fn() },
+  caso: { findUnique: vi.fn(), findMany: vi.fn() },
 }));
 vi.mock("../prisma", () => ({ prisma: db }));
 
 import {
   crearSesionRevision,
-  getCasoDeSesion,
+  getCasosDeSesion,
   getSesionRevision,
   listarSesionesRevision,
   publicarSesionRevision,
@@ -80,21 +80,56 @@ describe("sesiones de revisión", () => {
     expect(await publicarSesionRevision("c1")).toBe(false);
   });
 
-  it("getCasoDeSesion serializa el snapshot con sus eventos", async () => {
-    db.caso.findUnique.mockResolvedValue({
+});
+
+describe("getCasosDeSesion", () => {
+  beforeEach(() => vi.resetAllMocks());
+
+  function fila(id: string, categoria: string) {
+    return {
+      id,
+      categoria,
+      subcategorias: [],
+      resumen: null,
       estado: "CAPTADO",
-      categoria: "familia",
-      subcategorias: ["divorcio-sociedad-conyugal"],
-      resumen: { hechos: "x" },
-      contactoNombre: "Mariana Techera",
-      contactoTelefono: "099 000 001",
+      contactoNombre: "Ana",
+      contactoTelefono: null,
       contactoEmail: null,
-      eventos: [{ tipo: "CLASIFICACION", payload: {}, createdAt: new Date("2026-07-22T12:00:00Z") }],
-    });
-    const caso = await getCasoDeSesion("c1");
-    expect(caso?.estado).toBe("CAPTADO");
+      correccionAplicada: false,
+      eventos: [],
+    };
+  }
+
+  it("devuelve los casos de la conversación marcando el activo", async () => {
+    db.conversation.findUnique.mockResolvedValue({ casoActivoId: "k2" });
+    db.caso.findMany.mockResolvedValue([fila("k1", "familia"), fila("k2", "transito")]);
+
+    const casos = await getCasosDeSesion("c1");
+
+    expect(casos).toHaveLength(2);
+    expect(casos.find((caso) => caso.id === "k2")?.esActivo).toBe(true);
+    expect(casos.find((caso) => caso.id === "k1")?.esActivo).toBe(false);
+  });
+
+  it("devuelve lista vacía cuando no hay casos", async () => {
+    db.conversation.findUnique.mockResolvedValue({ casoActivoId: null });
+    db.caso.findMany.mockResolvedValue([]);
+    await expect(getCasosDeSesion("c1")).resolves.toEqual([]);
+  });
+
+  it("serializa eventos y correccionAplicada de cada caso", async () => {
+    db.conversation.findUnique.mockResolvedValue({ casoActivoId: "k1" });
+    db.caso.findMany.mockResolvedValue([
+      {
+        ...fila("k1", "familia"),
+        correccionAplicada: true,
+        eventos: [{ tipo: "CLASIFICACION", payload: {}, createdAt: new Date("2026-07-22T12:00:00Z") }],
+      },
+    ]);
+
+    const [caso] = await getCasosDeSesion("c1");
+
+    expect(caso?.correccionAplicada).toBe(true);
     expect(caso?.eventos[0]).toEqual({ tipo: "CLASIFICACION", payload: {}, createdAt: "2026-07-22T12:00:00.000Z" });
-    db.caso.findUnique.mockResolvedValue(null);
-    expect(await getCasoDeSesion("c-sin-caso")).toBeNull();
   });
 });

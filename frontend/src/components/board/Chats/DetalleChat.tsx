@@ -196,23 +196,33 @@ export function DetalleChat({ id }: { id: string }) {
           <h2 className={styles.subtitulo} id="board-caso">
             Caso
           </h2>
-          {expandido ? null : data.caso ? (
-            <dl className={styles.datos}>
-              <dt>Estado</dt>
-              <dd>{data.caso.estado.replace(/_/g, " ").toLowerCase()}</dd>
-              <dt>Categoría</dt>
-              <dd>{data.caso.categoria ?? "—"}</dd>
-              <dt>Subcategorías</dt>
-              <dd>{data.caso.subcategorias.join(", ") || "—"}</dd>
-              <dt>Contacto</dt>
-              <dd>
-                {[data.caso.contactoNombre, data.caso.contactoTelefono, data.caso.contactoEmail]
-                  .filter(Boolean)
-                  .join(" · ") || "Sin contacto registrado"}
-              </dd>
-            </dl>
+          {expandido ? null : data.casos.length === 0 ? (
+            <p className={styles.etiqueta}>Todavía no se registró ningún caso en esta conversación.</p>
           ) : (
-            <p className={styles.etiqueta}>Todavía no se abrió un caso.</p>
+            data.casos.map((caso) => (
+              <section key={caso.id} className={styles.caso}>
+                {data.casos.length > 1 ? (
+                  <h3 className={styles.casoTitulo}>
+                    {caso.categoria ?? "Fuera de cobertura"}
+                    {caso.esActivo ? <span className={styles.casoActivo}> · en curso</span> : null}
+                  </h3>
+                ) : null}
+                <dl className={styles.datos}>
+                  <dt>Estado</dt>
+                  <dd>{caso.estado.replace(/_/g, " ").toLowerCase()}</dd>
+                  <dt>Categoría</dt>
+                  <dd>{caso.categoria ?? "—"}</dd>
+                  <dt>Subcategorías</dt>
+                  <dd>{caso.subcategorias.join(", ") || "—"}</dd>
+                  <dt>Contacto</dt>
+                  <dd>
+                    {[caso.contactoNombre, caso.contactoTelefono, caso.contactoEmail]
+                      .filter(Boolean)
+                      .join(" · ") || "Sin contacto registrado"}
+                  </dd>
+                </dl>
+              </section>
+            ))
           )}
           <details className={styles.tecnico} hidden={expandido}>
             <summary>Detalle técnico</summary>
