@@ -14,22 +14,22 @@ datasource db {
 /// this row is the business-side record. Conversations are NOT modeled here:
 /// they live in Mastra storage as threads keyed by the anonymous session id.
 model Document {
-  id           String           @id @default(cuid())
-  title        String           @unique
+  id              String           @id @default(cuid())
+  title           String           @unique
   /// Original file location (S3 key or similar), if applicable.
-  sourceKey    String?
+  sourceKey       String?
   /// Corpus partition (registry ids). Null = legacy/untagged document.
-  categoria    String?
-  subcategoria String?
+  categoria       String?
+  subcategoria    String?
   /// sha256 del texto del archivo .md que originó el documento. NULL = ingestado
   /// antes de que existiera el sync incremental (se completa con --backfill).
   contentHash     String?
   /// Huella del pipeline que produjo los embeddings: modelo|taskType|chunkSize:overlap.
   /// Distinta de la actual = los chunks están viejos. Ver backend/src/mastra/config/embedding.ts.
   pipelineVersion String?
-  status       ProcessingStatus @default(PENDING)
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
+  status          ProcessingStatus @default(PENDING)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 
   chunks DocumentChunk[]
 
@@ -68,29 +68,29 @@ enum ProcessingStatus {
 /// history itself lives in Mastra storage (thread) — this row only pins the
 /// conversation to a category (spec §6).
 model Conversation {
-  id                 String    @id @default(cuid())
-  sessionId          String    @unique
-  threadId           String    @unique
-  categoria          String?
-  clasificadaEn      DateTime?
-  /// Atomic guard for `corregirClasificacion`: flips false→true exactly once,
-  /// enforced via a guarded `updateMany` (spec §6, at most ONE correction).
-  correccionAplicada Boolean   @default(false)
+  id             String          @id @default(cuid())
+  sessionId      String          @unique
+  threadId       String          @unique
+  categoria      String?
+  clasificadaEn  DateTime?
+  /// Puntero al Caso que atiende el turno actual. Escalar suelto, sin relación
+  /// Prisma (evita desambiguar dos relaciones Conversation<->Caso).
+  casoActivoId   String?
   /// Sesión creada por el equipo legal en /revision. Los Caso de estas
   /// conversaciones se EXCLUYEN de toda métrica de negocio (join por este flag).
-  esRevision         Boolean   @default(false)
+  esRevision     Boolean         @default(false)
   /// Nombre visible en el listado compartido de revisión.
-  titulo             String?
+  titulo         String?
   /// Nombre del experto que creó la sesión (listado compartido).
-  creadaPor          String?
+  creadaPor      String?
   /// Quién originó la sesión de revisión (null = conversación normal del home).
-  origenRevision     RevisionOrigen?
+  origenRevision RevisionOrigen?
   /// Corrida autónoma aún no publicada: fuera del listado del equipo legal.
-  borrador           Boolean   @default(false)
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  borrador       Boolean         @default(false)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
-  caso  Caso?
+  casos Caso[]
   notas NotaRevision[]
 
   @@index([esRevision, createdAt(sort: Desc)])
@@ -98,22 +98,26 @@ model Conversation {
 
 /// The lead — THE deliverable of the system (vision §5). Built incrementally.
 model Caso {
-  id               String     @id @default(cuid())
-  conversationId   String     @unique
-  categoria        String?
-  subcategorias    String[]   @default([])
-  resumen          Json?
-  contactoNombre   String?
-  contactoTelefono String?
-  contactoEmail    String?
-  estado           CasoEstado @default(EN_CONVERSACION)
-  origen           CasoOrigen @default(DOMINIO)
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
+  id                 String     @id @default(cuid())
+  conversationId     String
+  categoria          String?
+  subcategorias      String[]   @default([])
+  resumen            Json?
+  contactoNombre     String?
+  contactoTelefono   String?
+  contactoEmail      String?
+  estado             CasoEstado @default(EN_CONVERSACION)
+  origen             CasoOrigen @default(DOMINIO)
+  /// Atomic guard for `corregirClasificacion`: flips false→true exactly once,
+  /// enforced via a guarded `updateMany` (at most ONE correction POR CASO).
+  correccionAplicada Boolean    @default(false)
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
 
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   eventos      CasoEvento[]
 
+  @@unique([conversationId, categoria])
   @@index([estado, updatedAt(sort: Desc)])
 }
 
@@ -159,15 +163,15 @@ enum RevisionOrigen {
 /// Mastra (messageId) o a la sesión entera (messageId null). citaTexto guarda
 /// el extracto anotado — resiliencia si el anclaje falla y contexto del export.
 model NotaRevision {
-  id             String          @id @default(cuid())
+  id             String     @id @default(cuid())
   conversationId String
   messageId      String?
   citaTexto      String?
   autor          String
   texto          String
-  estado         NotaEstado      @default(ABIERTA)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  estado         NotaEstado @default(ABIERTA)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 
   conversation Conversation    @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   respuestas   RespuestaNota[]
@@ -177,12 +181,12 @@ model NotaRevision {
 
 /// Hilo de ida y vuelta por nota. origen distingue quién habla.
 model RespuestaNota {
-  id        String       @id @default(cuid())
+  id        String      @id @default(cuid())
   notaId    String
   origen    AutorOrigen
   autor     String
   texto     String
-  createdAt DateTime     @default(now())
+  createdAt DateTime    @default(now())
 
   nota NotaRevision @relation(fields: [notaId], references: [id], onDelete: Cascade)
 
