@@ -10,7 +10,13 @@ const COOKIE_SESION = "authjs.session-token";
  * usa el dev server — Playwright lo levanta con `pnpm dev`, que lee el mismo
  * `.env`, así que coinciden.
  */
-export async function iniciarSesionBoard(page: Page, email = "e2e@jurco.uy"): Promise<void> {
+export async function iniciarSesionBoard(
+  page: Page,
+  // Contra un server levantado con la allowlist real (ALLOWED_EMAILS de
+  // Railway), `e2e@jurco.uy` no pasa el gate y todo el spec falla en el
+  // redirect al login: E2E_BOARD_EMAIL deja apuntar a un email permitido.
+  email = process.env.E2E_BOARD_EMAIL ?? "e2e@jurco.uy",
+): Promise<void> {
   const secret = process.env.AUTH_SECRET;
   if (!secret) throw new Error("AUTH_SECRET no está seteada — el helper no puede acuñar la sesión");
 
