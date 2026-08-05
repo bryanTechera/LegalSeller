@@ -7,14 +7,20 @@ const tx = vi.hoisted(() => ({
     update: vi.fn(),
     updateMany: vi.fn().mockResolvedValue({ count: 1 }),
   },
-  caso: { create: vi.fn(), upsert: vi.fn(), update: vi.fn(), findUnique: vi.fn() },
+  caso: { create: vi.fn(), upsert: vi.fn(), update: vi.fn(), findUnique: vi.fn(), findFirst: vi.fn() },
   casoEvento: { create: vi.fn(), count: vi.fn() },
 }));
 vi.mock("./prisma", () => ({
   prisma: { ...tx, $transaction: vi.fn(async (fn: (t: typeof tx) => Promise<unknown>) => fn(tx)) },
 }));
 
-import { asignarClasificacion, corregirClasificacion, getOrCreateConversation, registrarDatosCaso } from "./clasificacion";
+import {
+  asignarClasificacion,
+  corregirClasificacion,
+  getOrCreateConversation,
+  registrarDatosCaso,
+  resolverCasoActivo,
+} from "./clasificacion";
 
 describe("asignarClasificacion", () => {
   beforeEach(() => vi.clearAllMocks());
@@ -273,17 +279,65 @@ describe("corregirClasificacion", () => {
 describe("getOrCreateConversation", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("hace upsert por sessionId y devuelve id/categoria", async () => {
-    tx.conversation.upsert.mockResolvedValue({ id: "c1", categoria: null });
+  it("hace upsert por sessionId y devuelve id/categoria/casoActivoId", async () => {
+    tx.conversation.upsert.mockResolvedValue({ id: "c1", categoria: null, casoActivoId: null });
 
     const result = await getOrCreateConversation("s1");
 
-    expect(result).toEqual({ id: "c1", categoria: null });
+    expect(result).toEqual({ id: "c1", categoria: null, casoActivoId: null });
     expect(tx.conversation.upsert).toHaveBeenCalledWith({
       where: { sessionId: "s1" },
       create: { sessionId: "s1", threadId: "chat-s1" },
       update: {},
-      select: { id: true, categoria: true },
+      select: { id: true, categoria: true, casoActivoId: true },
+    });
+  });
+});
+
+describe("resolverCasoActivo", () => {
+  beforeEach(() => vi.resetAllMocks());
+
+  it("devuelve null cuando la conversación todavía no tiene ningún caso", async () => {
+    tx.conversation.findUnique.mockResolvedValue({ id: "c1", casoActivoId: null });
+    tx.caso.findFirst.mockResolvedValue(null);
+    await expect(resolverCasoActivo("s1")).resolves.toBeNull();
+  });
+
+  it("resuelve el puntero a la fila del caso", async () => {
+    tx.conversation.findUnique.mockResolvedValue({ id: "c1", casoActivoId: "k1" });
+    tx.caso.findUnique.mockResolvedValue({
+      id: "k1",
+      categoria: "laboral",
+      estado: "CAPTADO",
+      origen: "DOMINIO",
+      correccionAplicada: false,
+    });
+    const caso = await resolverCasoActivo("s1");
+    expect(caso).toEqual({
+      id: "k1",
+      categoria: "laboral",
+      estado: "CAPTADO",
+      origen: "DOMINIO",
+      correccionAplicada: false,
+    });
+    expect(tx.caso.findFirst).not.toHaveBeenCalled();
+  });
+
+  it("auto-repara un puntero colgado adoptando el caso más reciente", async () => {
+    tx.conversation.findUnique.mockResolvedValue({ id: "c1", casoActivoId: "borrado" });
+    tx.caso.findUnique.mockResolvedValue(null);
+    tx.caso.findFirst.mockResolvedValue({
+      id: "k2",
+      categoria: "familia",
+      estado: "EN_CONVERSACION",
+      origen: "DOMINIO",
+      correccionAplicada: false,
+    });
+    const caso = await resolverCasoActivo("s1");
+    expect(caso?.id).toBe("k2");
+    expect(tx.conversation.update).toHaveBeenCalledWith({
+      where: { id: "c1" },
+      data: { casoActivoId: "k2" },
     });
   });
 });

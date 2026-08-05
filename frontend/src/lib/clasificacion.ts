@@ -1,9 +1,47 @@
 import "server-only";
 
+import { Prisma } from "@prisma/client";
+
 import { prisma } from "./prisma";
 import { threadIdForSession } from "./session";
 
 const ESCAPES = new Set(["fuera-de-universo", "categoria-no-habilitada"]);
+
+/** El Caso que atiende el turno: resolución del puntero Conversation.casoActivoId. */
+export interface CasoActivo {
+  id: string;
+  categoria: string | null;
+  estado: "EN_CONVERSACION" | "CAPTADO" | "FUERA_DE_COBERTURA";
+  origen: "DOMINIO" | "FUERA_DE_COBERTURA";
+  correccionAplicada: boolean;
+}
+
+const SELECT_CASO_ACTIVO = {
+  id: true,
+  categoria: true,
+  estado: true,
+  origen: true,
+  correccionAplicada: true,
+} as const;
+
+/**
+ * Contacto heredable entre casos de la MISMA conversación (spec §2): el Caso N
+ * nace CAPTADO con los datos que el consultante ya dio, porque volver a pedirle
+ * el teléfono a quien acaba de darlo destruye la confianza que sostiene el
+ * funnel. Toma el CAPTADO más reciente, no el primero: si corrigió su teléfono
+ * en el caso 2, el caso 3 hereda el corregido.
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function contactoHeredable(
+  tx: Prisma.TransactionClient,
+  conversationId: string,
+): Promise<{ contactoNombre: string | null; contactoTelefono: string | null; contactoEmail: string | null } | null> {
+  return tx.caso.findFirst({
+    where: { conversationId, estado: "CAPTADO" },
+    orderBy: { updatedAt: "desc" },
+    select: { contactoNombre: true, contactoTelefono: true, contactoEmail: true },
+  });
+}
 
 /**
  * Duck-typed check for Prisma's unique-constraint violation (P2002). Deliberately
@@ -16,14 +54,48 @@ function esErrorDeUnicidad(error: unknown): error is { code: string } {
   return typeof error === "object" && error !== null && "code" in error && (error as { code: unknown }).code === "P2002";
 }
 
-export async function getOrCreateConversation(sessionId: string): Promise<{ id: string; categoria: string | null }> {
-  const conversation = await prisma.conversation.upsert({
+export async function getOrCreateConversation(
+  sessionId: string,
+): Promise<{ id: string; categoria: string | null; casoActivoId: string | null }> {
+  return prisma.conversation.upsert({
     where: { sessionId },
     create: { sessionId, threadId: threadIdForSession(sessionId) },
     update: {},
-    select: { id: true, categoria: true },
+    select: { id: true, categoria: true, casoActivoId: true },
   });
-  return conversation;
+}
+
+/**
+ * El Caso que atiende el turno. Resuelve el puntero `Conversation.casoActivoId`
+ * a la fila real, con auto-reparación: si el puntero quedó colgado adopta el
+ * Caso más reciente de la conversación y lo reescribe, en vez de mandar el
+ * turno al receptor y abrir un caso duplicado sobre la misma categoría.
+ * Devuelve null SOLO cuando la conversación todavía no tiene ningún Caso: ese
+ * es el único disparador legítimo del receptor inaugural.
+ */
+export async function resolverCasoActivo(sessionId: string): Promise<CasoActivo | null> {
+  const conversation = await prisma.conversation.findUnique({
+    where: { sessionId },
+    select: { id: true, casoActivoId: true },
+  });
+  if (!conversation) return null;
+
+  if (conversation.casoActivoId) {
+    const caso = await prisma.caso.findUnique({
+      where: { id: conversation.casoActivoId },
+      select: SELECT_CASO_ACTIVO,
+    });
+    if (caso) return caso;
+  }
+
+  const ultimo = await prisma.caso.findFirst({
+    where: { conversationId: conversation.id },
+    orderBy: { updatedAt: "desc" },
+    select: SELECT_CASO_ACTIVO,
+  });
+  if (!ultimo) return null;
+  await prisma.conversation.update({ where: { id: conversation.id }, data: { casoActivoId: ultimo.id } });
+  return ultimo;
 }
 
 /**
