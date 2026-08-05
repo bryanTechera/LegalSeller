@@ -3,5 +3,9 @@ dist/
 .mastra/
 .env
 .env.local
+# Cualquier .env con credenciales reales (copias de Railway, backups) queda
+# fuera; sólo .env.example se versiona.
+.env.*
+!.env.example
 *.log
 src/test/eval-results.db

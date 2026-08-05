@@ -7,6 +7,10 @@ test-results/
 playwright-report/
 .env
 .env*.local
+# Cualquier .env con credenciales reales (copias de Railway, backups) queda
+# fuera; sólo .env.example se versiona.
+.env.*
+!.env.example
 *.log
 next-env.d.ts
 tsconfig.tsbuildinfo
