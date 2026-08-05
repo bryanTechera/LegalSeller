@@ -106,7 +106,10 @@ export function DetalleChat({ id }: { id: string }) {
   const notasDeLaConversacion = data.notas.filter(
     (nota) => nota.messageId === null || !idsMensajes.has(nota.messageId),
   );
-  const notasDelMensaje = data.notas.filter((nota) => nota.messageId === seleccionado);
+  // Sin selección la lista es vacía a propósito: filtrar por `null` matchearía
+  // justo las notas generales y la solapa contaría notas que no muestra.
+  const notasDelMensaje =
+    seleccionado === null ? [] : data.notas.filter((nota) => nota.messageId === seleccionado);
   const huerfanas = data.busquedas.filter((busqueda) => busqueda.messageId === null).length;
   const anotandoConversacion = anotando !== null && anotando.messageId === null;
 

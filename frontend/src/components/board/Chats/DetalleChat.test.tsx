@@ -282,6 +282,8 @@ describe("DetalleChat", () => {
     });
     render(<DetalleChat id="c1" />);
 
+    // La solapa del mensaje no cuenta estas notas: no son de ningún mensaje.
+    expect(screen.getByRole("tab", { name: "Notas del mensaje (0)" })).toBeInTheDocument();
     expect(screen.getByText("Nota 1 de 2")).toBeInTheDocument();
     expect(screen.getByText("Primera nota general")).toBeInTheDocument();
     expect(screen.queryByText("Segunda nota general")).not.toBeInTheDocument();

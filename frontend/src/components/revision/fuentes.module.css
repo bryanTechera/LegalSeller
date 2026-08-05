@@ -34,6 +34,13 @@ div.cabecera {
   cursor: default;
 }
 
+/* El `overflow: hidden` de la tarjeta recorta el anillo de foco global, que
+   se pinta 2px por fuera del borde: acá se pinta hacia adentro para que el
+   teclado tenga dónde verse. */
+.cabecera:focus-visible {
+  outline-offset: -2px;
+}
+
 .cabecera::-webkit-details-marker {
   display: none;
 }

@@ -55,9 +55,15 @@
   word-break: break-all;
 }
 
+/* `min-width: 0` y NO `overflow-x: auto`: los dos evitan que un hijo ancho
+   estire la grilla, pero el overflow convierte a `.contenido` en scroll
+   container (por CSS Overflow, un eje no-visible hace computar el otro a
+   `auto`), y como su alto es automático nunca scrollea — un `position:
+   sticky` adentro queda anclado a un scrollport inmóvil, o sea, muerto.
+   El panel del detalle del chat depende de ese sticky. */
 .contenido {
   padding: var(--space-8);
-  overflow-x: auto;
+  min-width: 0;
 }
 
 @media (width <= 48rem) {
