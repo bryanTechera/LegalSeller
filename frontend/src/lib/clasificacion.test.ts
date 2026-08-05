@@ -332,27 +332,19 @@ describe("registrarDatosCaso", () => {
     );
   });
 
-  it("sin caso activo ni categoría persistida, tolera P2002 al crear (dos registrar-caso concurrentes)", async () => {
+  it("sin caso activo ni categoría persistida, crea con categoria null y mueve el puntero", async () => {
     tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: null, casoActivoId: null });
-    tx.caso.create.mockRejectedValue(Object.assign(new Error("Unique constraint failed"), { code: "P2002" }));
-    tx.caso.findFirst.mockResolvedValue({ id: "k9", subcategorias: [], resumen: null }); // caso de la ganadora
+    tx.caso.create.mockResolvedValue({ id: "k9", subcategorias: [], resumen: null });
 
     await registrarDatosCaso({ sessionId: "s1", contactoNombre: "Ana" });
 
-    expect(tx.caso.findFirst).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { conversationId: "c1", categoria: null } }),
+    expect(tx.caso.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { conversationId: "c1", categoria: null } }),
     );
     expect(tx.conversation.update).toHaveBeenCalledWith({ where: { id: "c1" }, data: { casoActivoId: "k9" } });
     expect(tx.caso.update).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: "k9" }, data: expect.objectContaining({ contactoNombre: "Ana" }) }),
     );
-  });
-
-  it("relanza errores de caso.create que no son P2002 (sin caso activo ni categoría persistida)", async () => {
-    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: null, casoActivoId: null });
-    tx.caso.create.mockRejectedValue(new Error("db down"));
-
-    await expect(registrarDatosCaso({ sessionId: "s1", contactoNombre: "Ana" })).rejects.toThrow("db down");
   });
 });
 

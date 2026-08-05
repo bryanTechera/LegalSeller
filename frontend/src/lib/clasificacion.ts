@@ -312,10 +312,13 @@ export async function registrarDatosCaso(params: {
     // Sin caso activo: upsert por la clave compuesta cuando hay categoría
     // persistida (dos registrar-caso concurrentes de la misma categoría no
     // duplican). Con categoria null NO se puede usar la clave compuesta
-    // —Prisma la tipa `categoria: string`— así que va create directo, con el
-    // mismo catch-y-recuperación de P2002 que asignarClasificacion: si dos
-    // llamadas concurrentes chocan al crear, la que pierde adopta el caso de
-    // la ganadora en vez de dejar dos huérfanos.
+    // —Prisma la tipa `categoria: string`— así que va create directo, sin
+    // guard: dos registrar-caso concurrentes SIN categoría todavía pueden
+    // crear dos Caso con categoria: null para la misma conversación, y es a
+    // propósito (spec §3) — cada demanda fuera de cobertura es una señal de
+    // mercado separada, y el índice único no los unifica porque Postgres no
+    // considera dos NULL iguales. `abrirCasoFueraDeCobertura` (Task 4) va a
+    // crear una fila nueva en cada derivación por el mismo motivo.
     let caso: { id: string; subcategorias: string[]; resumen: unknown };
     if (casoActivo) {
       caso = casoActivo;
@@ -329,21 +332,10 @@ export async function registrarDatosCaso(params: {
         select: { id: true, subcategorias: true, resumen: true },
       });
     } else {
-      try {
-        caso = await tx.caso.create({
-          data: { conversationId: conversation.id, categoria: null },
-          select: { id: true, subcategorias: true, resumen: true },
-        });
-      } catch (error) {
-        if (!esErrorDeUnicidad(error)) throw error;
-        const ganador = await tx.caso.findFirst({
-          where: { conversationId: conversation.id, categoria: null },
-          orderBy: { updatedAt: "desc" },
-          select: { id: true, subcategorias: true, resumen: true },
-        });
-        if (!ganador) throw error;
-        caso = ganador;
-      }
+      caso = await tx.caso.create({
+        data: { conversationId: conversation.id, categoria: null },
+        select: { id: true, subcategorias: true, resumen: true },
+      });
     }
 
     if (!casoActivo) {
