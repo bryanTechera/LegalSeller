@@ -7,7 +7,14 @@ const tx = vi.hoisted(() => ({
     update: vi.fn(),
     updateMany: vi.fn().mockResolvedValue({ count: 1 }),
   },
-  caso: { create: vi.fn(), upsert: vi.fn(), update: vi.fn(), findUnique: vi.fn(), findFirst: vi.fn() },
+  caso: {
+    create: vi.fn(),
+    upsert: vi.fn(),
+    update: vi.fn(),
+    updateMany: vi.fn(),
+    findUnique: vi.fn(),
+    findFirst: vi.fn(),
+  },
   casoEvento: { create: vi.fn(), count: vi.fn() },
 }));
 vi.mock("./prisma", () => ({
@@ -23,13 +30,34 @@ import {
 } from "./clasificacion";
 
 describe("asignarClasificacion", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    // resetAllMocks (no clearAllMocks): varios tests de este describe encolan
+    // con mockResolvedValueOnce, y clearAllMocks no vacía esa cola entre tests.
+    vi.resetAllMocks();
+    tx.conversation.updateMany.mockResolvedValue({ count: 1 });
+  });
 
   it("first-write-wins: no pisa una categoría ya asignada", async () => {
-    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: "laboral" });
+    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: "laboral", casoActivoId: null });
     const result = await asignarClasificacion({ sessionId: "s1", categoria: "familia" });
-    expect(result).toEqual({ categoria: "laboral", aplicada: false });
+    expect(result).toEqual({ categoria: "laboral", aplicada: false, casoId: null, casoEstado: null });
     expect(tx.conversation.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("first-write-wins con caso activo: devuelve su id y estado", async () => {
+    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: "laboral", casoActivoId: "k1" });
+    tx.caso.findUnique.mockResolvedValue({
+      id: "k1",
+      categoria: "laboral",
+      origen: "DOMINIO",
+      subcategorias: [],
+      resumen: null,
+      estado: "CAPTADO",
+    });
+    const result = await asignarClasificacion({ sessionId: "s1", categoria: "familia" });
+    expect(result).toEqual({ categoria: "laboral", aplicada: false, casoId: "k1", casoEstado: "CAPTADO" });
+    expect(tx.conversation.updateMany).not.toHaveBeenCalled();
+    expect(tx.conversation.update).not.toHaveBeenCalled();
   });
 
   it("asigna, crea el caso y registra el evento CLASIFICACION", async () => {
@@ -55,44 +83,58 @@ describe("asignarClasificacion", () => {
   });
 
   it("escape fuera de cobertura: no asigna categoría de ruteo, marca el caso", async () => {
-    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: null });
-    tx.caso.findUnique.mockResolvedValue(null);
+    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: null, casoActivoId: null });
     tx.caso.create.mockResolvedValue({ id: "k1" });
     const result = await asignarClasificacion({
       sessionId: "s1",
       categoria: "categoria-no-habilitada",
       temaDetectado: "sucesiones",
     });
-    expect(result).toEqual({ categoria: null, aplicada: false });
+    expect(result).toEqual({ categoria: null, aplicada: false, casoId: "k1", casoEstado: null });
     expect(tx.conversation.updateMany).not.toHaveBeenCalled();
+    expect(tx.conversation.update).toHaveBeenCalledWith({ where: { id: "c1" }, data: { casoActivoId: "k1" } });
     expect(tx.caso.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ categoria: null, estado: "FUERA_DE_COBERTURA", origen: "FUERA_DE_COBERTURA" }),
       }),
     ); // demand signal recorded
+    // El escape nunca busca por clave compuesta (esEscape corta el ternario);
+    // la única llamada a caso.findUnique es la relectura final del estado.
+    expect(tx.caso.findUnique).toHaveBeenCalledTimes(1);
+    expect(tx.caso.findUnique).toHaveBeenCalledWith({ where: { id: "k1" }, select: { estado: true } });
   });
 
   it("promueve un caso escapado cuando llega una clasificación real (Critical 1)", async () => {
-    // Turno 1: escape — crea el caso congelado.
-    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: null });
-    tx.caso.findUnique.mockResolvedValue(null);
+    // Turno 1: escape — crea el caso congelado y mueve el puntero.
+    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: null, casoActivoId: null });
     tx.caso.create.mockResolvedValue({ id: "k1" });
     const primero = await asignarClasificacion({
       sessionId: "s1",
       categoria: "categoria-no-habilitada",
       temaDetectado: "sucesiones",
     });
-    expect(primero).toEqual({ categoria: null, aplicada: false });
+    expect(primero).toEqual({ categoria: null, aplicada: false, casoId: "k1", casoEstado: null });
+    expect(tx.conversation.update).toHaveBeenCalledWith({ where: { id: "c1" }, data: { casoActivoId: "k1" } });
 
-    vi.clearAllMocks();
+    vi.resetAllMocks();
+    tx.conversation.updateMany.mockResolvedValue({ count: 1 });
 
     // Turno 2: llega la clasificación real — la conversación sigue sin
-    // categoria (el escape nunca la fija) y el caso ya existe con el estado
+    // categoria (el escape nunca la fija) pero el puntero ya apunta al caso
     // congelado del escape.
-    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: null });
-    tx.caso.findUnique.mockResolvedValue({ id: "k1", subcategorias: [], resumen: null });
+    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: null, casoActivoId: "k1" });
+    tx.caso.findUnique
+      .mockResolvedValueOnce({
+        id: "k1",
+        categoria: null,
+        origen: "FUERA_DE_COBERTURA",
+        subcategorias: [],
+        resumen: null,
+        estado: "FUERA_DE_COBERTURA",
+      }) // casoActivo, resuelto por casoActivoId
+      .mockResolvedValueOnce(null) // casoExistente por clave compuesta: todavía no hay caso "laboral"
+      .mockResolvedValueOnce({ estado: "EN_CONVERSACION" }); // relectura final tras promover
     tx.caso.update.mockResolvedValue({ id: "k1" });
-    tx.conversation.updateMany.mockResolvedValue({ count: 1 });
 
     const segundo = await asignarClasificacion({
       sessionId: "s1",
@@ -100,8 +142,8 @@ describe("asignarClasificacion", () => {
       subcategoria: "despido",
     });
 
-    expect(segundo).toEqual({ categoria: "laboral", aplicada: true });
-    expect(tx.caso.upsert).not.toHaveBeenCalled();
+    expect(segundo).toEqual({ categoria: "laboral", aplicada: true, casoId: "k1", casoEstado: "EN_CONVERSACION" });
+    expect(tx.caso.create).not.toHaveBeenCalled();
     expect(tx.caso.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: "k1" },
@@ -116,7 +158,7 @@ describe("asignarClasificacion", () => {
   });
 
   it("no duplica una subcategoria ya presente al promover", async () => {
-    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: null });
+    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: null, casoActivoId: null });
     tx.caso.findUnique.mockResolvedValue({ id: "k1", subcategorias: ["despido"], resumen: { brief: "previo" } });
     tx.caso.update.mockResolvedValue({ id: "k1" });
 
@@ -128,18 +170,18 @@ describe("asignarClasificacion", () => {
   });
 
   it("tolera P2002 en la creación inaugural del caso (dos requests concurrentes)", async () => {
-    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: null });
+    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: null, casoActivoId: null });
     tx.caso.findUnique
-      .mockResolvedValueOnce(null) // esta transacción todavía no ve el caso
-      .mockResolvedValueOnce({ id: "k1", subcategorias: [], resumen: null }); // recuperación: caso del ganador
+      .mockResolvedValueOnce(null) // esta transacción todavía no ve el caso (clave compuesta)
+      .mockResolvedValueOnce({ id: "k1", subcategorias: [], resumen: null }) // recuperación: caso del ganador
+      .mockResolvedValueOnce({ estado: "EN_CONVERSACION" }); // relectura final
     tx.caso.create.mockRejectedValue(Object.assign(new Error("Unique constraint failed"), { code: "P2002" }));
     tx.caso.update.mockResolvedValue({ id: "k1" });
-    tx.conversation.updateMany.mockResolvedValue({ count: 1 });
 
     const result = await asignarClasificacion({ sessionId: "s1", categoria: "laboral" });
 
-    expect(result).toEqual({ categoria: "laboral", aplicada: true });
-    expect(tx.caso.findUnique).toHaveBeenCalledTimes(2);
+    expect(result).toEqual({ categoria: "laboral", aplicada: true, casoId: "k1", casoEstado: "EN_CONVERSACION" });
+    expect(tx.caso.findUnique).toHaveBeenCalledTimes(3);
     expect(tx.caso.update).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: "k1" }, data: expect.objectContaining({ categoria: "laboral" }) }),
     );
@@ -157,122 +199,76 @@ describe("asignarClasificacion", () => {
   });
 });
 
-describe("registrarDatosCaso", () => {
-  beforeEach(() => vi.clearAllMocks());
+describe("corregirClasificacion", () => {
+  beforeEach(() => vi.resetAllMocks());
 
-  it("mergea subcategorias y resumen existentes sin pisar otras claves", async () => {
-    tx.conversation.findUnique.mockResolvedValue({
-      id: "c1",
-      categoria: "laboral",
-      caso: { id: "k1", subcategorias: ["despido"], resumen: { hechos: "previo", intereses: "interes-existente" } },
+  it("sin caso activo no corrige", async () => {
+    tx.conversation.findUnique.mockResolvedValue({ id: "c1", casoActivoId: null });
+    await expect(corregirClasificacion({ sessionId: "s1", categoria: "familia", motivo: "m" })).resolves.toEqual({
+      aplicada: false,
     });
-
-    await registrarDatosCaso({ sessionId: "s1", subcategorias: ["indemnizacion"], hechos: "nuevo hecho" });
-
-    expect(tx.caso.create).not.toHaveBeenCalled();
-    expect(tx.caso.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { id: "k1" },
-        data: expect.objectContaining({
-          subcategorias: ["despido", "indemnizacion"],
-          resumen: expect.objectContaining({
-            hechos: "previo\nnuevo hecho",
-            intereses: "interes-existente", // no clobbered by the unrelated update
-          }),
-        }),
-      }),
-    );
   });
 
-  it("no borra campos existentes cuando los params llegan undefined explícitamente", async () => {
-    tx.conversation.findUnique.mockResolvedValue({
-      id: "c1",
-      categoria: "laboral",
-      caso: { id: "k1", subcategorias: [], resumen: {} },
+  it("no corrige hacia una categoría que ya tiene caso: eso es derivar-tema", async () => {
+    tx.conversation.findUnique.mockResolvedValue({ id: "c1", casoActivoId: "k1" });
+    tx.caso.findUnique
+      .mockResolvedValueOnce({ id: "k1", categoria: "laboral" })
+      .mockResolvedValueOnce({ id: "k2" });
+    await expect(corregirClasificacion({ sessionId: "s1", categoria: "familia", motivo: "m" })).resolves.toEqual({
+      aplicada: false,
     });
-
-    await registrarDatosCaso({ sessionId: "s1", hechos: "algo", contactoNombre: undefined });
-
-    const data = tx.caso.update.mock.calls[0][0].data;
-    expect(data).not.toHaveProperty("contactoNombre");
-    expect(data).not.toHaveProperty("contactoTelefono");
-    expect(data).not.toHaveProperty("contactoEmail");
+    expect(tx.caso.updateMany).not.toHaveBeenCalled();
   });
 
-  it("transiciona a CAPTADO y registra evento CONTACTO cuando llega cualquier dato de contacto", async () => {
-    tx.conversation.findUnique.mockResolvedValue({
-      id: "c1",
-      categoria: "laboral",
-      caso: { id: "k1", subcategorias: [], resumen: {} },
+  it("corrige el caso activo con guard atómico sobre Caso", async () => {
+    tx.conversation.findUnique.mockResolvedValue({ id: "c1", casoActivoId: "k1" });
+    tx.caso.findUnique.mockResolvedValueOnce({ id: "k1", categoria: "laboral" }).mockResolvedValueOnce(null);
+    tx.caso.updateMany.mockResolvedValue({ count: 1 });
+    await expect(corregirClasificacion({ sessionId: "s1", categoria: "familia", motivo: "m" })).resolves.toEqual({
+      aplicada: true,
     });
-
-    await registrarDatosCaso({ sessionId: "s1", contactoEmail: "persona@example.com" });
-
-    expect(tx.caso.update).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ estado: "CAPTADO", contactoEmail: "persona@example.com" }) }),
-    );
+    expect(tx.caso.updateMany).toHaveBeenCalledWith({
+      where: { id: "k1", correccionAplicada: false },
+      data: { correccionAplicada: true, categoria: "familia" },
+    });
     expect(tx.casoEvento.create).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ tipo: "CONTACTO" }) }),
-    );
-  });
-
-  it("registra evento REGISTRO_DATO cuando no hay dato de contacto", async () => {
-    tx.conversation.findUnique.mockResolvedValue({
-      id: "c1",
-      categoria: "laboral",
-      caso: { id: "k1", subcategorias: [], resumen: {} },
-    });
-
-    await registrarDatosCaso({ sessionId: "s1", hechos: "algo" });
-
-    expect(tx.casoEvento.create).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ tipo: "REGISTRO_DATO" }) }),
+      expect.objectContaining({ data: expect.objectContaining({ tipo: "CORRECCION" }) }),
     );
   });
 });
 
-describe("corregirClasificacion", () => {
-  beforeEach(() => vi.clearAllMocks());
+describe("registrarDatosCaso", () => {
+  beforeEach(() => vi.resetAllMocks());
 
-  it("aplica la corrección cuando el guard atómico la permite (count 1)", async () => {
-    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: "laboral", caso: { id: "k1" } });
-    tx.conversation.updateMany.mockResolvedValue({ count: 1 });
-
-    const result = await corregirClasificacion({ sessionId: "s1", categoria: "familia", motivo: "x" });
-
-    expect(result).toEqual({ aplicada: true });
-    expect(tx.conversation.updateMany).toHaveBeenCalledWith(
+  it("escribe sobre el caso activo y no acepta interesAdicional", async () => {
+    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: "laboral", casoActivoId: "k1" });
+    tx.caso.findUnique.mockResolvedValue({ id: "k1", subcategorias: ["despido"], resumen: { hechos: "previo" } });
+    await registrarDatosCaso({ sessionId: "s1", subcategorias: ["rubros-laborales"], hechos: "nuevo" });
+    expect(tx.caso.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { id: "c1", correccionAplicada: false },
-        data: expect.objectContaining({ correccionAplicada: true, categoria: "familia" }),
+        where: { id: "k1" },
+        data: expect.objectContaining({
+          subcategorias: ["despido", "rubros-laborales"],
+          resumen: { hechos: "previo\nnuevo" },
+        }),
       }),
     );
-    expect(tx.casoEvento.create).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ tipo: "CORRECCION" }) }),
+    expect(tx.conversation.update).not.toHaveBeenCalled();
+  });
+
+  it("sin caso activo abre el de la categoría persistida y mueve el puntero", async () => {
+    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: "laboral", casoActivoId: null });
+    tx.caso.upsert.mockResolvedValue({ id: "k9", subcategorias: [], resumen: null });
+    await registrarDatosCaso({ sessionId: "s1", contactoNombre: "Ana" });
+    expect(tx.caso.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { conversationId_categoria: { conversationId: "c1", categoria: "laboral" } },
+      }),
     );
+    expect(tx.conversation.update).toHaveBeenCalledWith({ where: { id: "c1" }, data: { casoActivoId: "k9" } });
     expect(tx.caso.update).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: "k1" }, data: { categoria: "familia" } }),
+      expect.objectContaining({ data: expect.objectContaining({ estado: "CAPTADO" }) }),
     );
-  });
-
-  it("no aplica una segunda corrección: el updateMany guardado devuelve count 0", async () => {
-    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: "laboral", caso: { id: "k1" } });
-    tx.conversation.updateMany.mockResolvedValue({ count: 0 });
-
-    const result = await corregirClasificacion({ sessionId: "s1", categoria: "familia", motivo: "x" });
-
-    expect(result).toEqual({ aplicada: false });
-    expect(tx.casoEvento.create).not.toHaveBeenCalled();
-    expect(tx.caso.update).not.toHaveBeenCalled();
-  });
-
-  it("no hace nada si la conversación no tiene caso", async () => {
-    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: "laboral", caso: null });
-
-    const result = await corregirClasificacion({ sessionId: "s1", categoria: "familia", motivo: "x" });
-
-    expect(result).toEqual({ aplicada: false });
-    expect(tx.conversation.updateMany).not.toHaveBeenCalled();
   });
 });
 

@@ -24,7 +24,6 @@ export type AsignacionArgs = z.infer<typeof asignacionArgsSchema>;
 export const registrarCasoArgsSchema = z.object({
   subcategorias: z.array(z.string()).optional(),
   hechos: z.string().optional(),
-  interesAdicional: z.string().optional(),
   contactoNombre: z.string().optional(),
   contactoTelefono: z.string().optional(),
   contactoEmail: z.string().optional(),

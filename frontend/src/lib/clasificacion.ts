@@ -103,7 +103,10 @@ export async function resolverCasoActivo(sessionId: string): Promise<CasoActivo 
  * concurrent double-submit or a re-emitted event never overwrites (spec §6).
  * Escapes never become routing state — they only mark the caso as demand
  * signal. A later REAL classification (after an earlier escape) promotes that
- * caso out of FUERA_DE_COBERTURA instead of leaving it frozen.
+ * caso out of FUERA_DE_COBERTURA instead of leaving it frozen. El puntero
+ * `casoActivoId` se actualiza en todo camino que resuelve un caso (escape
+ * incluido), para que un turno posterior lo encuentre vía `casoActivo` en vez
+ * de depender de la auto-reparación de `resolverCasoActivo`.
  */
 export async function asignarClasificacion(params: {
   sessionId: string;
@@ -112,20 +115,48 @@ export async function asignarClasificacion(params: {
   brief?: string;
   casoSensible?: boolean;
   temaDetectado?: string;
-}): Promise<{ categoria: string | null; aplicada: boolean }> {
+}): Promise<{
+  categoria: string | null;
+  aplicada: boolean;
+  casoId: string | null;
+  casoEstado: "EN_CONVERSACION" | "CAPTADO" | "FUERA_DE_COBERTURA" | null;
+}> {
   return prisma.$transaction(async (tx) => {
     const conversation = await tx.conversation.findUnique({
       where: { sessionId: params.sessionId },
-      select: { id: true, categoria: true },
+      select: { id: true, categoria: true, casoActivoId: true },
     });
-    if (!conversation) return { categoria: null, aplicada: false };
-    if (conversation.categoria) return { categoria: conversation.categoria, aplicada: false };
+    if (!conversation) return { categoria: null, aplicada: false, casoId: null, casoEstado: null };
+
+    // Nota: `estado` se agrega al select del brief (que solo trae categoria/
+    // origen/subcategorias/resumen) porque este mismo objeto también resuelve
+    // el early-return de first-write-wins, que necesita devolver casoEstado.
+    const casoActivo = conversation.casoActivoId
+      ? await tx.caso.findUnique({
+          where: { id: conversation.casoActivoId },
+          select: { id: true, categoria: true, origen: true, subcategorias: true, resumen: true, estado: true },
+        })
+      : null;
+
+    if (conversation.categoria) {
+      return {
+        categoria: conversation.categoria,
+        aplicada: false,
+        casoId: casoActivo?.id ?? null,
+        casoEstado: casoActivo?.estado ?? null,
+      };
+    }
 
     const esEscape = ESCAPES.has(params.categoria);
-    let casoExistente = await tx.caso.findUnique({
-      where: { conversationId: conversation.id },
-      select: { id: true, subcategorias: true, resumen: true },
-    });
+    let casoExistente = esEscape
+      ? null
+      : ((await tx.caso.findUnique({
+          where: { conversationId_categoria: { conversationId: conversation.id, categoria: params.categoria } },
+          select: { id: true, categoria: true, origen: true, subcategorias: true, resumen: true },
+        })) ??
+          // Promote: el caso activo puede ser el que dejó congelado un escape
+          // previo (categoria null). Se promueve en vez de abrir uno nuevo.
+          (casoActivo?.categoria === null && casoActivo.origen === "FUERA_DE_COBERTURA" ? casoActivo : null));
 
     let caso: { id: string } | undefined;
     if (!casoExistente) {
@@ -144,13 +175,14 @@ export async function asignarClasificacion(params: {
       } catch (error) {
         if (!esErrorDeUnicidad(error)) throw error;
         // Concurrent inaugural creation: another transaction won the race on
-        // conversationId (@unique) and this insert hit P2002. Recover the
-        // winner's caso and fall through to the normal existing-caso flow
-        // below (escape no-op / real-classification promote) instead of
-        // letting the transaction blow up.
+        // [conversationId, categoria] (@unique) and this insert hit P2002.
+        // Recover the winner's caso by the same compound key and fall
+        // through to the normal existing-caso flow below (escape no-op /
+        // real-classification promote) instead of letting the transaction
+        // blow up.
         casoExistente = await tx.caso.findUnique({
-          where: { conversationId: conversation.id },
-          select: { id: true, subcategorias: true, resumen: true },
+          where: { conversationId_categoria: { conversationId: conversation.id, categoria: params.categoria } },
+          select: { id: true, categoria: true, origen: true, subcategorias: true, resumen: true },
         });
         if (!casoExistente) throw error;
       }
@@ -205,7 +237,14 @@ export async function asignarClasificacion(params: {
       },
     });
 
-    if (esEscape) return { categoria: null, aplicada: false };
+    // El caso recién resuelto (creado, promovido o reutilizado por un
+    // escape) pasa a ser el activo de la conversación.
+    await tx.conversation.update({ where: { id: conversation.id }, data: { casoActivoId: caso.id } });
+    const casoFinal = await tx.caso.findUnique({ where: { id: caso.id }, select: { estado: true } });
+
+    if (esEscape) {
+      return { categoria: null, aplicada: false, casoId: caso.id, casoEstado: casoFinal?.estado ?? null };
+    }
 
     // Guarded write: double-submit safe even if two transactions read
     // categoria=null concurrently — only one row with categoria still null
@@ -221,18 +260,27 @@ export async function asignarClasificacion(params: {
         where: { id: conversation.id },
         select: { categoria: true },
       });
-      return { categoria: actual?.categoria ?? null, aplicada: false };
+      return {
+        categoria: actual?.categoria ?? null,
+        aplicada: false,
+        casoId: caso.id,
+        casoEstado: casoFinal?.estado ?? null,
+      };
     }
-    return { categoria: params.categoria, aplicada: true };
+    return { categoria: params.categoria, aplicada: true, casoId: caso.id, casoEstado: casoFinal?.estado ?? null };
   });
 }
 
-/** Incremental lead capture: merges data as it appears (spec §4). */
+/**
+ * Incremental lead capture: merges data as it appears. Escribe siempre sobre el
+ * CASO ACTIVO. Sin caso activo (registrar-caso del receptor para captación
+ * fuera de cobertura, antes de que exista clasificación) abre el caso de la
+ * categoría persistida y deja el puntero apuntándolo.
+ */
 export async function registrarDatosCaso(params: {
   sessionId: string;
   subcategorias?: string[];
   hechos?: string;
-  interesAdicional?: string;
   contactoNombre?: string;
   contactoTelefono?: string;
   contactoEmail?: string;
@@ -240,23 +288,46 @@ export async function registrarDatosCaso(params: {
   await prisma.$transaction(async (tx) => {
     const conversation = await tx.conversation.findUnique({
       where: { sessionId: params.sessionId },
-      select: { id: true, categoria: true, caso: { select: { id: true, subcategorias: true, resumen: true } } },
+      select: { id: true, categoria: true, casoActivoId: true },
     });
     if (!conversation) return;
 
+    const casoActivo = conversation.casoActivoId
+      ? await tx.caso.findUnique({
+          where: { id: conversation.casoActivoId },
+          select: { id: true, subcategorias: true, resumen: true },
+        })
+      : null;
+
+    // Sin caso activo: upsert por la clave compuesta cuando hay categoría
+    // persistida (dos registrar-caso concurrentes de la misma categoría no
+    // duplican). Con categoria null NO se puede usar la clave compuesta
+    // —Prisma la tipa `categoria: string`— así que va create directo.
     const caso =
-      conversation.caso ??
-      (await tx.caso.create({
-        data: { conversationId: conversation.id, categoria: conversation.categoria },
-        select: { id: true, subcategorias: true, resumen: true },
-      }));
+      casoActivo ??
+      (conversation.categoria
+        ? await tx.caso.upsert({
+            where: {
+              conversationId_categoria: { conversationId: conversation.id, categoria: conversation.categoria },
+            },
+            create: { conversationId: conversation.id, categoria: conversation.categoria },
+            update: {},
+            select: { id: true, subcategorias: true, resumen: true },
+          })
+        : await tx.caso.create({
+            data: { conversationId: conversation.id, categoria: null },
+            select: { id: true, subcategorias: true, resumen: true },
+          }));
+
+    if (!casoActivo) {
+      await tx.conversation.update({ where: { id: conversation.id }, data: { casoActivoId: caso.id } });
+    }
 
     const subcategorias = params.subcategorias
       ? Array.from(new Set([...caso.subcategorias, ...params.subcategorias]))
       : undefined;
     const resumenPrevio = (caso.resumen as Record<string, unknown> | null) ?? {};
     const hechosPrevios = typeof resumenPrevio.hechos === "string" ? `${resumenPrevio.hechos}\n` : "";
-    const interesesPrevios = typeof resumenPrevio.intereses === "string" ? `${resumenPrevio.intereses}\n` : "";
 
     const tieneContacto = Boolean(params.contactoNombre || params.contactoTelefono || params.contactoEmail);
     await tx.caso.update({
@@ -266,7 +337,6 @@ export async function registrarDatosCaso(params: {
         resumen: {
           ...resumenPrevio,
           ...(params.hechos ? { hechos: `${hechosPrevios}${params.hechos}` } : {}),
-          ...(params.interesAdicional ? { intereses: `${interesesPrevios}${params.interesAdicional}` } : {}),
         },
         ...(params.contactoNombre ? { contactoNombre: params.contactoNombre } : {}),
         ...(params.contactoTelefono ? { contactoTelefono: params.contactoTelefono } : {}),
@@ -285,11 +355,10 @@ export async function registrarDatosCaso(params: {
 }
 
 /**
- * Bounded reclassification: at most ONE correction per conversation, enforced
- * atomically via the `correccionAplicada` guard on `Conversation` — a guarded
- * `updateMany` flips it false→true, so two concurrent calls can never both
- * succeed (spec §6). The `CasoEvento` row created on success is the audit
- * record, not the guard.
+ * Bounded reclassification: a lo sumo UNA corrección por CASO, atómica vía el
+ * guard `correccionAplicada` sobre `Caso`. Corrige el caso ACTIVO: abrir un tema
+ * nuevo es `derivar-tema`, no una corrección. El `CasoEvento` es auditoría, no
+ * el guard.
  */
 export async function corregirClasificacion(params: {
   sessionId: string;
@@ -299,26 +368,44 @@ export async function corregirClasificacion(params: {
   return prisma.$transaction(async (tx) => {
     const conversation = await tx.conversation.findUnique({
       where: { sessionId: params.sessionId },
-      select: { id: true, categoria: true, caso: { select: { id: true } } },
+      select: { id: true, casoActivoId: true },
     });
-    if (!conversation?.caso) return { aplicada: false };
+    if (!conversation?.casoActivoId) return { aplicada: false };
 
-    // Guarded write: atomic max-1 correction — only one transaction can flip
-    // correccionAplicada false→true for this conversation.
-    const updated = await tx.conversation.updateMany({
-      where: { id: conversation.id, correccionAplicada: false },
-      data: { correccionAplicada: true, categoria: params.categoria, clasificadaEn: new Date() },
+    const caso = await tx.caso.findUnique({
+      where: { id: conversation.casoActivoId },
+      select: { id: true, categoria: true },
+    });
+    if (!caso) return { aplicada: false };
+
+    // Si la categoría destino YA tiene caso en esta conversación, corregir
+    // violaría @@unique([conversationId, categoria]) y abortaría la transacción
+    // entera con P2002. Eso no es una corrección: es un tema ya abierto, y el
+    // camino correcto es derivar-tema.
+    const colision = await tx.caso.findUnique({
+      where: { conversationId_categoria: { conversationId: conversation.id, categoria: params.categoria } },
+      select: { id: true },
+    });
+    if (colision) return { aplicada: false };
+
+    const updated = await tx.caso.updateMany({
+      where: { id: caso.id, correccionAplicada: false },
+      data: { correccionAplicada: true, categoria: params.categoria },
     });
     if (updated.count === 0) return { aplicada: false };
 
     await tx.casoEvento.create({
       data: {
-        casoId: conversation.caso.id,
+        casoId: caso.id,
         tipo: "CORRECCION",
-        payload: { de: conversation.categoria, a: params.categoria, motivo: params.motivo },
+        payload: { de: caso.categoria, a: params.categoria, motivo: params.motivo },
       },
     });
-    await tx.caso.update({ where: { id: conversation.caso.id }, data: { categoria: params.categoria } });
+    // La denormalización de la conversación sigue al caso activo.
+    await tx.conversation.update({
+      where: { id: conversation.id },
+      data: { categoria: params.categoria, clasificadaEn: new Date() },
+    });
     return { aplicada: true };
   });
 }
