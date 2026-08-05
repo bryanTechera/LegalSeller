@@ -16,9 +16,12 @@ const { clasificacion, dominios, agentService } = vi.hoisted(() => ({
     asignarClasificacion: vi.fn(),
     registrarDatosCaso: vi.fn(),
     corregirClasificacion: vi.fn(),
+    resolverCasoActivo: vi.fn(),
+    abrirOReactivarCaso: vi.fn(),
+    abrirCasoFueraDeCobertura: vi.fn(),
   },
   dominios: { subcategoriaUnica: vi.fn(), esCategoriaHabilitada: vi.fn() },
-  agentService: { streamAgentMessage: vi.fn(), appendThreadMessages: vi.fn(), fetchAssistantTexts: vi.fn() },
+  agentService: { streamAgentMessage: vi.fn(), appendThreadMessages: vi.fn() },
 }));
 
 vi.mock("./clasificacion", () => clasificacion);
@@ -46,17 +49,24 @@ const asignacionLaboral = {
 
 describe("orchestrateChatTurn", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     clasificacion.asignarClasificacion.mockResolvedValue({ categoria: "laboral", aplicada: true });
     clasificacion.registrarDatosCaso.mockResolvedValue(undefined);
+    clasificacion.resolverCasoActivo.mockResolvedValue(null);
     agentService.appendThreadMessages.mockResolvedValue(undefined);
-    agentService.fetchAssistantTexts.mockResolvedValue([]);
     dominios.subcategoriaUnica.mockResolvedValue("despido");
     dominios.esCategoriaHabilitada.mockResolvedValue(true);
   });
 
   it("con categoría asignada rutea directo al agente de categoría", async () => {
-    clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral" });
+    clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral", casoActivoId: "k1" });
+    clasificacion.resolverCasoActivo.mockResolvedValue({
+      id: "k1",
+      categoria: "laboral",
+      estado: "EN_CONVERSACION",
+      origen: "DOMINIO",
+      correccionAplicada: false,
+    });
     agentService.streamAgentMessage.mockResolvedValue(sseResponse([{ type: "text-delta", payload: { text: "hola" } }]));
     const response = await orchestrateChatTurn({ sessionId: "s1", message: "y el aguinaldo?" });
     expect(agentService.streamAgentMessage).toHaveBeenCalledTimes(1);
@@ -67,23 +77,86 @@ describe("orchestrateChatTurn", () => {
     expect(await drain(response)).toContain("hola");
   });
 
-  it("deriva pedidoContactoHecho del historial cuando un mensaje del asistente ya pidió contacto", async () => {
-    clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral" });
-    agentService.fetchAssistantTexts.mockResolvedValue([
-      "Tenés 180 días de protección. Si querés, dejame tu nombre y un teléfono así te contactamos.",
-    ]);
-    agentService.streamAgentMessage.mockResolvedValue(sseResponse([{ type: "text-delta", payload: { text: "ok" } }]));
-    await orchestrateChatTurn({ sessionId: "s1", message: "cuanto tiempo tengo para reclamar?" });
-    expect(agentService.streamAgentMessage.mock.calls[0][0]).toMatchObject({ pedidoContactoHecho: true });
+  it("rutea por el caso activo, no por Conversation.categoria", async () => {
+    clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral", casoActivoId: "k1" });
+    clasificacion.resolverCasoActivo.mockResolvedValue({
+      id: "k1",
+      categoria: "familia",
+      estado: "CAPTADO",
+      origen: "DOMINIO",
+      correccionAplicada: false,
+    });
+    dominios.esCategoriaHabilitada.mockResolvedValue(true);
+    agentService.streamAgentMessage.mockResolvedValue(sseResponse([{ type: "text-delta", payload: { text: "hola" } }]));
+
+    await drain(await orchestrateChatTurn({ sessionId: "s1", message: "consulta" }));
+
+    expect(agentService.streamAgentMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ agentId: "familia", pedidoContactoHecho: true }),
+    );
   });
 
-  it("si la lectura del historial falla asume pedidoContactoHecho false y no rompe el turno", async () => {
-    clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral" });
-    agentService.fetchAssistantTexts.mockRejectedValue(new Error("boom"));
-    agentService.streamAgentMessage.mockResolvedValue(sseResponse([{ type: "text-delta", payload: { text: "ok" } }]));
-    const response = await orchestrateChatTurn({ sessionId: "s1", message: "hola de nuevo" });
-    expect(await drain(response)).toContain("ok");
-    expect(agentService.streamAgentMessage.mock.calls[0][0]).toMatchObject({ pedidoContactoHecho: false });
+  it("observa derivar-tema y corre el receptor sobre el mismo mensaje", async () => {
+    clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral", casoActivoId: "k1" });
+    clasificacion.resolverCasoActivo.mockResolvedValue({
+      id: "k1",
+      categoria: "laboral",
+      estado: "EN_CONVERSACION",
+      origen: "DOMINIO",
+      correccionAplicada: false,
+    });
+    dominios.esCategoriaHabilitada.mockResolvedValue(true);
+    dominios.subcategoriaUnica.mockResolvedValue(null);
+    agentService.streamAgentMessage
+      .mockResolvedValueOnce(
+        sseResponse([
+          { type: "tool-call", payload: { toolName: "derivar-tema", args: { tema: "me chocaron el auto" } } },
+          { type: "text-delta", payload: { text: "puente" } },
+        ]),
+      )
+      .mockResolvedValueOnce(
+        sseResponse([
+          {
+            type: "tool-call",
+            payload: { toolName: "asignar-clasificacion", args: { categoria: "transito", brief: "choque" } },
+          },
+        ]),
+      );
+
+    await drain(await orchestrateChatTurn({ sessionId: "s1", message: "también me chocaron" }));
+
+    expect(agentService.streamAgentMessage).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ agentId: "recepcion", message: "también me chocaron", memoryReadOnly: true }),
+    );
+    expect(clasificacion.abrirOReactivarCaso).toHaveBeenCalledWith(
+      expect.objectContaining({ sessionId: "s1", categoria: "transito" }),
+    );
+  });
+
+  it("falso positivo del agente: el receptor clasifica igual y no se abre caso", async () => {
+    clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral", casoActivoId: "k1" });
+    clasificacion.resolverCasoActivo.mockResolvedValue({
+      id: "k1",
+      categoria: "laboral",
+      estado: "EN_CONVERSACION",
+      origen: "DOMINIO",
+      correccionAplicada: false,
+    });
+    dominios.esCategoriaHabilitada.mockResolvedValue(true);
+    agentService.streamAgentMessage
+      .mockResolvedValueOnce(
+        sseResponse([{ type: "tool-call", payload: { toolName: "derivar-tema", args: { tema: "licencias" } } }]),
+      )
+      .mockResolvedValueOnce(
+        sseResponse([
+          { type: "tool-call", payload: { toolName: "asignar-clasificacion", args: { categoria: "laboral" } } },
+        ]),
+      );
+
+    await drain(await orchestrateChatTurn({ sessionId: "s1", message: "y las licencias?" }));
+
+    expect(clasificacion.abrirOReactivarCaso).not.toHaveBeenCalled();
   });
 
   it("fast-path: clasifica, persiste, encadena al agente de categoría en el mismo turno", async () => {
@@ -232,7 +305,14 @@ describe("orchestrateChatTurn", () => {
   });
 
   it("régimen: categoría deshabilitada después de persistida degrada con gracia", async () => {
-    clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral" });
+    clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral", casoActivoId: "k1" });
+    clasificacion.resolverCasoActivo.mockResolvedValue({
+      id: "k1",
+      categoria: "laboral",
+      estado: "EN_CONVERSACION",
+      origen: "DOMINIO",
+      correccionAplicada: false,
+    });
     dominios.esCategoriaHabilitada.mockResolvedValueOnce(false);
     const response = await orchestrateChatTurn({ sessionId: "s1", message: "y ahora qué hago?" });
     const text = await drain(response);
@@ -242,7 +322,14 @@ describe("orchestrateChatTurn", () => {
   });
 
   it("observa registrar-caso en régimen y persiste los datos", async () => {
-    clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral" });
+    clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral", casoActivoId: "k1" });
+    clasificacion.resolverCasoActivo.mockResolvedValue({
+      id: "k1",
+      categoria: "laboral",
+      estado: "EN_CONVERSACION",
+      origen: "DOMINIO",
+      correccionAplicada: false,
+    });
     agentService.streamAgentMessage.mockResolvedValue(
       sseResponse([
         { type: "tool-call", payload: { toolName: "registrar-caso", args: { contactoNombre: "Ana", contactoTelefono: "099" } } },
@@ -256,7 +343,14 @@ describe("orchestrateChatTurn", () => {
   });
 
   it("args de tool-call con forma inválida se descartan sin persistir ni romper el stream", async () => {
-    clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral" });
+    clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral", casoActivoId: "k1" });
+    clasificacion.resolverCasoActivo.mockResolvedValue({
+      id: "k1",
+      categoria: "laboral",
+      estado: "EN_CONVERSACION",
+      origen: "DOMINIO",
+      correccionAplicada: false,
+    });
     agentService.streamAgentMessage.mockResolvedValue(
       sseResponse([
         // subcategorias debería ser array de strings, no un string suelto:

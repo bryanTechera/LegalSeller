@@ -3,19 +3,22 @@ import "server-only";
 import { createSseLineSplitter, parseSseData } from "@/utils/sse";
 import { logger } from "@/utils/logger";
 
-import { appendThreadMessages, fetchAssistantTexts, streamAgentMessage } from "./agent-service";
-import { contienePedidoContacto } from "./pedido-contacto";
+import { appendThreadMessages, streamAgentMessage } from "./agent-service";
 import {
   type AsignacionArgs,
   asignacionArgsSchema,
   correccionArgsSchema,
+  derivarTemaArgsSchema,
   registrarCasoArgsSchema,
 } from "./chat-orchestrator-schemas";
 import {
+  abrirCasoFueraDeCobertura,
+  abrirOReactivarCaso,
   asignarClasificacion,
   corregirClasificacion,
   getOrCreateConversation,
   registrarDatosCaso,
+  resolverCasoActivo,
 } from "./clasificacion";
 import { esCategoriaHabilitada, subcategoriaUnica } from "./dominios";
 import { threadIdForSession } from "./session";
@@ -105,7 +108,11 @@ async function consumeUpstream(
 }
 
 /** Runs the receptor turn (readOnly memory), buffering everything. */
-async function runReceptor(params: { sessionId: string; message: string }): Promise<ReceptorOutcome> {
+async function runReceptor(params: {
+  sessionId: string;
+  message: string;
+  persistirRegistrarCaso?: boolean;
+}): Promise<ReceptorOutcome> {
   const upstream = await streamAgentMessage({
     agentId: RECEPCION_AGENT_ID,
     threadId: threadIdForSession(params.sessionId),
@@ -134,6 +141,10 @@ async function runReceptor(params: { sessionId: string; message: string }): Prom
         return;
       }
       if (toolName === "registrar-caso") {
+        // En la corrida de derivación el puntero casoActivoId todavía apunta al
+        // Caso viejo: persistir acá escribiría datos del tema NUEVO sobre el
+        // caso VIEJO.
+        if (params.persistirRegistrarCaso === false) return;
         // The receptor also has registrar-caso available — for out-of-
         // coverage lead capture (spec §3/§7/§10) it may run BEFORE any
         // classification exists. The conversation row already exists (created
@@ -165,14 +176,65 @@ async function runReceptor(params: { sessionId: string; message: string }): Prom
   return { kind: "pregunta", text };
 }
 
+/**
+ * Segundo paso del escalamiento (spec §4): el agente de categoría marcó
+ * `derivar-tema`, así que el receptor clasifica el MISMO mensaje del usuario y
+ * el puntero `casoActivoId` se mueve. El agente marca, el receptor decide: un
+ * falso positivo del agente es no-op. Nunca tira — corre con la respuesta del
+ * turno ya streameada.
+ */
+async function derivarTema(params: {
+  sessionId: string;
+  message: string;
+  categoriaActiva: string;
+  tema: string;
+}): Promise<void> {
+  let outcome: ReceptorOutcome;
+  try {
+    outcome = await runReceptor({
+      sessionId: params.sessionId,
+      message: params.message,
+      persistirRegistrarCaso: false,
+    });
+  } catch (error: unknown) {
+    logger.error("receptor de derivación falló", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return;
+  }
+  // El texto del receptor se DESCARTA: el cliente ya recibió la respuesta
+  // puente del agente y este turno no se appendea al thread.
+  if (!outcome.args) return;
+  const derivada = outcome.args;
+  if (derivada.categoria === params.categoriaActiva) return;
+  if (ESCAPES.has(derivada.categoria) || !(await esCategoriaHabilitada(derivada.categoria))) {
+    await abrirCasoFueraDeCobertura({
+      sessionId: params.sessionId,
+      temaDetectado: derivada.temaDetectado ?? derivada.categoria,
+      brief: derivada.brief ?? params.tema,
+    });
+    return;
+  }
+  const subcategoria = derivada.subcategoria ?? (await subcategoriaUnica(derivada.categoria)) ?? undefined;
+  await abrirOReactivarCaso({
+    sessionId: params.sessionId,
+    categoria: derivada.categoria,
+    subcategoria,
+    brief: derivada.brief ?? params.tema,
+  });
+}
+
 /** Streams a category-agent turn to the client while observing case tool-calls. */
 function pipeCategoryTurn(params: {
   sessionId: string;
+  message: string;
+  categoriaActiva: string;
   upstream: Response;
 }): Response {
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
       const encoder = new TextEncoder();
+      let temaDerivado: string | null = null;
       void consumeUpstream(params.upstream, {
         onRaw: (raw) => {
           try {
@@ -198,6 +260,15 @@ function pipeCategoryTurn(params: {
               }
               const result = await corregirClasificacion({ sessionId: params.sessionId, ...parsed.data });
               if (!result.aplicada) logger.warn("corregir-clasificacion rejected", { toolName });
+            } else if (toolName === "derivar-tema") {
+              const parsed = derivarTemaArgsSchema.safeParse(args);
+              if (!parsed.success) {
+                logger.warn("tool-call args failed validation", { toolName });
+                return;
+              }
+              // Se ANOTA, no se ejecuta: el receptor corre una sola vez por
+              // turno y recién con el stream del agente drenado.
+              temaDerivado ??= parsed.data.tema;
             }
           } catch (error) {
             // Persistence must never break the user-facing stream.
@@ -208,8 +279,22 @@ function pipeCategoryTurn(params: {
           }
         },
       })
+        .then(async () => {
+          // Va ANTES de cerrar el controller a propósito: el texto del agente ya
+          // salió completo hacia el cliente, y mantener el stream abierto hasta
+          // que el puntero se movió es lo único que evita la carrera con el
+          // turno siguiente — tanto el chat como el runner de escenarios mandan
+          // el próximo mensaje recién cuando este stream cierra.
+          if (temaDerivado === null) return;
+          await derivarTema({
+            sessionId: params.sessionId,
+            message: params.message,
+            categoriaActiva: params.categoriaActiva,
+            tema: temaDerivado,
+          });
+        })
         .catch((error: unknown) => {
-          logger.error("upstream consumption failed", {
+          logger.error("derivación de tema falló", {
             error: error instanceof Error ? error.message : String(error),
           });
         })
@@ -230,58 +315,56 @@ async function callCategoryAgent(params: {
   categoria: string;
   message: string;
   casoBrief?: string;
+  /** Hecho de la base, no heurística: el Caso activo ya está CAPTADO (spec §5). */
+  pedidoContactoHecho: boolean;
 }): Promise<Response> {
   const threadId = threadIdForSession(params.sessionId);
-  // Estado "pedido de contacto ya hecho": lo deriva el BFF del historial del
-  // thread con un scan determinístico — cuatro iteraciones de prompt mostraron
-  // que el agente no asienta su propio estado a tiempo (plan
-  // 2026-07-22-feedback-captacion-insistente). Si la lectura falla, se asume
-  // false: el peor caso es el comportamiento previo, nunca romper el turno.
-  const pedidoContactoHecho = await fetchAssistantTexts({ threadId, agentId: params.categoria })
-    .then((texts) => texts.some(contienePedidoContacto))
-    .catch((error: unknown) => {
-      logger.warn("pedido-contacto detection failed; assuming not asked", {
-        error: error instanceof Error ? error.message : String(error),
-      });
-      return false;
-    });
   const upstream = await streamAgentMessage({
     agentId: params.categoria,
     threadId,
     userId: params.sessionId,
     message: params.message,
     casoBrief: params.casoBrief,
-    pedidoContactoHecho,
+    pedidoContactoHecho: params.pedidoContactoHecho,
     // NOTE: no client signal — upstream consumption is decoupled from aborts.
   });
   if (!upstream.ok || !upstream.body) {
     throw new Error(`category agent stream responded ${upstream.status}`);
   }
-  return pipeCategoryTurn({ sessionId: params.sessionId, upstream });
+  return pipeCategoryTurn({
+    sessionId: params.sessionId,
+    message: params.message,
+    categoriaActiva: params.categoria,
+    upstream,
+  });
 }
 
 /**
- * One chat turn (spec §7): route by persisted classification; without it, run
- * the receptor and either chain to the category agent in the SAME response
+ * One chat turn (spec §7): route by the active Caso; without it, run the
+ * receptor and either chain to the category agent in the SAME response
  * (fast-path) or emit the receptor's question (slow-path, appended to the
  * thread since the receptor runs readOnly).
  */
 export async function orchestrateChatTurn(params: { sessionId: string; message: string }): Promise<Response> {
-  const conversation = await getOrCreateConversation(params.sessionId);
+  await getOrCreateConversation(params.sessionId);
 
-  if (conversation.categoria) {
+  // El ruteo pasa a ser por el Caso activo: `Conversation.categoria` queda como
+  // denormalización, no como estado de ruteo.
+  const casoActivo = await resolverCasoActivo(params.sessionId);
+  if (casoActivo?.categoria) {
     // Guard against a category that was enabled when persisted but has since
     // been disabled in the registry (final review gap #3, regime path):
     // degrade gracefully instead of calling an agent the backend may no
     // longer serve. The persisted classification is left untouched.
-    if (!(await esCategoriaHabilitada(conversation.categoria))) {
-      logger.warn("persisted category no longer enabled", { categoria: conversation.categoria });
+    if (!(await esCategoriaHabilitada(casoActivo.categoria))) {
+      logger.warn("persisted category no longer enabled", { categoria: casoActivo.categoria });
       return textOnlyResponse(DEGRADED_CATEGORY_MESSAGE);
     }
     return callCategoryAgent({
       sessionId: params.sessionId,
-      categoria: conversation.categoria,
+      categoria: casoActivo.categoria,
       message: params.message,
+      pedidoContactoHecho: casoActivo.estado === "CAPTADO",
     });
   }
 
@@ -319,6 +402,7 @@ export async function orchestrateChatTurn(params: { sessionId: string; message: 
           categoria: asignada.categoria,
           message: params.message,
           casoBrief: outcome.args.brief,
+          pedidoContactoHecho: asignada.casoEstado === "CAPTADO",
         });
       }
     }

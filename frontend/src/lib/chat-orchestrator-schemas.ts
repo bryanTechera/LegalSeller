@@ -35,3 +35,6 @@ export const correccionArgsSchema = z.object({
   motivo: z.string().min(1),
 });
 export type CorreccionArgs = z.infer<typeof correccionArgsSchema>;
+
+export const derivarTemaArgsSchema = z.object({ tema: z.string().min(1) });
+export type DerivarTemaArgs = z.infer<typeof derivarTemaArgsSchema>;
