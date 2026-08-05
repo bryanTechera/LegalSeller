@@ -10,12 +10,11 @@ import { subcategoriaAsignableSchema } from "../../dominios/registry.js";
  */
 export const registrarCasoTool = createTool({
   id: "registrar-caso",
-  description: `Registrá datos del caso APENAS aparezcan en la conversación: hechos relevantes, subcategorías detectadas, intereses adicionales y datos de contacto. Llamala cada vez que el usuario aporte información nueva relevante; los datos se acumulan.`,
+  description: `Registrá datos del caso APENAS aparezcan en la conversación: hechos relevantes, subcategorías detectadas y datos de contacto.`,
   inputSchema: z
     .object({
       subcategorias: z.array(subcategoriaAsignableSchema).optional().meta({ description: "Subcategorías detectadas (acumulativas)" }),
       hechos: z.string().optional().meta({ description: "Hechos/fechas nuevos relatados por el usuario" }),
-      interesAdicional: z.string().optional().meta({ description: "Tema extra fuera de la categoría de la conversación" }),
       contactoNombre: z.string().optional(),
       contactoTelefono: z.string().optional(),
       contactoEmail: z.string().optional(),
