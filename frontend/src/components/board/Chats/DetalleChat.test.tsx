@@ -312,6 +312,39 @@ describe("DetalleChat", () => {
     expect(screen.queryByText("Primera nota general")).not.toBeInTheDocument();
   });
 
+  it("«Expandir» colapsa el caso y las notas de la conversación, y «Contraer» los devuelve", () => {
+    const base = detalleBase.notas[0];
+    mockDatos({ ...detalleBase, notas: [{ ...base, id: "g1", messageId: null, texto: "Nota general" }] });
+    render(<DetalleChat id="c1" />);
+
+    expect(screen.getByText(/Juan Pérez/)).toBeInTheDocument();
+    expect(screen.getByText("Nota general")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Expandir" }));
+
+    // Los títulos quedan, el contenido no: los bloques están colapsados.
+    expect(screen.getByRole("heading", { name: "Caso" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Notas de la conversación" })).toBeInTheDocument();
+    expect(screen.queryByText(/Juan Pérez/)).not.toBeInTheDocument();
+    expect(screen.queryByText("Nota general")).not.toBeInTheDocument();
+    expect(screen.getByText("1 nota")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Contraer" }));
+    expect(screen.getByText(/Juan Pérez/)).toBeInTheDocument();
+    expect(screen.getByText("Nota general")).toBeInTheDocument();
+  });
+
+  // Colapsar desmontaría el composer y se llevaría puesto el borrador.
+  it("una nota de la conversación a medio escribir sobrevive a «Expandir»", () => {
+    render(<DetalleChat id="c1" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Nota sobre la conversación" }));
+    fireEvent.change(screen.getByLabelText("Texto de la nota"), { target: { value: "borrador" } });
+    fireEvent.click(screen.getByRole("button", { name: "Expandir" }));
+
+    expect(screen.getByLabelText("Texto de la nota")).toHaveValue("borrador");
+  });
+
   it("anotar desde el panel de fuentes salta a las notas del mensaje con la cita cargada", () => {
     render(<DetalleChat id="c1" />);
 

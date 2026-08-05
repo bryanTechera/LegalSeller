@@ -39,6 +39,9 @@ export function DetalleChat({ id }: { id: string }) {
   // conversación son globales y viven fuera de ellas, siempre a la vista.
   const [solapa, setSolapa] = useState<"fuentes" | "notas">("fuentes");
   const [seleccionado, setSeleccionado] = useState<string | null>(null);
+  // Modo "leer las fuentes": colapsa los bloques de la conversación para que el
+  // panel del mensaje se quede con toda la columna.
+  const [expandido, setExpandido] = useState(false);
 
   // try/catch como en SesionView: sin él, una excepción de red (conexión
   // cortada, no un status !== 2xx) sube sin manejar hasta NotaComposer y el
@@ -193,7 +196,7 @@ export function DetalleChat({ id }: { id: string }) {
           <h2 className={styles.subtitulo} id="board-caso">
             Caso
           </h2>
-          {data.caso ? (
+          {expandido ? null : data.caso ? (
             <dl className={styles.datos}>
               <dt>Estado</dt>
               <dd>{data.caso.estado.replace(/_/g, " ").toLowerCase()}</dd>
@@ -211,7 +214,7 @@ export function DetalleChat({ id }: { id: string }) {
           ) : (
             <p className={styles.etiqueta}>Todavía no se abrió un caso.</p>
           )}
-          <details className={styles.tecnico}>
+          <details className={styles.tecnico} hidden={expandido}>
             <summary>Detalle técnico</summary>
             <dl className={styles.datos}>
               <dt>Agentes</dt>
@@ -247,18 +250,30 @@ export function DetalleChat({ id }: { id: string }) {
             <h2 className={styles.subtitulo} id="board-notas-conversacion">
               Notas de la conversación
             </h2>
-            <button
-              type="button"
-              className={styles.botonNota}
-              onClick={() => setAnotando({ messageId: null, cita: null })}
-            >
-              Nota sobre la conversación
-            </button>
+            {expandido ? (
+              <span className={styles.etiqueta}>
+                {notasDeLaConversacion.length === 0
+                  ? "sin notas"
+                  : notasDeLaConversacion.length === 1
+                    ? "1 nota"
+                    : `${String(notasDeLaConversacion.length)} notas`}
+              </span>
+            ) : (
+              <button
+                type="button"
+                className={styles.botonNota}
+                onClick={() => setAnotando({ messageId: null, cita: null })}
+              >
+                Nota sobre la conversación
+              </button>
+            )}
           </div>
+          {/* El composer sobrevive al colapso a propósito: desmontarlo se
+              lleva puesto lo que el revisor venía escribiendo. */}
           {anotandoConversacion ? (
             <NotaComposer cita={null} onCancelar={() => setAnotando(null)} onGuardar={guardarNota} />
           ) : null}
-          {notasDeLaConversacion.length === 0 ? (
+          {expandido ? null : notasDeLaConversacion.length === 0 ? (
             <p className={styles.etiqueta}>Todavía no hay notas sobre la conversación.</p>
           ) : (
             <NotasPaginadas
@@ -294,6 +309,14 @@ export function DetalleChat({ id }: { id: string }) {
             Notas del mensaje ({notasDelMensaje.length})
             </button>
           </div>
+          <button
+            type="button"
+            className={styles.expandir}
+            aria-pressed={expandido}
+            onClick={() => setExpandido(!expandido)}
+          >
+            {expandido ? "Contraer" : "Expandir"}
+          </button>
         </div>
 
         <section
