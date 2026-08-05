@@ -39,30 +39,6 @@
   color: var(--ink-500);
 }
 
-.markdown {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  overflow-wrap: anywhere;
-}
-
-.markdown :is(ul, ol) {
-  padding-inline-start: var(--space-6);
-}
-
-.markdown blockquote {
-  border-inline-start: 3px solid var(--accent);
-  padding-inline-start: var(--space-3);
-  color: var(--ink-700);
-}
-
-.markdown code {
-  background: var(--surface-muted);
-  border-radius: var(--radius-sm);
-  padding: 0 var(--space-1);
-  font-size: var(--text-sm);
-}
-
 .thinking {
   font-size: var(--text-sm);
   color: var(--ink-500);

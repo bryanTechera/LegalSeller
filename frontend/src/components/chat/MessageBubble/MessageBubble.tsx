@@ -1,7 +1,5 @@
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-
 import { BrandMark } from "@/components/brand/BrandMark";
+import { TextoMarkdown } from "@/components/shared/TextoMarkdown/TextoMarkdown";
 
 import styles from "./MessageBubble.module.css";
 
@@ -34,10 +32,9 @@ export function MessageBubble({ role, content, showThinking = false, anchorId }:
             </span>
             <span className={styles.assistantName}>Jurco</span>
           </span>
-          <div className={styles.markdown}>
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+          <TextoMarkdown texto={content}>
             {showThinking ? <span className={styles.thinking}>Buscando en el corpus…</span> : null}
-          </div>
+          </TextoMarkdown>
         </>
       ) : (
         <p>{content}</p>

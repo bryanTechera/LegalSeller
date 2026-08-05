@@ -8,6 +8,7 @@ import { NotaComposer } from "@/components/revision/NotaComposer";
 import { NotasPaginadas } from "@/components/revision/NotasPaginadas";
 import { NotaThread } from "@/components/revision/NotaThread";
 import { PanelFuentes } from "@/components/revision/PanelFuentes";
+import { TextoMarkdown } from "@/components/shared/TextoMarkdown/TextoMarkdown";
 import type { DetalleConversacion } from "@/lib/board/conversaciones";
 import { resumirTecnico } from "@/lib/board/tecnico";
 import { resumirPorRespuesta, textoDeMarca } from "@/lib/revision/fuentes";
@@ -141,7 +142,10 @@ export function DetalleChat({ id }: { id: string }) {
                 aria-current={esSeleccionado ? "true" : undefined}
                 data-seleccionada={esSeleccionado ? "true" : undefined}
               >
-                <p>{item.texto}</p>
+                {/* El agente responde en markdown: sin rendirlo, el revisor
+                    lee los asteriscos de cada negrita. El mensaje del
+                    consultante es texto plano, como en el chat. */}
+                {item.rol === "assistant" ? <TextoMarkdown texto={item.texto} /> : <p>{item.texto}</p>}
                 <div className={styles.filaMensaje}>
                   {item.rol === "assistant" ? (
                     <button

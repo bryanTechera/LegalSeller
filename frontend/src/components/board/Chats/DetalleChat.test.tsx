@@ -157,6 +157,25 @@ describe("DetalleChat", () => {
     expect(within(liAgente as HTMLElement).getByText("1 consulta · 1 fragmento")).toBeInTheDocument();
   });
 
+  it("la respuesta del agente se rinde como markdown, no con los asteriscos crudos", () => {
+    mockDatos({
+      ...detalleBase,
+      timeline: [
+        {
+          tipo: "mensaje",
+          id: "a1",
+          rol: "assistant",
+          texto: "BPS no te paga por **solo 3 días**.",
+          fecha: "2026-08-04T10:01:00.000Z",
+        },
+      ],
+    });
+    render(<DetalleChat id="c1" />);
+
+    expect(screen.getByText("solo 3 días").tagName).toBe("STRONG");
+    expect(screen.queryByText(/\*\*/)).not.toBeInTheDocument();
+  });
+
   it("una respuesta con búsqueda vacía muestra la marca en estilo de alerta", () => {
     render(<DetalleChat id="c1" />);
 
