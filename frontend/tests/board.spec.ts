@@ -66,6 +66,14 @@ test("el detalle del chat muestra las fuentes del corpus", async ({ page }) => {
   await page.getByRole("tab", { name: /Notas del mensaje/ }).click();
   await expect(page.getByRole("button", { name: "Nota sobre este mensaje" })).toBeVisible();
 
+  // «Expandir» le da la columna entera al panel del mensaje.
+  await page.getByRole("button", { name: "Expandir" }).click();
+  await expect(page.getByRole("heading", { name: "Caso" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Nota sobre la conversación" })).toBeHidden();
+  await page.getByRole("button", { name: "Contraer" }).click();
+  await expect(page.getByRole("button", { name: "Nota sobre la conversación" })).toBeVisible();
+
+  await page.getByRole("tab", { name: "Fuentes" }).click();
   await page.getByRole("button", { name: "Quitar selección" }).click();
   await expect(respuestaConMarca).not.toHaveAttribute("data-seleccionada", "true");
 });
