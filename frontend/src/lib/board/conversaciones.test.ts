@@ -58,13 +58,50 @@ describe("listarConversaciones", () => {
       {
         id: "c1",
         fecha: "2026-07-30T10:00:00.000Z",
+        // Sin fila de mensajes con ultimaActividad (mock por defecto de este
+        // describe), cae al createdAt de la conversación.
+        ultimaActividad: "2026-07-30T10:00:00.000Z",
         categoria: "laboral",
         estadoCaso: "CAPTADO",
+        casos: 1,
         mensajes: 6,
         preview: "Me despidieron sin causa",
         notas: 2,
       },
     ]);
+  });
+
+  it("ordena por última actividad, no por creación", async () => {
+    prismaMock.prisma.conversation.findMany.mockResolvedValue([
+      { ...filaConversacion("nueva-inactiva"), createdAt: new Date("2026-08-04T10:00:00.000Z") },
+      { ...filaConversacion("vieja-activa"), createdAt: new Date("2026-08-01T10:00:00.000Z") },
+    ]);
+    prismaMock.prisma.$queryRaw.mockResolvedValue([
+      {
+        threadId: "chat-nueva-inactiva",
+        mensajes: 2,
+        preview: "hola",
+        ultimaActividad: new Date("2026-08-04T10:05:00.000Z"),
+      },
+      {
+        threadId: "chat-vieja-activa",
+        mensajes: 8,
+        preview: "me despidieron",
+        ultimaActividad: new Date("2026-08-05T13:08:00.000Z"),
+      },
+    ]);
+
+    const pagina = await listarConversaciones({ rango: "30d" });
+
+    expect(pagina.chats.map((chat) => chat.id)).toEqual(["vieja-activa", "nueva-inactiva"]);
+  });
+
+  it("marca CAPTADO el chat que tiene al menos un caso captado", async () => {
+    prismaMock.prisma.conversation.findMany.mockResolvedValue([
+      { ...filaConversacion("c1"), casos: [{ estado: "EN_CONVERSACION" }, { estado: "CAPTADO" }] },
+    ]);
+    const pagina = await listarConversaciones({ rango: "30d" });
+    expect(pagina.chats[0]).toMatchObject({ estadoCaso: "CAPTADO", casos: 2 });
   });
 
   it("una conversación sin mensajes persistidos no rompe el listado", async () => {
