@@ -55,6 +55,22 @@ export function citaDeFragmento(fragmento: FragmentoRecuperado): string {
   return `${encabezado}«${cuerpo}»`;
 }
 
+/**
+ * Fragmentos de mayor a menor score. El backend ya los devuelve ordenados,
+ * pero el orden es lo que le da sentido a la numeración que ve el revisor:
+ * lo garantizamos acá en vez de confiar en el productor.
+ */
+export function fragmentosPorScore(fragmentos: FragmentoRecuperado[]): FragmentoRecuperado[] {
+  return [...fragmentos].sort((a, b) => b.similarity - a.similarity);
+}
+
+/** Línea de resumen de una búsqueda colapsada: cuántas fuentes trajo y cuál fue la mejor. */
+export function resumenDeBusqueda(busqueda: BusquedaCorpus): string {
+  if (busqueda.estado !== "ok" || busqueda.fragmentos.length === 0) return "sin resultados";
+  const mejor = Math.max(...busqueda.fragmentos.map((fragmento) => fragmento.similarity));
+  return `${plural(busqueda.fragmentos.length, "fragmento", "fragmentos")} · mejor ${mejor.toFixed(2)}`;
+}
+
 export function resumirPorRespuesta(busquedas: BusquedaCorpus[]): Map<string, ResumenFuentes> {
   const porMensaje = new Map<string, ResumenFuentes>();
   for (const busqueda of busquedas) {

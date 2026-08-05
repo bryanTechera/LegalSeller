@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   citaDeBusqueda,
   citaDeFragmento,
+  fragmentosPorScore,
+  resumenDeBusqueda,
   resumirPorRespuesta,
   textoDeMarca,
   textoDelMapa,
@@ -32,6 +34,32 @@ function busqueda(sobreescribir: Partial<BusquedaCorpus> = {}): BusquedaCorpus {
     ...sobreescribir,
   };
 }
+
+describe("fragmentosPorScore", () => {
+  it("ordena de mayor a menor score sin mutar el arreglo original", () => {
+    const bajo = { ...fragmento, documentId: "d2", similarity: 0.41 };
+    const medio = { ...fragmento, documentId: "d3", similarity: 0.63 };
+    const original = [bajo, fragmento, medio];
+
+    expect(fragmentosPorScore(original).map((f) => f.documentId)).toEqual(["d1", "d3", "d2"]);
+    expect(original.map((f) => f.documentId)).toEqual(["d2", "d1", "d3"]);
+  });
+});
+
+describe("resumenDeBusqueda", () => {
+  it("cuenta los fragmentos y nombra el mejor score", () => {
+    const otro = { ...fragmento, documentId: "d2", similarity: 0.41 };
+    expect(resumenDeBusqueda(busqueda({ fragmentos: [otro, fragmento] }))).toBe("2 fragmentos · mejor 0.79");
+  });
+
+  it("un solo fragmento va en singular", () => {
+    expect(resumenDeBusqueda(busqueda())).toBe("1 fragmento · mejor 0.79");
+  });
+
+  it("una búsqueda sin resultados lo dice", () => {
+    expect(resumenDeBusqueda(busqueda({ estado: "empty", fragmentos: [] }))).toBe("sin resultados");
+  });
+});
 
 describe("citaDeBusqueda", () => {
   it("cita la consulta que armó el agente", () => {

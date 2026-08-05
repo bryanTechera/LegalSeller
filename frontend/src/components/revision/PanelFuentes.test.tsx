@@ -146,6 +146,56 @@ describe("PanelFuentes", () => {
     );
   });
 
+  it("una sola búsqueda muestra sus fragmentos sin colapsar", () => {
+    render(
+      <PanelFuentes busquedas={[busqueda()]} messageIdSeleccionado="m1" onIrARespuesta={vi.fn()} onAnotar={vi.fn()} />,
+    );
+    expect(screen.getByText("Ley 10.489 — art. 4")).toBeVisible();
+  });
+
+  it("con varias búsquedas en la misma respuesta solo se ven las consultas hasta expandir", () => {
+    const otra = busqueda({
+      spanId: "t2",
+      consulta: "plazo para reclamar despido",
+      fragmentos: [{ ...fragmento, documentId: "d2", documentTitle: "Ley 18.572" }],
+    });
+    render(
+      <PanelFuentes
+        busquedas={[busqueda(), otra]}
+        messageIdSeleccionado="m1"
+        onIrARespuesta={vi.fn()}
+        onAnotar={vi.fn()}
+      />,
+    );
+
+    // Las dos consultas están a la vista; sus resultados, no.
+    expect(screen.getByText("indemnización por despido antigüedad")).toBeVisible();
+    expect(screen.getByText("plazo para reclamar despido")).toBeVisible();
+    expect(screen.getByText("Ley 18.572 — art. 4")).not.toBeVisible();
+
+    // El resumen de la cabecera dice qué hay adentro sin abrirla.
+    expect(screen.getAllByText("1 fragmento · mejor 0.79")).toHaveLength(2);
+
+    fireEvent.click(screen.getByText("plazo para reclamar despido"));
+    expect(screen.getByText("Ley 18.572 — art. 4")).toBeVisible();
+  });
+
+  it("los fragmentos se numeran por score, de mayor a menor", () => {
+    const bajo = { ...fragmento, documentId: "d2", documentTitle: "Resolución 123", similarity: 0.41 };
+    render(
+      <PanelFuentes
+        busquedas={[busqueda({ fragmentos: [bajo, fragmento] })]}
+        messageIdSeleccionado="m1"
+        onIrARespuesta={vi.fn()}
+        onAnotar={vi.fn()}
+      />,
+    );
+
+    const numeros = screen.getAllByRole("article").map((articulo) => articulo.textContent ?? "");
+    expect(numeros[0]).toMatch(/^1Ley 10\.489 — art\. 40\.79/);
+    expect(numeros[1]).toMatch(/^2Resolución 123 — art\. 40\.41/);
+  });
+
   it("una respuesta sin búsquedas lo dice y deja volver al mapa", () => {
     const onIrARespuesta = vi.fn();
     render(

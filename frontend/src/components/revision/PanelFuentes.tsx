@@ -5,6 +5,8 @@ import { useState } from "react";
 import {
   citaDeBusqueda,
   citaDeFragmento,
+  fragmentosPorScore,
+  resumenDeBusqueda,
   textoDelMapa,
   type BusquedaCorpus,
   type FragmentoRecuperado,
@@ -30,7 +32,7 @@ function Fragmento({
   onAnotar,
 }: {
   fragmento: FragmentoRecuperado;
-  /** Posición 1-based dentro de la búsqueda: desambigua dos chunks del mismo documento/sección. */
+  /** Posición 1-based por score dentro de la búsqueda: es el número que se muestra. */
   indice: number;
   onAnotar: () => void;
 }) {
@@ -42,12 +44,15 @@ function Fragmento({
   return (
     <article className={styles.fragmento}>
       <header className={styles.fragmentoMeta}>
-        <span>{docLabel}</span>
+        <span className={styles.numero} aria-hidden="true">
+          {indice}
+        </span>
+        <span className={styles.documento}>{docLabel}</span>
         <span className={styles.score}>
+          <span className={styles.scoreValor}>{fragmento.similarity.toFixed(2)}</span>
           <span className={styles.barra} aria-hidden="true">
             <span style={{ width: `${String(Math.round(fragmento.similarity * 100))}%` }} />
           </span>
-          {fragmento.similarity.toFixed(2)}
         </span>
       </header>
       <p className={styles.fragmentoTexto}>{texto}</p>
@@ -75,23 +80,36 @@ function Fragmento({
   );
 }
 
-function Busqueda({
+/**
+ * Cabecera de una búsqueda: lo único visible cuando está colapsada. Va con
+ * `span`s y no con `p` porque también es el contenido de un `summary`, cuyo
+ * modelo de contenido es phrasing content.
+ */
+function Cabecera({ busqueda }: { busqueda: BusquedaCorpus }) {
+  const filtros = [busqueda.categoria, ...busqueda.subcategorias].filter(Boolean).join(" · ");
+  return (
+    <>
+      <span className={styles.etiqueta}>Consulta del agente</span>
+      <span className={styles.consulta}>{busqueda.consulta || "(consulta ilegible)"}</span>
+      {filtros ? <span className={styles.filtros}>{filtros}</span> : null}
+      <span className={busqueda.estado === "ok" ? styles.resumen : styles.resumenVacio}>
+        {resumenDeBusqueda(busqueda)}
+      </span>
+    </>
+  );
+}
+
+function Cuerpo({
   busqueda,
   onAnotar,
 }: {
   busqueda: BusquedaCorpus;
   onAnotar: (messageId: string | null, cita: string) => void;
 }) {
-  const filtros = [busqueda.categoria, ...busqueda.subcategorias].filter(Boolean).join(" · ");
-
   return (
-    <section className={styles.busqueda}>
-      <p className={styles.etiqueta}>Consulta del agente</p>
-      <p className={styles.consulta}>{busqueda.consulta}</p>
-      {filtros ? <p className={styles.filtros}>{filtros}</p> : null}
-
+    <div className={styles.resultados}>
       {busqueda.estado === "ok" ? (
-        busqueda.fragmentos.map((fragmento, indice) => (
+        fragmentosPorScore(busqueda.fragmentos).map((fragmento, indice) => (
           <Fragmento
             key={fragmento.documentId + String(fragmento.similarity)}
             fragmento={fragmento}
@@ -117,7 +135,42 @@ function Busqueda({
       >
         Dejar nota sobre esta búsqueda
       </button>
-    </section>
+    </div>
+  );
+}
+
+function Busqueda({
+  busqueda,
+  colapsable,
+  onAnotar,
+}: {
+  busqueda: BusquedaCorpus;
+  /** Con varias búsquedas en la misma respuesta, cada una arranca colapsada. */
+  colapsable: boolean;
+  onAnotar: (messageId: string | null, cita: string) => void;
+}) {
+  // `open` controlado: sin el estado, un re-render del panel (expandir un
+  // fragmento, guardar una nota) volvería a cerrar lo que el revisor abrió.
+  const [abierta, setAbierta] = useState(false);
+
+  if (!colapsable) {
+    return (
+      <section className={styles.busqueda}>
+        <div className={styles.cabecera}>
+          <Cabecera busqueda={busqueda} />
+        </div>
+        <Cuerpo busqueda={busqueda} onAnotar={onAnotar} />
+      </section>
+    );
+  }
+
+  return (
+    <details className={styles.busqueda} open={abierta} onToggle={(event) => setAbierta(event.currentTarget.open)}>
+      <summary className={styles.cabecera}>
+        <Cabecera busqueda={busqueda} />
+      </summary>
+      <Cuerpo busqueda={busqueda} onAnotar={onAnotar} />
+    </details>
   );
 }
 
@@ -169,7 +222,7 @@ export function PanelFuentes({ busquedas, messageIdSeleccionado, onIrARespuesta,
   return (
     <div className={styles.detalle}>
       {deLaRespuesta.map((busqueda) => (
-        <Busqueda key={busqueda.spanId} busqueda={busqueda} onAnotar={onAnotar} />
+        <Busqueda key={busqueda.spanId} busqueda={busqueda} colapsable={deLaRespuesta.length > 1} onAnotar={onAnotar} />
       ))}
     </div>
   );

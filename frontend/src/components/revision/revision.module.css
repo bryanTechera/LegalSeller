@@ -342,11 +342,20 @@
   align-items: start;
 }
 
+/* Scroll propio: la columna vive dentro de `.sesionScroll`, así que sin un
+   alto acotado una respuesta con muchas fuentes estiraba la página y había
+   que scrollear la conversación entera para leerla. El descuento cubre el
+   header de la sesión y el composer, que quedan fuera del scrollport. */
 .columnaFuentes {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: var(--space-3);
   position: sticky;
   top: var(--space-6);
+  max-height: calc(100dvh - 14rem);
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .marcaFuentes,
@@ -376,6 +385,8 @@
 
   .columnaFuentes {
     position: static;
+    max-height: none;
+    overflow-y: visible;
   }
 }
 

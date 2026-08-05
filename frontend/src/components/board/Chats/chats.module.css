@@ -133,11 +133,17 @@
   cursor: pointer;
 }
 
+/* Alto acotado al viewport para que el panel scrollee solo: con muchas
+   fuentes, la columna lateral era más alta que la página y obligaba a
+   scrollear todo el chat para leerla. Las solapas quedan fijas arriba. */
 .panel {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: var(--space-4);
   position: sticky;
   top: var(--space-6);
+  max-height: calc(100vh - var(--space-6) * 2);
+  min-height: 0;
 }
 
 .bloqueLateral {
@@ -145,6 +151,9 @@
   background: var(--surface);
   border: 1px solid var(--ink-100);
   border-radius: var(--radius-md);
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .subtitulo {
@@ -231,5 +240,10 @@
 
   .panel {
     position: static;
+    max-height: none;
+  }
+
+  .bloqueLateral {
+    overflow-y: visible;
   }
 }
