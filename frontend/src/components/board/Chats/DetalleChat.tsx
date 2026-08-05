@@ -287,6 +287,14 @@ export function DetalleChat({ id }: { id: string }) {
             Notas del mensaje ({notasDelMensaje.length})
             </button>
           </div>
+        </div>
+
+        <section
+          className={styles.bloqueLateral}
+          id="panel-mensaje"
+          role="tabpanel"
+          aria-labelledby={solapa === "fuentes" ? "solapa-fuentes" : "solapa-notas"}
+        >
           {seleccionado !== null ? (
             <button
               type="button"
@@ -299,14 +307,6 @@ export function DetalleChat({ id }: { id: string }) {
               Quitar selección
             </button>
           ) : null}
-        </div>
-
-        <section
-          className={styles.bloqueLateral}
-          id="panel-mensaje"
-          role="tabpanel"
-          aria-labelledby={solapa === "fuentes" ? "solapa-fuentes" : "solapa-notas"}
-        >
           {solapa === "fuentes" ? (
             <PanelFuentes
               busquedas={data.busquedas}

@@ -195,7 +195,9 @@
 .quitarSeleccion {
   font: inherit;
   font-size: var(--text-xs);
+  align-self: flex-end;
   border: 0;
+  padding: 0;
   background: transparent;
   color: var(--ink-500);
   text-decoration: underline;
