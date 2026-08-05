@@ -148,7 +148,11 @@
 /* Bloques siempre visibles (caso y notas de la conversación): no se encogen
    ni se esconden detrás de una solapa — son datos de toda la conversación. */
 .bloqueFijo {
-  flex-shrink: 0;
+  /* Se encoge y scrollea por dentro antes que desbordar la columna: con el
+     alto atado al viewport, un bloque rígido empujaría el panel del mensaje
+     fuera de la pantalla, sin barra que lo alcance. */
+  flex: 0 1 auto;
+  min-height: 4rem;
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
@@ -163,7 +167,7 @@
 
 /* Panel del mensaje elegido: se queda con el alto sobrante y scrollea solo. */
 .bloqueLateral {
-  flex: 1;
+  flex: 1 1 12rem;
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
@@ -171,7 +175,7 @@
   background: var(--surface);
   border: 1px solid var(--ink-100);
   border-radius: var(--radius-md);
-  min-height: 8rem;
+  min-height: 10rem;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
