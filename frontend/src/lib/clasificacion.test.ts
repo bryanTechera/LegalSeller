@@ -157,6 +157,45 @@ describe("asignarClasificacion", () => {
     );
   });
 
+  it("escape tras escape en turnos distintos reusa el caso congelado (no fragmenta la demanda)", async () => {
+    // Turno 1: primer escape — crea el caso congelado y mueve el puntero.
+    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: null, casoActivoId: null });
+    tx.caso.create.mockResolvedValue({ id: "k1" });
+    const primero = await asignarClasificacion({
+      sessionId: "s1",
+      categoria: "categoria-no-habilitada",
+      temaDetectado: "sucesiones",
+    });
+    expect(primero).toEqual({ categoria: null, aplicada: false, casoId: "k1", casoEstado: null });
+
+    vi.resetAllMocks();
+    tx.conversation.updateMany.mockResolvedValue({ count: 1 });
+
+    // Turno 2: segundo escape (mismo tema reformulado u otro) — el puntero
+    // ya apunta al caso FUERA_DE_COBERTURA congelado por el turno 1.
+    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: null, casoActivoId: "k1" });
+    tx.caso.findUnique
+      .mockResolvedValueOnce({
+        id: "k1",
+        categoria: null,
+        origen: "FUERA_DE_COBERTURA",
+        subcategorias: [],
+        resumen: null,
+        estado: "FUERA_DE_COBERTURA",
+      }) // casoActivo, resuelto por casoActivoId
+      .mockResolvedValueOnce({ estado: "FUERA_DE_COBERTURA" }); // relectura final
+
+    const segundo = await asignarClasificacion({
+      sessionId: "s1",
+      categoria: "fuera-de-universo",
+      temaDetectado: "sucesiones otra vez",
+    });
+
+    expect(segundo).toEqual({ categoria: null, aplicada: false, casoId: "k1", casoEstado: "FUERA_DE_COBERTURA" });
+    expect(tx.caso.create).not.toHaveBeenCalled();
+    expect(tx.conversation.update).not.toHaveBeenCalled(); // el puntero ya apuntaba a k1: no se mueve
+  });
+
   it("no duplica una subcategoria ya presente al promover", async () => {
     tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: null, casoActivoId: null });
     tx.caso.findUnique.mockResolvedValue({ id: "k1", subcategorias: ["despido"], resumen: { brief: "previo" } });
@@ -235,6 +274,28 @@ describe("corregirClasificacion", () => {
       expect.objectContaining({ data: expect.objectContaining({ tipo: "CORRECCION" }) }),
     );
   });
+
+  it("no propaga P2002 cuando otra transacción crea el caso destino entre la colisión y el update (TOCTOU)", async () => {
+    tx.conversation.findUnique.mockResolvedValue({ id: "c1", casoActivoId: "k1" });
+    tx.caso.findUnique.mockResolvedValueOnce({ id: "k1", categoria: "laboral" }).mockResolvedValueOnce(null);
+    tx.caso.updateMany.mockRejectedValue(Object.assign(new Error("Unique constraint failed"), { code: "P2002" }));
+
+    await expect(corregirClasificacion({ sessionId: "s1", categoria: "familia", motivo: "m" })).resolves.toEqual({
+      aplicada: false,
+    });
+    expect(tx.casoEvento.create).not.toHaveBeenCalled();
+    expect(tx.conversation.update).not.toHaveBeenCalled();
+  });
+
+  it("relanza errores de caso.updateMany que no son P2002", async () => {
+    tx.conversation.findUnique.mockResolvedValue({ id: "c1", casoActivoId: "k1" });
+    tx.caso.findUnique.mockResolvedValueOnce({ id: "k1", categoria: "laboral" }).mockResolvedValueOnce(null);
+    tx.caso.updateMany.mockRejectedValue(new Error("db down"));
+
+    await expect(corregirClasificacion({ sessionId: "s1", categoria: "familia", motivo: "m" })).rejects.toThrow(
+      "db down",
+    );
+  });
 });
 
 describe("registrarDatosCaso", () => {
@@ -269,6 +330,29 @@ describe("registrarDatosCaso", () => {
     expect(tx.caso.update).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ estado: "CAPTADO" }) }),
     );
+  });
+
+  it("sin caso activo ni categoría persistida, tolera P2002 al crear (dos registrar-caso concurrentes)", async () => {
+    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: null, casoActivoId: null });
+    tx.caso.create.mockRejectedValue(Object.assign(new Error("Unique constraint failed"), { code: "P2002" }));
+    tx.caso.findFirst.mockResolvedValue({ id: "k9", subcategorias: [], resumen: null }); // caso de la ganadora
+
+    await registrarDatosCaso({ sessionId: "s1", contactoNombre: "Ana" });
+
+    expect(tx.caso.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { conversationId: "c1", categoria: null } }),
+    );
+    expect(tx.conversation.update).toHaveBeenCalledWith({ where: { id: "c1" }, data: { casoActivoId: "k9" } });
+    expect(tx.caso.update).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: "k9" }, data: expect.objectContaining({ contactoNombre: "Ana" }) }),
+    );
+  });
+
+  it("relanza errores de caso.create que no son P2002 (sin caso activo ni categoría persistida)", async () => {
+    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: null, casoActivoId: null });
+    tx.caso.create.mockRejectedValue(new Error("db down"));
+
+    await expect(registrarDatosCaso({ sessionId: "s1", contactoNombre: "Ana" })).rejects.toThrow("db down");
   });
 });
 

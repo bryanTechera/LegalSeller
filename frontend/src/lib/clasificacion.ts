@@ -148,15 +148,21 @@ export async function asignarClasificacion(params: {
     }
 
     const esEscape = ESCAPES.has(params.categoria);
+    // El caso activo puede ser el que dejó congelado un escape previo
+    // (categoria null, origen FUERA_DE_COBERTURA). Un escape nuevo lo REUSA
+    // (nadie afirmó que el tema sea distinto — puede ser la misma consulta
+    // reformulada) en vez de abrir otro; una clasificación real lo PROMUEVE
+    // fuera del estado congelado. `abrirCasoFueraDeCobertura` (Task 4) es la
+    // única vía que crea siempre, porque ahí el agente marcó explícitamente
+    // un tema nuevo con derivar-tema.
+    const casoActivoEscapado =
+      casoActivo?.categoria === null && casoActivo.origen === "FUERA_DE_COBERTURA" ? casoActivo : null;
     let casoExistente = esEscape
-      ? null
+      ? casoActivoEscapado
       : ((await tx.caso.findUnique({
           where: { conversationId_categoria: { conversationId: conversation.id, categoria: params.categoria } },
           select: { id: true, categoria: true, origen: true, subcategorias: true, resumen: true },
-        })) ??
-          // Promote: el caso activo puede ser el que dejó congelado un escape
-          // previo (categoria null). Se promueve en vez de abrir uno nuevo.
-          (casoActivo?.categoria === null && casoActivo.origen === "FUERA_DE_COBERTURA" ? casoActivo : null));
+        })) ?? casoActivoEscapado);
 
     let caso: { id: string } | undefined;
     if (!casoExistente) {
@@ -238,8 +244,12 @@ export async function asignarClasificacion(params: {
     });
 
     // El caso recién resuelto (creado, promovido o reutilizado por un
-    // escape) pasa a ser el activo de la conversación.
-    await tx.conversation.update({ where: { id: conversation.id }, data: { casoActivoId: caso.id } });
+    // escape) pasa a ser el activo de la conversación — salvo que ya lo
+    // fuera (un escape repetido reutiliza el mismo caso congelado y el
+    // puntero no se mueve).
+    if (casoActivo?.id !== caso.id) {
+      await tx.conversation.update({ where: { id: conversation.id }, data: { casoActivoId: caso.id } });
+    }
     const casoFinal = await tx.caso.findUnique({ where: { id: caso.id }, select: { estado: true } });
 
     if (esEscape) {
@@ -302,22 +312,39 @@ export async function registrarDatosCaso(params: {
     // Sin caso activo: upsert por la clave compuesta cuando hay categoría
     // persistida (dos registrar-caso concurrentes de la misma categoría no
     // duplican). Con categoria null NO se puede usar la clave compuesta
-    // —Prisma la tipa `categoria: string`— así que va create directo.
-    const caso =
-      casoActivo ??
-      (conversation.categoria
-        ? await tx.caso.upsert({
-            where: {
-              conversationId_categoria: { conversationId: conversation.id, categoria: conversation.categoria },
-            },
-            create: { conversationId: conversation.id, categoria: conversation.categoria },
-            update: {},
-            select: { id: true, subcategorias: true, resumen: true },
-          })
-        : await tx.caso.create({
-            data: { conversationId: conversation.id, categoria: null },
-            select: { id: true, subcategorias: true, resumen: true },
-          }));
+    // —Prisma la tipa `categoria: string`— así que va create directo, con el
+    // mismo catch-y-recuperación de P2002 que asignarClasificacion: si dos
+    // llamadas concurrentes chocan al crear, la que pierde adopta el caso de
+    // la ganadora en vez de dejar dos huérfanos.
+    let caso: { id: string; subcategorias: string[]; resumen: unknown };
+    if (casoActivo) {
+      caso = casoActivo;
+    } else if (conversation.categoria) {
+      caso = await tx.caso.upsert({
+        where: {
+          conversationId_categoria: { conversationId: conversation.id, categoria: conversation.categoria },
+        },
+        create: { conversationId: conversation.id, categoria: conversation.categoria },
+        update: {},
+        select: { id: true, subcategorias: true, resumen: true },
+      });
+    } else {
+      try {
+        caso = await tx.caso.create({
+          data: { conversationId: conversation.id, categoria: null },
+          select: { id: true, subcategorias: true, resumen: true },
+        });
+      } catch (error) {
+        if (!esErrorDeUnicidad(error)) throw error;
+        const ganador = await tx.caso.findFirst({
+          where: { conversationId: conversation.id, categoria: null },
+          orderBy: { updatedAt: "desc" },
+          select: { id: true, subcategorias: true, resumen: true },
+        });
+        if (!ganador) throw error;
+        caso = ganador;
+      }
+    }
 
     if (!casoActivo) {
       await tx.conversation.update({ where: { id: conversation.id }, data: { casoActivoId: caso.id } });
@@ -388,10 +415,20 @@ export async function corregirClasificacion(params: {
     });
     if (colision) return { aplicada: false };
 
-    const updated = await tx.caso.updateMany({
-      where: { id: caso.id, correccionAplicada: false },
-      data: { correccionAplicada: true, categoria: params.categoria },
-    });
+    let updated: { count: number };
+    try {
+      updated = await tx.caso.updateMany({
+        where: { id: caso.id, correccionAplicada: false },
+        data: { correccionAplicada: true, categoria: params.categoria },
+      });
+    } catch (error) {
+      if (!esErrorDeUnicidad(error)) throw error;
+      // TOCTOU: entre el chequeo de colisión y este update, otra transacción
+      // creó el Caso de la categoría destino — el update pisaría
+      // @@unique([conversationId, categoria]). Igual que la colisión
+      // detectada arriba, no es una corrección aplicable: no reintentes.
+      return { aplicada: false };
+    }
     if (updated.count === 0) return { aplicada: false };
 
     await tx.casoEvento.create({
