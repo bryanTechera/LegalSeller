@@ -2,11 +2,17 @@ import { Memory } from "@mastra/memory";
 
 import { postgresStore } from "../../config/storage.js";
 
-const WORKING_MEMORY_TEMPLATE = `# Caso del usuario
+const WORKING_MEMORY_TEMPLATE = `# Casos en curso
 
+## Caso que estás atendiendo
+- Categoría:
 - Hechos y fechas relatados:
 - Subcategorías detectadas:
-- Intereses adicionales (otros temas mencionados):
+
+## Otros casos abiertos en esta conversación
+- (una línea por caso: categoría — qué contó el usuario. Sus hechos NO son del caso que atendés ahora)
+
+## Datos del consultante (comunes a todos los casos)
 - Datos de contacto ya aportados:
 - Preferencias de respuesta:
 `;

@@ -13,7 +13,7 @@ const categoriaHabilitadaSchema = z.enum(
  */
 export const corregirClasificacionTool = createTool({
   id: "corregir-clasificacion",
-  description: `Corregí la categoría de la conversación SOLO si es evidente que la clasificación inicial fue un error (el problema real del usuario es de otra área). Disponible una única vez por conversación. Un tema ADICIONAL no es un error: registralo con registrar-caso (interesAdicional).`,
+  description: `Corregí la categoría de la conversación SOLO si es evidente que la clasificación inicial fue un error (el problema real del usuario es de otra área). Disponible una única vez por caso. Un tema ADICIONAL no es un error: marcalo con derivar-tema.`,
   inputSchema: z.object({
     categoria: categoriaHabilitadaSchema.meta({ description: "Categoría correcta" }),
     motivo: z.string().min(1).meta({ description: "Por qué la clasificación anterior fue un error" }),
