@@ -22,6 +22,8 @@ vi.mock("./prisma", () => ({
 }));
 
 import {
+  abrirCasoFueraDeCobertura,
+  abrirOReactivarCaso,
   asignarClasificacion,
   corregirClasificacion,
   getOrCreateConversation,
@@ -411,5 +413,116 @@ describe("resolverCasoActivo", () => {
       where: { id: "c1" },
       data: { casoActivoId: "k2" },
     });
+  });
+});
+
+describe("abrirOReactivarCaso", () => {
+  beforeEach(() => vi.resetAllMocks());
+
+  it("falso positivo: misma categoría que el caso activo es no-op", async () => {
+    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: "laboral", casoActivoId: "k1" });
+    tx.caso.findUnique.mockResolvedValue({
+      id: "k1",
+      categoria: "laboral",
+      estado: "EN_CONVERSACION",
+      origen: "DOMINIO",
+      correccionAplicada: false,
+    });
+    await expect(abrirOReactivarCaso({ sessionId: "s1", categoria: "laboral" })).resolves.toEqual({
+      accion: "no-op",
+      casoId: "k1",
+      categoria: "laboral",
+    });
+    expect(tx.caso.create).not.toHaveBeenCalled();
+    expect(tx.conversation.update).not.toHaveBeenCalled();
+  });
+
+  it("reactiva el caso de una categoría ya presente sin crear otro", async () => {
+    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: "laboral", casoActivoId: "k1" });
+    tx.caso.findUnique
+      .mockResolvedValueOnce({
+        id: "k1",
+        categoria: "laboral",
+        estado: "CAPTADO",
+        origen: "DOMINIO",
+        correccionAplicada: false,
+      })
+      .mockResolvedValueOnce({ id: "k2", categoria: "familia" });
+    const resultado = await abrirOReactivarCaso({ sessionId: "s1", categoria: "familia" });
+    expect(resultado).toEqual({ accion: "reactivado", casoId: "k2", categoria: "familia" });
+    expect(tx.caso.create).not.toHaveBeenCalled();
+    expect(tx.conversation.update).toHaveBeenCalledWith({ where: { id: "c1" }, data: { casoActivoId: "k2" } });
+  });
+
+  it("crea el caso de una categoría nueva heredando el contacto: nace CAPTADO", async () => {
+    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: "laboral", casoActivoId: "k1" });
+    tx.caso.findUnique
+      .mockResolvedValueOnce({
+        id: "k1",
+        categoria: "laboral",
+        estado: "CAPTADO",
+        origen: "DOMINIO",
+        correccionAplicada: false,
+      })
+      .mockResolvedValueOnce(null);
+    tx.caso.findFirst.mockResolvedValue({
+      contactoNombre: "Ana",
+      contactoTelefono: "099",
+      contactoEmail: null,
+    });
+    tx.caso.create.mockResolvedValue({ id: "k3" });
+    const resultado = await abrirOReactivarCaso({ sessionId: "s1", categoria: "transito", subcategoria: undefined });
+    expect(resultado).toEqual({ accion: "creado", casoId: "k3", categoria: "transito" });
+    expect(tx.caso.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          categoria: "transito",
+          contactoNombre: "Ana",
+          contactoTelefono: "099",
+          estado: "CAPTADO",
+        }),
+      }),
+    );
+    expect(tx.conversation.update).toHaveBeenCalledWith({ where: { id: "c1" }, data: { casoActivoId: "k3" } });
+  });
+
+  it("sin contacto heredable el caso nuevo nace EN_CONVERSACION", async () => {
+    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: "laboral", casoActivoId: "k1" });
+    tx.caso.findUnique
+      .mockResolvedValueOnce({
+        id: "k1",
+        categoria: "laboral",
+        estado: "EN_CONVERSACION",
+        origen: "DOMINIO",
+        correccionAplicada: false,
+      })
+      .mockResolvedValueOnce(null);
+    tx.caso.findFirst.mockResolvedValue(null);
+    tx.caso.create.mockResolvedValue({ id: "k4" });
+    await abrirOReactivarCaso({ sessionId: "s1", categoria: "familia" });
+    expect(tx.caso.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ estado: "EN_CONVERSACION" }) }),
+    );
+  });
+});
+
+describe("abrirCasoFueraDeCobertura", () => {
+  beforeEach(() => vi.resetAllMocks());
+
+  it("siempre crea un caso nuevo: cada demanda no cubierta es una señal separada", async () => {
+    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: "laboral", casoActivoId: "k1" });
+    tx.caso.findFirst.mockResolvedValue(null);
+    tx.caso.create.mockResolvedValue({ id: "k5" });
+    const resultado = await abrirCasoFueraDeCobertura({ sessionId: "s1", temaDetectado: "penal" });
+    expect(resultado).toEqual({ accion: "creado", casoId: "k5", categoria: null });
+    expect(tx.caso.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          categoria: null,
+          origen: "FUERA_DE_COBERTURA",
+          estado: "FUERA_DE_COBERTURA",
+        }),
+      }),
+    );
   });
 });

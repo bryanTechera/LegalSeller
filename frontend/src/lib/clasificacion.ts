@@ -31,7 +31,6 @@ const SELECT_CASO_ACTIVO = {
  * funnel. Toma el CAPTADO más reciente, no el primero: si corrigió su teléfono
  * en el caso 2, el caso 3 hereda el corregido.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function contactoHeredable(
   tx: Prisma.TransactionClient,
   conversationId: string,
@@ -436,5 +435,114 @@ export async function corregirClasificacion(params: {
       data: { categoria: params.categoria, clasificadaEn: new Date() },
     });
     return { aplicada: true };
+  });
+}
+
+/** Qué hizo la derivación con el puntero — el orquestador loguea sobre esto. */
+export type ResultadoDerivacion =
+  | { accion: "sin-conversacion" }
+  /** Falso positivo del agente: el receptor clasificó en la categoría del caso activo. Inofensivo por diseño. */
+  | { accion: "no-op"; casoId: string; categoria: string | null }
+  | { accion: "reactivado"; casoId: string; categoria: string | null }
+  | { accion: "creado"; casoId: string; categoria: string | null };
+
+/**
+ * Abre o reactiva el Caso de una categoría distinta a la del caso activo, y
+ * mueve `Conversation.casoActivoId` (spec §4). Tres ramas:
+ *   - misma categoría que el caso activo -> no-op (falso positivo del agente).
+ *   - categoría ya presente en la conversación -> reactiva ese Caso con sus
+ *     hechos acumulados; "volvamos a lo del divorcio" sale gratis por acá.
+ *   - categoría nueva -> crea Caso N heredando el contacto, que nace CAPTADO
+ *     (spec §2: no se le vuelve a pedir el teléfono a quien ya lo dio).
+ * La unicidad compuesta es la red: aunque el receptor devuelva dos veces la
+ * misma categoría, la base rechaza el duplicado.
+ */
+export async function abrirOReactivarCaso(params: {
+  sessionId: string;
+  categoria: string;
+  subcategoria?: string;
+  brief?: string;
+}): Promise<ResultadoDerivacion> {
+  return prisma.$transaction(async (tx) => {
+    const conversation = await tx.conversation.findUnique({
+      where: { sessionId: params.sessionId },
+      select: { id: true, categoria: true, casoActivoId: true },
+    });
+    if (!conversation) return { accion: "sin-conversacion" };
+
+    const casoActivo = conversation.casoActivoId
+      ? await tx.caso.findUnique({ where: { id: conversation.casoActivoId }, select: SELECT_CASO_ACTIVO })
+      : null;
+
+    if (casoActivo?.categoria === params.categoria) {
+      return { accion: "no-op", casoId: casoActivo.id, categoria: casoActivo.categoria };
+    }
+
+    const existente = await tx.caso.findUnique({
+      where: { conversationId_categoria: { conversationId: conversation.id, categoria: params.categoria } },
+      select: { id: true, categoria: true },
+    });
+    if (existente) {
+      await tx.conversation.update({ where: { id: conversation.id }, data: { casoActivoId: existente.id } });
+      return { accion: "reactivado", casoId: existente.id, categoria: existente.categoria };
+    }
+
+    const contacto = await contactoHeredable(tx, conversation.id);
+    const creado = await tx.caso.create({
+      data: {
+        conversationId: conversation.id,
+        categoria: params.categoria,
+        subcategorias: params.subcategoria ? [params.subcategoria] : [],
+        resumen: params.brief ? { brief: params.brief } : undefined,
+        contactoNombre: contacto?.contactoNombre ?? null,
+        contactoTelefono: contacto?.contactoTelefono ?? null,
+        contactoEmail: contacto?.contactoEmail ?? null,
+        estado: contacto ? "CAPTADO" : "EN_CONVERSACION",
+        origen: "DOMINIO",
+      },
+      select: { id: true },
+    });
+    await tx.conversation.update({ where: { id: conversation.id }, data: { casoActivoId: creado.id } });
+    await tx.casoEvento.create({
+      data: { casoId: creado.id, tipo: "CLASIFICACION", payload: { categoria: params.categoria, via: "derivar-tema" } },
+    });
+    return { accion: "creado", casoId: creado.id, categoria: params.categoria };
+  });
+}
+
+/**
+ * Demanda fuera de cobertura detectada durante la conversación. SIEMPRE crea un
+ * Caso nuevo con `categoria: null`: en Postgres dos NULL no unifican bajo la
+ * clave compuesta, y eso es lo correcto — cada tema no cubierto es una señal de
+ * mercado separada (spec §3). El puntero NO se mueve: no hay agente que atienda
+ * esa categoría, así que el turno siguiente sigue en el caso que venía.
+ */
+export async function abrirCasoFueraDeCobertura(params: {
+  sessionId: string;
+  temaDetectado: string;
+  brief?: string;
+}): Promise<ResultadoDerivacion> {
+  return prisma.$transaction(async (tx) => {
+    const conversation = await tx.conversation.findUnique({
+      where: { sessionId: params.sessionId },
+      select: { id: true },
+    });
+    if (!conversation) return { accion: "sin-conversacion" };
+
+    const contacto = await contactoHeredable(tx, conversation.id);
+    const creado = await tx.caso.create({
+      data: {
+        conversationId: conversation.id,
+        categoria: null,
+        resumen: { brief: params.brief ?? params.temaDetectado, temaDetectado: params.temaDetectado },
+        contactoNombre: contacto?.contactoNombre ?? null,
+        contactoTelefono: contacto?.contactoTelefono ?? null,
+        contactoEmail: contacto?.contactoEmail ?? null,
+        estado: "FUERA_DE_COBERTURA",
+        origen: "FUERA_DE_COBERTURA",
+      },
+      select: { id: true },
+    });
+    return { accion: "creado", casoId: creado.id, categoria: null };
   });
 }
