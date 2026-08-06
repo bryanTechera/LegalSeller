@@ -1,5 +1,7 @@
 import "server-only";
 
+import type { ZodError } from "zod";
+
 import { createSseLineSplitter, parseSseData } from "@/utils/sse";
 import { logger } from "@/utils/logger";
 
@@ -34,6 +36,22 @@ interface ReceptorOutcome {
   kind: "clasificada" | "escape" | "pregunta";
   args?: AsignacionArgs;
   text: string;
+}
+
+/**
+ * Un parseo fallido descarta la tool-call ENTERA y el turno sigue como si nada
+ * (nunca romper el stream del usuario), así que este log es la única señal de
+ * que un turno perdió datos. Van las RUTAS de los campos que fallaron y sus
+ * códigos —nunca los valores, que son PII del consultante— porque sin ellas el
+ * warn no distingue "el modelo cambió de shape" de "payload adversarial": fue
+ * exactamente lo que dejó correr sin ruido el drop de los `null` de GPT-5.6.
+ */
+function avisarArgsInvalidos(toolName: string, error: ZodError): void {
+  logger.warn("tool-call args failed validation", {
+    toolName,
+    campos: error.issues.map((issue) => issue.path.map(String).join(".")),
+    codigos: error.issues.map((issue) => issue.code),
+  });
 }
 
 function sseHeaders(): HeadersInit {
@@ -172,7 +190,7 @@ async function runReceptor(params: {
       if (toolName === "asignar-clasificacion") {
         const parsed = asignacionArgsSchema.safeParse(args);
         if (!parsed.success) {
-          logger.warn("tool-call args failed validation", { toolName });
+          avisarArgsInvalidos(toolName, parsed.error);
           return;
         }
         asignacion = parsed.data;
@@ -191,7 +209,7 @@ async function runReceptor(params: {
         // readOnly (final review gap #1 — was silently dropped before).
         const parsed = registrarCasoArgsSchema.safeParse(args);
         if (!parsed.success) {
-          logger.warn("tool-call args failed validation", { toolName });
+          avisarArgsInvalidos(toolName, parsed.error);
           return;
         }
         try {
@@ -312,14 +330,14 @@ function pipeCategoryTurn(params: {
             if (toolName === "registrar-caso") {
               const parsed = registrarCasoArgsSchema.safeParse(args);
               if (!parsed.success) {
-                logger.warn("tool-call args failed validation", { toolName });
+                avisarArgsInvalidos(toolName, parsed.error);
                 return;
               }
               await registrarDatosCaso({ sessionId: params.sessionId, ...parsed.data });
             } else if (toolName === "corregir-clasificacion") {
               const parsed = correccionArgsSchema.safeParse(args);
               if (!parsed.success) {
-                logger.warn("tool-call args failed validation", { toolName });
+                avisarArgsInvalidos(toolName, parsed.error);
                 return;
               }
               const result = await corregirClasificacion({ sessionId: params.sessionId, ...parsed.data });
@@ -327,7 +345,7 @@ function pipeCategoryTurn(params: {
             } else if (toolName === "derivar-tema") {
               const parsed = derivarTemaArgsSchema.safeParse(args);
               if (!parsed.success) {
-                logger.warn("tool-call args failed validation", { toolName });
+                avisarArgsInvalidos(toolName, parsed.error);
                 return;
               }
               // Se ANOTA, no se ejecuta: el receptor corre una sola vez por
