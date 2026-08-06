@@ -346,5 +346,23 @@
     "esperado": {
       "categoria": "fuera-de-universo"
     }
+  },
+  {
+    "mensaje": "reparto para una app de delivery y me bloquearon la cuenta de un dia para el otro",
+    "esperado": {
+      "categoria": "laboral"
+    }
+  },
+  {
+    "mensaje": "me mandaron al seguro de paro y no se si me corresponde cobrarlo",
+    "esperado": {
+      "categoria": "laboral"
+    }
+  },
+  {
+    "mensaje": "hago teletrabajo y me exigen estar conectado a cualquier hora, hasta los fines de semana",
+    "esperado": {
+      "categoria": "laboral"
+    }
   }
 ]

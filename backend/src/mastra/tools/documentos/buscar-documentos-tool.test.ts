@@ -91,8 +91,8 @@ describe("buildSearchQuery", () => {
 });
 
 describe("minSimilarityPara", () => {
-  it("devuelve el umbral calibrado de cada categoría (Tarea 10, 2026-08-04)", () => {
-    expect(minSimilarityPara("laboral")).toBe(0.717);
+  it("devuelve el umbral calibrado de cada categoría (Tarea 10, 2026-08-04; laboral recalibrado 2026-08-06 con el corpus del anexo)", () => {
+    expect(minSimilarityPara("laboral")).toBe(0.693);
     expect(minSimilarityPara("familia")).toBe(0.678);
     expect(minSimilarityPara("arrendamiento-desalojo")).toBe(0.686);
     expect(minSimilarityPara("relaciones-consumo")).toBe(0.645);

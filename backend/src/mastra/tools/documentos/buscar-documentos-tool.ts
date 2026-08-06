@@ -21,9 +21,21 @@ import { getPool } from "../../config/storage.js";
  *
  * Tránsito's margin (±0.006) is thin because that categoría has only 9
  * documents — it's the first threshold to revisit as the corpus grows.
+ *
+ * Laboral recalibrated 2026-08-06 with the anexo corpus (subcategorías nuevas
+ * seguro-desempleo, teletrabajo y plataformas-digitales + transversales): the
+ * expanded golden set's positive floor dropped to 0.703 ("me bloquearon la
+ * cuenta de la app") while the negative ceiling stayed at 0.683 ("pasante" →
+ * despido-enfermedad), so the midpoint moved from 0.717 to 0.693. The margin
+ * (±0.010) is now the second-thinnest after tránsito. Known gap, measured and
+ * accepted: colloquial micro-scenario phrasings ("¿me pagan el viaje si el
+ * cliente cancela?") score 0.63-0.68 against their correct doc — the doc ranks
+ * FIRST but below any viable threshold, so those queries return empty. That is
+ * a query-scale problem (candidate for query-side expansion), not a ranking
+ * problem — reranking stays discarded (recall@20−recall@5 = 0).
  */
 const MIN_SIMILARITY_POR_CATEGORIA: Record<string, number> = {
-  laboral: 0.717,
+  laboral: 0.693,
   familia: 0.678,
   "arrendamiento-desalojo": 0.686,
   "relaciones-consumo": 0.645,

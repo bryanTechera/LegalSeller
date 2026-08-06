@@ -84,11 +84,95 @@
   {
     "consulta": "trabajo en relación de dependencia para una empresa extranjera 100% remota, ¿qué legislación laboral me aplica?",
     "categoria": "laboral",
+    "esperado": ["Teletrabajo — Concepto, acuerdo escrito y reversibilidad"]
+  },
+  {
+    "consulta": "quiero poner una empresa unipersonal, ¿qué trámites necesito para arrancar?",
+    "categoria": "laboral",
     "esperado": []
   },
   {
     "consulta": "me contrataron como pasante en una empresa, ¿qué derechos laborales tengo como pasante?",
     "categoria": "laboral",
     "esperado": []
+  },
+  {
+    "consulta": "me mandaron al seguro de paro por suspensión, ¿cuánto voy a cobrar y por cuánto tiempo?",
+    "categoria": "laboral",
+    "subcategorias": ["seguro-desempleo"],
+    "esperado": ["Seguro de desempleo — Duración y monto del subsidio"]
+  },
+  {
+    "consulta": "me despidieron la semana pasada, ¿qué plazo tengo para pedir el seguro de desempleo y qué me piden?",
+    "categoria": "laboral",
+    "subcategorias": ["seguro-desempleo"],
+    "esperado": ["Seguro de desempleo — Requisitos y plazo de solicitud"]
+  },
+  {
+    "consulta": "estoy en el seguro de paro hace meses y la empresa no me reintegra, ¿qué pasa si se termina y no me llaman?",
+    "categoria": "laboral",
+    "subcategorias": ["seguro-desempleo", "despido"],
+    "esperado": ["Seguro de desempleo — Despido ficto y efectos del subsidio"]
+  },
+  {
+    "consulta": "hago teletrabajo y un día trabajé doce horas, ¿me tienen que pagar horas extras?",
+    "categoria": "laboral",
+    "subcategorias": ["teletrabajo"],
+    "esperado": ["Teletrabajo — Jornada, horas extras, desconexión y seguridad"]
+  },
+  {
+    "consulta": "empecé a trabajar desde casa por acuerdo con la empresa pero me arrepentí, ¿puedo volver a la oficina?",
+    "categoria": "laboral",
+    "subcategorias": ["teletrabajo"],
+    "esperado": ["Teletrabajo — Concepto, acuerdo escrito y reversibilidad"]
+  },
+  {
+    "consulta": "reparto para una app de delivery y me bloquearon la cuenta sin darme ninguna explicación",
+    "categoria": "laboral",
+    "subcategorias": ["plataformas-digitales"],
+    "esperado": ["Plataformas digitales — Algoritmos, bloqueo de cuenta y derechos comunes"]
+  },
+  {
+    "consulta": "trabajo como repartidor dependiente de una plataforma, ¿cuántas horas por semana puedo trabajar y cuál es el mínimo que me tienen que pagar?",
+    "categoria": "laboral",
+    "subcategorias": ["plataformas-digitales"],
+    "esperado": ["Plataformas digitales — Tiempo de trabajo, retribución y modalidad autónoma"]
+  },
+  {
+    "consulta": "estoy embarazada y en el trabajo no me quieren dar las horas para ir a los controles",
+    "categoria": "laboral",
+    "subcategorias": ["licencias-especiales"],
+    "esperado": ["Licencias especiales — Controles de embarazo"]
+  },
+  {
+    "consulta": "en el restaurante los clientes dejan propina con la tarjeta y el dueño se la queda",
+    "categoria": "laboral",
+    "subcategorias": ["rubros-laborales"],
+    "esperado": ["Rubros laborales — Propinas por medios electrónicos de pago"]
+  },
+  {
+    "consulta": "trabajo para una empresa tercerizada que no me paga, ¿puedo reclamarle a la empresa principal donde presto tareas?",
+    "categoria": "laboral",
+    "esperado": ["Laboral — Tercerizaciones: responsabilidad de la empresa principal"]
+  },
+  {
+    "consulta": "la empresa donde trabajaba entró en concurso y quedó debiéndome sueldos y la liquidación, ¿quién me paga?",
+    "categoria": "laboral",
+    "esperado": ["Laboral — Fondo de garantía de créditos laborales: insolvencia del empleador"]
+  },
+  {
+    "consulta": "en mi trabajo nunca me dieron recibo de sueldo, ¿están obligados a dármelo?",
+    "categoria": "laboral",
+    "esperado": ["Laboral — Recibo de sueldo: obligación, contenido y multa por no entregarlo"]
+  },
+  {
+    "consulta": "hace años que me pagan en negro y no me hacen los aportes, ¿pierdo esos años para la jubilación?",
+    "categoria": "laboral",
+    "esperado": ["Laboral — Historia laboral, aportes y trabajo no registrado"]
+  },
+  {
+    "consulta": "trabajo de albañil en una obra y la empresa no me pagó el aguinaldo ni la licencia",
+    "categoria": "laboral",
+    "esperado": ["Laboral — Construcción: licencia, aguinaldo y salario vacacional se cobran por BPS"]
   }
 ]

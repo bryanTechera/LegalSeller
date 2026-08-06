@@ -15,6 +15,9 @@ describe("payload de /api/dominios", () => {
             "trabajador-rural",
             "call-center",
             "licencias-especiales",
+            "seguro-desempleo",
+            "teletrabajo",
+            "plataformas-digitales",
           ],
         },
         {

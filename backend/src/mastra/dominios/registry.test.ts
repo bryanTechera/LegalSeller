@@ -35,6 +35,9 @@ describe("registry de dominios", () => {
       "trabajador-rural",
       "call-center",
       "licencias-especiales",
+      "seguro-desempleo",
+      "teletrabajo",
+      "plataformas-digitales",
     ]);
     expect(subcategoriasHabilitadas("familia").map((s) => s.id)).toEqual([
       "pension-tenencia-visitas",

@@ -26,6 +26,8 @@ Señales de despido especial — cambian sustancialmente lo que corresponde recl
 - Discapacidad, trabajo nocturno, trabajadora doméstica, trabajador rural, viajante o vendedor de plaza.
 
 Si el empleador alegó notoria mala conducta: la carga de probarla es del empleador, no del trabajador — dato que el usuario suele desconocer y que vuelve especialmente valiosa la evaluación de un abogado.
+
+Seguro de desempleo: ante un despido, una suspensión o una reducción de tareas reciente, preguntá si ya gestionó el subsidio por desempleo ante el BPS — el plazo de solicitud es corto y perentorio, y dejarlo pasar cuesta meses de prestación; si la empresa no le entrega los formularios, el trámite igual se puede iniciar. Traé requisitos, plazo, monto y duración con buscar-documentos filtrando también por seguro-desempleo. Una suspensión que se estira sin reintegro, o un trabajo reducido que se prolonga, pueden configurar un despido (despido ficto): señal de que además hay una indemnización para dimensionar.
 </dimensionar_despido>`,
 };
 
