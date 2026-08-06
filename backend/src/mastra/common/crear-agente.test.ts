@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildDynamicInstructions, crearAgente, opcionesDeModelo } from "./crear-agente.js";
+import { buildDynamicInstructions, crearAgente, opcionesDeModelo, opcionesDeProcessors } from "./crear-agente.js";
 
 const params = {
   id: "prueba",
@@ -56,5 +56,35 @@ describe("opcionesDeModelo", () => {
     const opciones = opcionesDeModelo("openai/gpt-5.6-luna");
     const providerOptions = opciones.providerOptions as { openai: { reasoningEffort: string } };
     expect(["none", "low"]).toContain(providerOptions.openai.reasoningEffort);
+  });
+
+  it("todo agente sale con el filtro de confidencialidad cableado", () => {
+    const { outputProcessors } = opcionesDeProcessors();
+    expect(outputProcessors().map((p) => p.id)).toContain("filtro-confidencialidad");
+  });
+
+  it("los processors se resuelven como función, para que el body del request no pueda pisarlos", () => {
+    // El bodySchema de /api/agents/:id/stream no se valida en runtime y el
+    // adapter spreadea el JSON crudo en los params: un {"outputProcessors": []}
+    // en el body ganaría sobre un array literal del AgentConfig.
+    const { inputProcessors, outputProcessors } = opcionesDeProcessors();
+    expect(typeof inputProcessors).toBe("function");
+    expect(typeof outputProcessors).toBe("function");
+  });
+
+  it("EVALS_SIN_PROCESSORS los desactiva — los evals de prompt tienen que medir la rule, no el filtro", () => {
+    const previo = process.env.EVALS_SIN_PROCESSORS;
+    process.env.EVALS_SIN_PROCESSORS = "1";
+    try {
+      expect(opcionesDeProcessors().outputProcessors()).toHaveLength(0);
+      expect(opcionesDeProcessors().inputProcessors()).toHaveLength(0);
+    } finally {
+      if (previo === undefined) process.env.EVALS_SIN_PROCESSORS = undefined;
+      else process.env.EVALS_SIN_PROCESSORS = previo;
+    }
+  });
+
+  it("el agente se construye con los processors cableados", () => {
+    expect(() => crearAgente(params)).not.toThrow();
   });
 });

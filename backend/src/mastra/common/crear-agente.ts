@@ -1,10 +1,12 @@
 import { gateway } from "@ai-sdk/gateway";
 import { Agent, type ToolsInput } from "@mastra/core/agent";
+import { type Processor, UnicodeNormalizer } from "@mastra/core/processors";
 import type { RequestContext } from "@mastra/core/request-context";
 import type { Memory } from "@mastra/memory";
 
 import type { ReadOnlyState } from "../../models/index.js";
 import { MODELO_RECEPCION } from "../config/modelos.js";
+import { FiltroConfidencialidad } from "../processors/filtro-confidencialidad.js";
 
 import { getReadOnlyFromContext } from "./middleware/index.js";
 
@@ -90,6 +92,31 @@ export function opcionesDeModelo(model: string): Record<string, unknown> {
  * request context — swallow; a real request must never run the agent with a
  * silently broken prompt).
  */
+/**
+ * Processors de los 6 agentes, resueltos como FUNCIÓN y no como array: el
+ * `bodySchema` de `/api/agents/:id/stream` no se valida en runtime y el adapter
+ * spreadea el JSON crudo en los params, así que un `{"outputProcessors": []}`
+ * en el body ganaría sobre el AgentConfig (`[]` es truthy). Resolverlos acá deja
+ * la capa 3 fuera del alcance del body. Ver el plan §7.
+ *
+ * El único escape es `EVALS_SIN_PROCESSORS=1`, que setea el runner de evals en
+ * su propio proceso: los evals de prompt tienen que medir la rule, no el
+ * filtro, o pasarían verde con el prompt roto. Va por entorno y NO por
+ * `requestContext` justamente porque el requestContext SÍ viaja en el body —
+ * un flag ahí reabriría el agujero que esta función cierra. Mismo patrón que
+ * `MASTRA_DISABLE_STORAGE_INIT`.
+ */
+export function opcionesDeProcessors(): {
+  inputProcessors: () => Processor[];
+  outputProcessors: () => Processor[];
+} {
+  const desactivados = process.env.EVALS_SIN_PROCESSORS === "1";
+  return {
+    inputProcessors: () => (desactivados ? [] : [new UnicodeNormalizer({ stripControlChars: true })]),
+    outputProcessors: () => (desactivados ? [] : [new FiltroConfidencialidad()]),
+  };
+}
+
 export function crearAgente(params: CrearAgenteParams): Agent {
   const {
     id,
@@ -127,5 +154,6 @@ export function crearAgente(params: CrearAgenteParams): Agent {
     model: gateway(model),
     maxRetries,
     defaultOptions: dynamicOptions,
+    ...opcionesDeProcessors(),
   });
 }
