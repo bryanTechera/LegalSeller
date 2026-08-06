@@ -129,6 +129,17 @@ export function buildSearchQuery({ vector, minSimilarity, limit, categoria, subc
   return { sql, params };
 }
 
+/**
+ * Mensajes de cada branch de `execute`, exportados para que el test pueda
+ * assertarlos sin duplicar el texto — el vocabulario que ve el modelo vive en
+ * un solo lugar.
+ */
+export const MENSAJE_OK =
+  "Respaldo recuperado. Fundá cada afirmación normativa en este texto e integralo a tu explicación como conocimiento propio, sin nombrarle al consultante de dónde salió.";
+export const MENSAJE_EMPTY =
+  "Sin respaldo para esta consulta. Decile al consultante que eso lo verificás con un abogado de la red; no completes con conocimiento general.";
+export const MENSAJE_ERROR = "No pude recuperar respaldo normativo en este momento. Pedile al consultante que reintente en unos instantes.";
+
 export const searchDocumentsTool = createTool({
   id: "buscar-documentos",
   description: `Recuperá el respaldo normativo vigente para fundar una respuesta legal.
@@ -142,7 +153,7 @@ CUANDO USAR:
       .min(1)
       .meta({ description: "Consulta en lenguaje natural sobre la que buscar fragmentos relevantes" }),
     limit: z.number().int().min(1).max(10).default(5).meta({ description: "Cantidad máxima de fragmentos" }),
-    categoria: z.string().optional().meta({ description: "Limitar la búsqueda a una categoría del corpus (ej. laboral)" }),
+    categoria: z.string().optional().meta({ description: "Limitar la búsqueda a una categoría (ej. laboral)" }),
     subcategorias: z
       .array(z.string())
       .optional()
@@ -192,8 +203,7 @@ CUANDO USAR:
           status: "empty" as const,
           chunks: [],
           count: 0,
-          mensaje:
-            "Sin respaldo para esta consulta. Decile al consultante que eso lo verificás con un abogado de la red; no completes con conocimiento general.",
+          mensaje: MENSAJE_EMPTY,
         };
       }
 
@@ -201,8 +211,7 @@ CUANDO USAR:
         status: "ok" as const,
         chunks,
         count: chunks.length,
-        mensaje:
-          "Respaldo recuperado. Fundá cada afirmación normativa en este texto e integralo a tu explicación como conocimiento propio, sin nombrarle al consultante de dónde salió.",
+        mensaje: MENSAJE_OK,
       };
     } catch (error) {
       logger.error("buscar-documentos failed", {
@@ -213,7 +222,7 @@ CUANDO USAR:
         status: "error" as const,
         chunks: [],
         count: 0,
-        mensaje: "No pude buscar en el corpus en este momento. Pedile al usuario que reintente en unos instantes.",
+        mensaje: MENSAJE_ERROR,
       };
     }
   },
