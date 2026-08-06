@@ -52,6 +52,7 @@ import { relacionesConsumoAgent } from "../mastra/dominios/relaciones-consumo/in
 import { transitoAgent } from "../mastra/dominios/transito/index.js";
 
 import { evalRetrieval } from "./retrieval/run-retrieval.js";
+import { afirmaSinRespaldo } from "./scorers.js";
 
 const THRESHOLD = 0.9;
 
@@ -149,6 +150,7 @@ const LOG_FALLAS = join(
 function registrarFalla(dataset: string, mensaje: string, problemas: string[], texto: string): void {
   appendFileSync(LOG_FALLAS, `\n### ${dataset} — "${mensaje}"\n${problemas.join("; ")}\n---\n${texto}\n`);
 }
+
 
 /**
  * Títulos del corpus ("Despido — …", "Trabajador rural — …"): el patrón se
@@ -323,7 +325,7 @@ async function evalVozFuentes(agent: CategoriaAgent, agentDir: string, label: st
       problemas.push(`falta alguna de: ${alternativas.map((alt) => `"${alt}"`).join(", ")}`);
     }
     for (const vedado of item.esperado.prohibido ?? []) {
-      if (text.toLowerCase().includes(vedado.toLowerCase())) problemas.push(`afirmó "${vedado}" sin respaldo`);
+      if (afirmaSinRespaldo(text.toLowerCase(), vedado)) problemas.push(`afirmó "${vedado}" sin respaldo`);
     }
 
     if (text.length > 0 && problemas.length === 0) passed += 1;
@@ -411,7 +413,7 @@ async function evalFidelidad(agent: CategoriaAgent, agentDir: string, label: str
       problemas.push(`falta alguna de: ${alternativas.map((alt) => `"${alt}"`).join(", ")}`);
     }
     for (const vedado of item.esperado.prohibido ?? []) {
-      if (text.includes(vedado.toLowerCase())) problemas.push(`afirmó "${vedado}" sin respaldo`);
+      if (afirmaSinRespaldo(text, vedado)) problemas.push(`afirmó "${vedado}" sin respaldo`);
     }
 
     if (text.length > 0 && problemas.length === 0) passed += 1;
