@@ -2,11 +2,13 @@ import { crearAgente } from "../../common/crear-agente.js";
 import { sharedMemory } from "../../common/memory/index.js";
 import { MODELO_ESPECIALISTA } from "../../config/modelos.js";
 import { crearSkillTools } from "../../skills/tool-skills/index.js";
-import { registrarCasoTool } from "../../tools/casos/registrar-caso-tool.js";
+import { crearRegistrarCasoTool } from "../../tools/casos/registrar-caso-tool.js";
 import { corregirClasificacionTool } from "../../tools/clasificacion/corregir-clasificacion-tool.js";
 import { searchDocumentsTool } from "../../tools/documentos/buscar-documentos-tool.js";
 
 import { buildFamiliaInstructions } from "./instructions.js";
+
+const registrarCasoTool = crearRegistrarCasoTool("familia");
 
 /** Category agent for Familia: owns the conversation and the funnel (spec §4). */
 export const familiaAgent = crearAgente({

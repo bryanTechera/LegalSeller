@@ -4,6 +4,7 @@ import {
   CATEGORIAS,
   categoriaAsignableSchema,
   categoriasHabilitadas,
+  subcategoriasDeCategoriaSchema,
   subcategoriaUnicaHabilitada,
   subcategoriasHabilitadas,
 } from "./registry.js";
@@ -75,5 +76,18 @@ describe("registry de dominios", () => {
     expect(values).toContain("relaciones-consumo");
     expect(values).toContain("fuera-de-universo");
     expect(values).toContain("categoria-no-habilitada");
+  });
+
+  it("el enum de subcategorías de laboral no incluye las de arrendamiento", () => {
+    const schema = subcategoriasDeCategoriaSchema("laboral");
+    expect(schema).toBeDefined();
+    const valores = schema?.options ?? [];
+    expect(valores).toContain("despido");
+    expect(valores).not.toContain("desalojo-ley-8153");
+    expect(valores).not.toContain("desalojo-ley-19889");
+  });
+
+  it("devuelve undefined para una categoría sin subcategorías", () => {
+    expect(subcategoriasDeCategoriaSchema("transito")).toBeUndefined();
   });
 });

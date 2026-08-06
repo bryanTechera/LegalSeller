@@ -85,3 +85,18 @@ export const subcategoriaAsignableSchema = z.enum(
     "subcategorias",
   ),
 );
+
+/**
+ * Subcategorías de UNA categoría. `registrar-caso` de cada especialista usa
+ * esta versión: el enum global mete los ids de todas las categorías —incluidos
+ * los que llevan número de ley— en el inputSchema de cada agente, que es un
+ * volcado de la taxonomía recitable sin invocar ninguna tool.
+ * `undefined` cuando la categoría no tiene subcategorías en v1.
+ */
+export function subcategoriasDeCategoriaSchema(
+  categoriaId: string,
+): z.ZodEnum<[string, ...string[]]> | undefined {
+  const ids = subcategoriasHabilitadas(categoriaId as CategoriaId).map((s) => s.id);
+  if (ids.length === 0) return undefined;
+  return z.enum(nonEmptyEnum(ids, `subcategorias de ${categoriaId}`));
+}
