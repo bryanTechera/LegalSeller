@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-import { MARCA } from "@/lib/marca";
+import { MARCA, MARCA_ACENTO, MARCA_RAIZ } from "@/lib/marca";
 
 /*
  * Tarjeta que ve quien recibe un link del sitio por WhatsApp — el canal por el
@@ -51,7 +51,12 @@ export default function OpengraphImage() {
             <path d="M4 15 a4 4 0 0 0 8 0" />
             <path d="M20 15 a4 4 0 0 0 8 0" />
           </svg>
-          <span style={{ fontSize: 52, color: "#ffffff", letterSpacing: "0.02em" }}>{MARCA}</span>
+          {/* Wordmark en dos tonos, igual que en pantalla. Sobre el navy el acento
+              base rinde mejor que el fuerte, y empareja con la balanza. */}
+          <span style={{ fontSize: 52, color: "#ffffff", letterSpacing: "0.02em" }}>
+            {MARCA_RAIZ}
+            <span style={{ color: ACENTO }}>{MARCA_ACENTO}</span>
+          </span>
         </div>
         <div style={{ fontSize: 68, color: "#ffffff", lineHeight: 1.15, marginTop: 48 }}>
           Consultas legales en Uruguay, al instante

@@ -8,8 +8,9 @@ import { MARCA, SITIO_URL } from "@/lib/marca";
 
 /*
  * Identidad tipográfica: serif editorial para el titular (big-law de
- * prestigio), Poppins en caps con tracking para wordmark/labels y Open
- * Sans para cuerpo. next/font las sirve self-hosted (`font-src 'self'`).
+ * prestigio), Poppins para wordmark y labels —estos en caps con tracking, el
+ * wordmark en caja mixta y a dos tonos— y Open Sans para cuerpo. next/font las
+ * sirve self-hosted (`font-src 'self'`).
  *
  * Presupuesto de preload (auditoría SEO 2026-08-06): las tres familias se
  * preloadeaban a prioridad alta, 117.520 B compitiendo con el CSS y el JS en la

@@ -1,0 +1,9 @@
+/*
+ * "Ya" en acento fuerte, no en el acento base: sobre `--paper` el acento base
+ * da 3,66:1 y el wordmark del home es texto de 18px, justo por debajo del
+ * umbral de "texto grande" de WCAG. `--accent-strong` da 5,22:1 y pasa AA en
+ * cualquier tamaño, con la misma familia de color que la balanza.
+ */
+.acento {
+  color: var(--accent-strong);
+}

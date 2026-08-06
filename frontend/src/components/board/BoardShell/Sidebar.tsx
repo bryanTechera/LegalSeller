@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { BrandMark } from "@/components/brand/BrandMark";
-import { MARCA } from "@/lib/marca";
+import { Wordmark } from "@/components/brand/Wordmark";
 
 import styles from "./board.module.css";
 
@@ -21,7 +21,7 @@ export function Sidebar({ usuario }: { usuario: string }) {
     <nav className={styles.sidebar} aria-label="Secciones del board">
       <span className={styles.wordmark}>
         <BrandMark size={22} />
-        {MARCA}
+        <Wordmark />
       </span>
       <ul className={styles.nav}>
         {SECCIONES.map((seccion) => {

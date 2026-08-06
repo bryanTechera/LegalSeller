@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { BrandMark } from "@/components/brand/BrandMark";
+import { Wordmark } from "@/components/brand/Wordmark";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import { MARCA } from "@/lib/marca";
 
@@ -24,7 +25,7 @@ export default function HomePage() {
       <header className={styles.header}>
         <h1 className={styles.wordmark}>
           <BrandMark size={22} />
-          {MARCA}
+          <Wordmark />
         </h1>
       </header>
       <main className={styles.main}>
