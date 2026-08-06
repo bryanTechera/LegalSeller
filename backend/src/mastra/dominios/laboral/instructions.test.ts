@@ -42,4 +42,10 @@ describe("instrucciones del agente laboral", () => {
     expect(prompt).not.toContain("<estado_captacion>");
     expect(prompt).toContain("Pedí los datos de contacto");
   });
+
+  it("no nombra el proyecto interno en el prompt", () => {
+    const prompt = buildLaboralInstructions(null);
+    expect(prompt).not.toContain("LegalSeller");
+    expect(prompt).toContain("Jurco");
+  });
 });
