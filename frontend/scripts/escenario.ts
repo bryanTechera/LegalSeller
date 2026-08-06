@@ -13,7 +13,7 @@ import type { Corrida } from "../src/lib/escenarios/schema";
 import { ClienteRevision } from "./escenario/cliente";
 import { guardarCorrida, leerEscenario, localizarCorrida } from "./escenario/corridas";
 
-const URL_DEFAULT = "https://frontend-production-1293.up.railway.app";
+const URL_DEFAULT = "https://dudaya.com";
 const NOMBRE_RUNNER = "Asistente técnico";
 const USO = `Uso:
   pnpm escenario correr <slug> [--url <base>] [--clave <clave>] [--publicar]
