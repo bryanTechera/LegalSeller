@@ -117,6 +117,24 @@ Las dos son complementarias: los feedback loops mejoran lo que el agente produce
 
 ---
 
+## Scorers programáticos: falso positivo y punto ciego
+
+Los scorers del proyecto son regex sobre el texto del agente, no jueces LLM. Su modo de falla no es el sesgo sino el **desalineamiento entre lo que el patrón matchea y la propiedad que se quiere medir**. Un gate rojo intermitente casi nunca es "el modelo es no determinístico": es que el patrón mide otra cosa. Antes de mover un umbral o culpar al modelo, imprimí la respuesta completa de los ítems que fallan y leela.
+
+Caso de referencia (`voz-fuentes`, diagnóstico 2026-08-05, 24 generaciones instrumentadas). El gate exigía "sin mecánica interna" y falseaba en las dos direcciones a la vez:
+
+- **Falso positivo — el patrón medía la palabra, no el referente.** `\b(el|del) documento\b` marcaba "conviene revisar todas las páginas **del documento**", que habla del cedulón **del consultante** y es exactamente lo que la rule `conducta-arrendamiento` le ordena decir. Base medida: 3 de 4 corridas. El gate de arrendamiento estaba rojo por una respuesta correcta. La discriminación no es el artículo sino de quién es el documento: se detecta el referente (`documento de origen`, `material de respaldo`, `fuente interna`, un título del corpus), no el sustantivo.
+- **Punto ciego — la lista fija se desactualizó contra los datos.** El corpus usa 10 prefijos de título (`Despido — `, `Trabajador rural — `, …) y el patrón enumeraba 7. El mismo defecto —nombrarle al consultante un documento interno— pasaba o fallaba el gate según qué documento le tocara nombrar al agente. Un detector que enumera valores del dominio se deriva de la fuente de verdad (acá, `SELECT DISTINCT split_part(title, ' — ', 1) FROM "Document"`), no se copia a mano: así una subcategoría nueva queda cubierta sin que nadie se acuerde.
+
+Corolarios que valen para cualquier scorer nuevo:
+
+- **Un `prohibido` mide una afirmación, y un substring no puede expresarla**: toda forma afirmativa es substring de su propia negación ("no corresponde la triple" contiene "corresponde la triple"), así que ninguna lista de frases prohibidas distingue afirmar de excluir. La unidad de medida tiene que ser la oración. Para explicar que algo NO corresponde hay que nombrarlo: el ítem del reintegro tras certificación de BSE reprobaba una respuesta que decía "no es automáticamente una indemnización triple" y enumeraba en qué hipótesis sí — o sea, la fidelidad a las condiciones del texto que ese dataset premia. Ver `backend/src/test/scorers.ts`.
+- **Un chequeo que vale para toda respuesta va default-on**, no opt-in por ítem. El ítem de familia que no declaraba `sinReferenciasInternas` filtró "material disponible" en 2 de 4 corridas sin que el gate lo viera: el dataset se llama voz-fuentes, la propiedad es de todas sus respuestas.
+- **Un dataset chico convierte un falso positivo en un gate rojo permanente.** Con 3 ítems y umbral 0.90, un solo ítem mal medido da 0.67 y el gate no puede distinguir señal de ruido. Antes de agrandar el dataset, verificá que lo que falla sea un defecto: acá los 3 ítems alcanzaban, lo que estaba roto era el patrón.
+- **El scorer arreglado tiene que fallar con el defecto puesto.** Si lo relajás para que pase, escribiste una decoración. La secuencia correcta es: reproducir el defecto con el patrón nuevo, recién ahí arreglar el agente, y volver a medir.
+
+---
+
 ## Writing prompts for judges/scorers
 
 El prompt que recibe un judge LLM determina la calidad del scorer tanto o más que la elección del modelo. Cuatro principios.

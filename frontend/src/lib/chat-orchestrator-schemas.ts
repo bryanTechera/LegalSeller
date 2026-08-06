@@ -24,7 +24,6 @@ export type AsignacionArgs = z.infer<typeof asignacionArgsSchema>;
 export const registrarCasoArgsSchema = z.object({
   subcategorias: z.array(z.string()).optional(),
   hechos: z.string().optional(),
-  interesAdicional: z.string().optional(),
   contactoNombre: z.string().optional(),
   contactoTelefono: z.string().optional(),
   contactoEmail: z.string().optional(),
@@ -36,3 +35,6 @@ export const correccionArgsSchema = z.object({
   motivo: z.string().min(1),
 });
 export type CorreccionArgs = z.infer<typeof correccionArgsSchema>;
+
+export const derivarTemaArgsSchema = z.object({ tema: z.string().min(1) });
+export type DerivarTemaArgs = z.infer<typeof derivarTemaArgsSchema>;

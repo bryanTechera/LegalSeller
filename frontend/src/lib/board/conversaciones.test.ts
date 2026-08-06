@@ -15,7 +15,7 @@ vi.mock("@/lib/revision/timeline", async (importOriginal) => {
   return { ...actual, construirTimeline: timelineMock.construirTimeline };
 });
 
-const sesionesMock = vi.hoisted(() => ({ getCasoDeSesion: vi.fn() }));
+const sesionesMock = vi.hoisted(() => ({ getCasosDeSesion: vi.fn() }));
 vi.mock("@/lib/revision/sesiones", () => sesionesMock);
 
 const notasMock = vi.hoisted(() => ({ listarNotasDeSesion: vi.fn() }));
@@ -32,7 +32,7 @@ function filaConversacion(id: string) {
     threadId: `chat-${id}`,
     categoria: "laboral",
     createdAt: new Date("2026-07-30T10:00:00.000Z"),
-    caso: { estado: "CAPTADO" },
+    casos: [{ estado: "CAPTADO" }],
     _count: { notas: 2 },
     intentosExtraccion: 0,
     reglasExtraccion: [],
@@ -60,8 +60,12 @@ describe("listarConversaciones", () => {
       {
         id: "c1",
         fecha: "2026-07-30T10:00:00.000Z",
+        // Sin fila de mensajes con ultimaActividad (mock por defecto de este
+        // describe), cae al createdAt de la conversación.
+        ultimaActividad: "2026-07-30T10:00:00.000Z",
         categoria: "laboral",
         estadoCaso: "CAPTADO",
+        casos: 1,
         mensajes: 6,
         preview: "Me despidieron sin causa",
         notas: 2,
@@ -82,6 +86,39 @@ describe("listarConversaciones", () => {
     expect(chats[0]).toMatchObject({ intentosExtraccion: 2, reglasExtraccion: ["proveedor", "infra"] });
   });
 
+  it("ordena por última actividad, no por creación", async () => {
+    prismaMock.prisma.conversation.findMany.mockResolvedValue([
+      { ...filaConversacion("nueva-inactiva"), createdAt: new Date("2026-08-04T10:00:00.000Z") },
+      { ...filaConversacion("vieja-activa"), createdAt: new Date("2026-08-01T10:00:00.000Z") },
+    ]);
+    prismaMock.prisma.$queryRaw.mockResolvedValue([
+      {
+        threadId: "chat-nueva-inactiva",
+        mensajes: 2,
+        preview: "hola",
+        ultimaActividad: new Date("2026-08-04T10:05:00.000Z"),
+      },
+      {
+        threadId: "chat-vieja-activa",
+        mensajes: 8,
+        preview: "me despidieron",
+        ultimaActividad: new Date("2026-08-05T13:08:00.000Z"),
+      },
+    ]);
+
+    const pagina = await listarConversaciones({ rango: "30d" });
+
+    expect(pagina.chats.map((chat) => chat.id)).toEqual(["vieja-activa", "nueva-inactiva"]);
+  });
+
+  it("marca CAPTADO el chat que tiene al menos un caso captado", async () => {
+    prismaMock.prisma.conversation.findMany.mockResolvedValue([
+      { ...filaConversacion("c1"), casos: [{ estado: "EN_CONVERSACION" }, { estado: "CAPTADO" }] },
+    ]);
+    const pagina = await listarConversaciones({ rango: "30d" });
+    expect(pagina.chats[0]).toMatchObject({ estadoCaso: "CAPTADO", casos: 2 });
+  });
+
   it("una conversación sin mensajes persistidos no rompe el listado", async () => {
     prismaMock.prisma.$queryRaw.mockResolvedValue([]);
     const resultado = await listarConversaciones({ rango: "30d" });
@@ -91,7 +128,7 @@ describe("listarConversaciones", () => {
   it("el filtro de estado se aplica sobre el caso", async () => {
     await listarConversaciones({ rango: "30d", estado: "CAPTADO" });
     const where = prismaMock.prisma.conversation.findMany.mock.calls[0][0].where;
-    expect(where.caso).toMatchObject({ estado: "CAPTADO" });
+    expect(where.casos).toMatchObject({ some: { estado: "CAPTADO" } });
   });
 
   it("devuelve cursor null cuando la página no está llena", async () => {
@@ -160,7 +197,7 @@ describe("obtenerConversacion", () => {
       createdAt: new Date("2026-07-30T10:00:00.000Z"),
     });
     timelineMock.construirTimeline.mockResolvedValue([{ tipo: "mensaje", id: "m1" }]);
-    sesionesMock.getCasoDeSesion.mockResolvedValue({ estado: "CAPTADO" });
+    sesionesMock.getCasosDeSesion.mockResolvedValue([{ id: "k1", esActivo: true, estado: "CAPTADO" }]);
     notasMock.listarNotasDeSesion.mockResolvedValue([]);
     busquedasMock.construirBusquedas.mockResolvedValue([
       { spanId: "t1", messageId: "m1", agente: "laboral", consulta: "indemnización por despido", categoria: "laboral", subcategorias: ["despido"], estado: "ok", fragmentos: [], fecha: "2026-07-30T10:00:04.000Z" },
@@ -174,7 +211,7 @@ describe("obtenerConversacion", () => {
       threadId: "chat-c1",
       categoria: "laboral",
       timeline: [{ tipo: "mensaje", id: "m1" }],
-      caso: { estado: "CAPTADO" },
+      casos: [{ id: "k1", esActivo: true, estado: "CAPTADO" }],
       notas: [],
     });
   });

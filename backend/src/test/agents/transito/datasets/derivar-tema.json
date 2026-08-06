@@ -1,0 +1,50 @@
+[
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "me chocaron la semana pasada y el otro auto se fue sin dejar datos" },
+      { "rol": "asistente", "texto": "Qué mal momento. Contame si hiciste la denuncia policial y si tuviste algún lesionado." },
+      { "rol": "usuario", "texto": "hice la denuncia, no hubo heridos. aparte el dueño del apartamento que alquilo me quiere echar sin avisarme" }
+    ],
+    "esperado": { "derivaTema": true }
+  },
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "me hicieron una multa por exceso de velocidad y no estoy de acuerdo" },
+      { "rol": "asistente", "texto": "Contame qué dice la notificación y si tenés el radar identificado." },
+      { "rol": "usuario", "texto": "todavía no la vi bien. y aparte me echaron del trabajo la semana pasada sin decirme nada" }
+    ],
+    "esperado": { "derivaTema": true }
+  },
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "me retuvieron la libreta por un control de alcoholemia" },
+      { "rol": "asistente", "texto": "Contame qué resultado dio el test y si te notificaron por escrito la suspensión." },
+      { "rol": "usuario", "texto": "dio positivo. aparte me estoy separando de mi mujer y no sabemos qué hacer con la casa" }
+    ],
+    "esperado": { "derivaTema": true }
+  },
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "me chocaron por atrás y tengo dolor de cuello desde entonces" },
+      { "rol": "asistente", "texto": "Contame si fuiste al médico y si tenés el parte policial del siniestro." },
+      { "rol": "usuario", "texto": "fui a la mutualista. aparte me hicieron una multa esa misma semana por no llevar el cinturón, eso también lo puedo reclamar?" }
+    ],
+    "esperado": { "derivaTema": false }
+  },
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "el seguro de mi moto me rechazo el siniestro y no entiendo por que" },
+      { "rol": "asistente", "texto": "Contame qué motivo te dieron por escrito para el rechazo." },
+      { "rol": "usuario", "texto": "dicen que no estaba al día. aparte hace dos meses me retuvieron la libreta en otro control y todavía no sé cómo sigue eso" }
+    ],
+    "esperado": { "derivaTema": false }
+  },
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "me descontaron puntos de la libreta por una multa que no sabía que tenía" },
+      { "rol": "asistente", "texto": "Contame de qué infracción se trata y cuándo la notificaron." },
+      { "rol": "usuario", "texto": "no tengo idea, la vi ahora. igual quiero preguntar por otro choque que tuve el año pasado, todavía no reclamé nada" }
+    ],
+    "esperado": { "derivaTema": false }
+  }
+]

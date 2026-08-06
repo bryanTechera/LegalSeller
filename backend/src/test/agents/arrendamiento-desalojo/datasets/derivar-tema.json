@@ -1,0 +1,50 @@
+[
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "me llegó un cedulón de desalojo del apartamento que alquilo y no sé cuánto tiempo tengo" },
+      { "rol": "asistente", "texto": "Contame si tu contrato tiene garantía y desde cuándo estás debiendo el alquiler." },
+      { "rol": "usuario", "texto": "debo dos meses. aparte me despidieron del trabajo la semana pasada sin pagarme nada" }
+    ],
+    "esperado": { "derivaTema": true }
+  },
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "estoy armando el contrato de alquiler de mi apartamento y la inmobiliaria me pide una garantía rara" },
+      { "rol": "asistente", "texto": "Contame qué garantía te están pidiendo exactamente." },
+      { "rol": "usuario", "texto": "una garantía de una empresa que no conozco. aparte tuve un choque el mes pasado y el seguro no me quiere pagar" }
+    ],
+    "esperado": { "derivaTema": true }
+  },
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "un inquilino me debe tres meses de alquiler y no sé cómo cobrarle" },
+      { "rol": "asistente", "texto": "Contame si tenés contrato firmado y si ya le reclamaste el pago por algún medio." },
+      { "rol": "usuario", "texto": "sí tengo contrato. aparte me estoy divorciando y no sabemos qué hacer con los bienes que tenemos juntos" }
+    ],
+    "esperado": { "derivaTema": true }
+  },
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "la inmobiliaria me quiere subir el alquiler antes de que se cumpla el año" },
+      { "rol": "asistente", "texto": "Contame qué dice tu contrato sobre el reajuste del precio." },
+      { "rol": "usuario", "texto": "no dice nada de un aumento antes del año. y aparte me llegó una notificación judicial de desalojo, eso es aparte de esto?" }
+    ],
+    "esperado": { "derivaTema": false }
+  },
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "me notificaron el desalojo del apartamento porque supuestamente no pagué a tiempo" },
+      { "rol": "asistente", "texto": "Contame si tu contrato tiene garantía o se sometió a la ley sin garantía." },
+      { "rol": "usuario", "texto": "no tiene garantía. aparte igual les debo dos meses de alquiler de antes, eso lo pueden cobrar por separado?" }
+    ],
+    "esperado": { "derivaTema": false }
+  },
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "arriendo un campo para pastoreo y el propietario me quiere sacar antes de tiempo" },
+      { "rol": "asistente", "texto": "Contame qué dice el contrato sobre el plazo y si está inscripto." },
+      { "rol": "usuario", "texto": "el contrato dice cinco años, todavía no se cumplieron. aparte tengo un galpón en un pueblo que también alquilo y me lo quieren desalojar" }
+    ],
+    "esperado": { "derivaTema": false }
+  }
+]

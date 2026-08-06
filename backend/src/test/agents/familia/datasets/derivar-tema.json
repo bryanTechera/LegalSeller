@@ -1,0 +1,50 @@
+[
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "me quiero divorciar, ya no da para más con mi marido" },
+      { "rol": "asistente", "texto": "Entiendo. Contame si tienen hijos en común o bienes que repartir." },
+      { "rol": "usuario", "texto": "tenemos una hija de 5 años. ah, y aparte me echaron del trabajo la semana pasada sin avisarme nada" }
+    ],
+    "esperado": { "derivaTema": true }
+  },
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "el padre de mi hijo hace meses que no me pasa la pensión" },
+      { "rol": "asistente", "texto": "Qué difícil situación. Contame desde cuándo no te paga y si hay alguna resolución judicial ya fijada." },
+      { "rol": "usuario", "texto": "hace cuatro meses. y aparte tuve un choque la semana pasada y el seguro del otro auto no me quiere pagar" }
+    ],
+    "esperado": { "derivaTema": true }
+  },
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "se murió mi papá y quiero saber cómo sigo con la herencia" },
+      { "rol": "asistente", "texto": "Te acompaño en el momento. Contame si tu papá dejó testamento y quiénes son los otros herederos." },
+      { "rol": "usuario", "texto": "no dejó testamento. aparte el dueño del apartamento que alquilo me mandó un cedulón de desalojo" }
+    ],
+    "esperado": { "derivaTema": true }
+  },
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "quiero iniciar el divorcio, no hay vuelta atrás" },
+      { "rol": "asistente", "texto": "Contame si tienen hijos menores o bienes gananciales para tener el panorama completo." },
+      { "rol": "usuario", "texto": "tenemos dos hijos chicos, y quiero saber cómo queda la pensión para ellos" }
+    ],
+    "esperado": { "derivaTema": false }
+  },
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "estoy haciendo la sucesión de mi mamá" },
+      { "rol": "asistente", "texto": "Contame si hay otros hermanos o herederos y si ya iniciaste algún trámite." },
+      { "rol": "usuario", "texto": "aparte quiero saber si mi concubinato de diez años con mi pareja actual cuenta como si estuviéramos casados" }
+    ],
+    "esperado": { "derivaTema": false }
+  },
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "estoy denunciando a mi pareja por violencia, ya hice la denuncia" },
+      { "rol": "asistente", "texto": "Hiciste bien en denunciar. Contame si ya tenés alguna medida de protección dispuesta." },
+      { "rol": "usuario", "texto": "sí, ya tengo. y aparte quiero saber cómo hago para iniciar el divorcio de una vez" }
+    ],
+    "esperado": { "derivaTema": false }
+  }
+]

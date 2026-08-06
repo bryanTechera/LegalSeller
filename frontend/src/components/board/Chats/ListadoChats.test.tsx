@@ -13,8 +13,10 @@ vi.mock("swr", () => ({ default: vi.fn() }));
 const chatBase: ChatResumen = {
   id: "c1",
   fecha: "2026-08-04T10:00:00.000Z",
+  ultimaActividad: "2026-08-04T10:05:00.000Z",
   categoria: "laboral",
   estadoCaso: "CAPTADO",
+  casos: 1,
   mensajes: 6,
   preview: "Me despidieron sin causa",
   notas: 0,

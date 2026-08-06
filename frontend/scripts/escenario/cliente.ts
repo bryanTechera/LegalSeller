@@ -60,9 +60,17 @@ export class ClienteRevision {
     return (payload as { sesiones: SesionListado[] }).sesiones;
   }
 
+  /**
+   * El endpoint devuelve TODOS los Caso de la sesión desde la Task 8 (una
+   * sesión puede acumular más de uno). El reporte del runner sigue siendo
+   * singular: preferimos el caso activo (`casoActivoId`) y, si no hay
+   * ninguno marcado, el más antiguo — el mismo que devolvía este método
+   * cuando cada sesión tenía a lo sumo un Caso.
+   */
   async getCaso(sesionId: string): Promise<CasoCorrida | null> {
     const payload = await this.json("GET", `/api/revision/sesiones/${sesionId}`);
-    return (payload as { caso: CasoCorrida | null }).caso;
+    const casos = (payload as { casos: (CasoCorrida & { esActivo: boolean })[] }).casos;
+    return casos.find((caso) => caso.esActivo) ?? casos[0] ?? null;
   }
 
   /** Turno de chat: SSE con texto, tool-calls y latencias. 429 → espera y reintenta una vez. */

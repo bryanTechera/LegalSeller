@@ -18,10 +18,6 @@ export function crearRegistrarCasoTool(categoriaId?: string) {
 
   const baseShape = {
     hechos: z.string().optional().meta({ description: "Hechos/fechas nuevos relatados por el usuario" }),
-    interesAdicional: z
-      .string()
-      .optional()
-      .meta({ description: "Tema extra fuera de la categoría de la conversación" }),
     contactoNombre: z.string().optional(),
     contactoTelefono: z.string().optional(),
     contactoEmail: z.string().optional(),
@@ -40,7 +36,7 @@ export function crearRegistrarCasoTool(categoriaId?: string) {
 
   return createTool({
     id: "registrar-caso",
-    description: `Registrá datos del caso APENAS aparezcan en la conversación: hechos relevantes, subcategorías detectadas, intereses adicionales y datos de contacto. Llamala cada vez que el consultante aporte información nueva relevante; los datos se acumulan.`,
+    description: `Registrá datos del caso APENAS aparezcan en la conversación: hechos relevantes, subcategorías detectadas y datos de contacto.`,
     inputSchema: z.object(shape).refine(
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Zod keeps explicitly-undefined keys — the check is real
       (value) => Object.values(value).some((v) => v !== undefined),

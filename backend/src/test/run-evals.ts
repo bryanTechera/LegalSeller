@@ -14,8 +14,10 @@
  *   "SIEMPRE fundar en el corpus".
  * - Voz-fuentes por agente de categoría (revisión feedback legal
  *   2026-07-22): responses must not surface internal corpus mechanics
- *   (document titles, "documento", "corpus", "PDF") and, when asked about
- *   sources, must answer with the official Jurco phrase (rules conducta-*).
+ *   (document titles, "corpus", "PDF", "material de respaldo") and, when
+ *   asked about sources, must answer with the official Jurco phrase (rules
+ *   conducta-*). Los títulos se leen de la base, no de una lista fija, y el
+ *   chequeo corre en todo ítem salvo que se apague explícitamente.
  * - Captación por agente de categoría (feedback legal 2026-07-22, corrida
  *   divorcio-con-hijos-visitas): multi-turn — after an ignored contact ask,
  *   the agent must NOT repeat the request on its own initiative (rule
@@ -24,6 +26,14 @@
  *   2026-07-23): substring/ban checks derived from real failures — the
  *   answer must keep the retrieved text's conditions (no triple for a
  *   readmitted worker; no invented sector-laudo benefits for nocturnidad).
+ * - Derivar-tema por agente de categoría (plan casos-múltiples, Task 10,
+ *   2026-08-05): multi-turn — the agent must call derivar-tema when the
+ *   consultante brings a matter from ANOTHER área while the current one
+ *   keeps going, and must NOT call it for a topic switch within the same
+ *   área (a different subcategoría, or — for tránsito, which has none — a
+ *   different señal of the same category). The negative side is the one
+ *   that matters: an agent that over-triggers adds a spurious receptor call
+ *   per turn.
  */
 import "dotenv/config";
 
@@ -34,12 +44,13 @@ import "dotenv/config";
 // opcionesDeProcessors lo lee al construirlos.
 process.env.EVALS_SIN_PROCESSORS = "1";
 
-import { readFileSync } from "node:fs";
+import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { RequestContext } from "@mastra/core/request-context";
 
+import { getPool } from "../mastra/config/storage.js";
 import { arrendamientoDesalojoAgent } from "../mastra/dominios/arrendamiento-desalojo/index.js";
 import { familiaAgent } from "../mastra/dominios/familia/index.js";
 import { laboralAgent } from "../mastra/dominios/laboral/index.js";
@@ -49,6 +60,7 @@ import { transitoAgent } from "../mastra/dominios/transito/index.js";
 import { detectar } from "../mastra/processors/terminos-confidenciales.js";
 
 import { evalRetrieval } from "./retrieval/run-retrieval.js";
+import { afirmaSinRespaldo } from "./scorers.js";
 
 const THRESHOLD = 0.9;
 
@@ -94,6 +106,11 @@ interface AntifiltracionItem {
   };
 }
 
+interface DerivarTemaItem {
+  mensajes: MensajeHistoria[];
+  esperado: { derivaTema: boolean };
+}
+
 function toGenerateMessages(mensajes: MensajeHistoria[]): { role: "user" | "assistant"; content: string }[] {
   return mensajes.map((mensaje) => ({
     role: mensaje.rol === "usuario" ? ("user" as const) : ("assistant" as const),
@@ -115,18 +132,66 @@ const PEDIDO_CONTACTO: readonly RegExp[] = [
 
 /**
  * Internal-mechanics leak patterns (feedback legal 2026-07-22, notas de
- * Federico): the agent must integrate corpus content as its own knowledge —
- * naming document titles ("Despido — …"), "el documento", "corpus" or "PDF"
- * breaks the product voice. "un/algún documento" stays legal (the agent may
- * legitimately ask the consultante for their paperwork).
+ * Federico): the agent must integrate corpus content as its own knowledge.
+ *
+ * El leak se detecta por el REFERENTE (nuestro material de respaldo), no por
+ * la palabra suelta. Corrección 2026-08-05, medida sobre transcripciones
+ * reales: `\b(el|del) documento\b` marcaba al agente hablando de los papeles
+ * DEL CONSULTANTE ("revisar todas las páginas del documento", por el cedulón)
+ * — que es exactamente lo que la rule conducta-arrendamiento le manda hacer —
+ * y hacía fallar el gate por una respuesta correcta.
  */
 const REFERENCIAS_INTERNAS: readonly RegExp[] = [
   /\bcorpus\b/i,
   /base de (datos|documentos|conocimiento)/i,
   /\bPDF\b/i,
-  /\b(el|del) documento\b/i,
-  /(Despido|Rubros laborales|Licencias especiales|Trabajador rural|Call center|Laboral|Familia|Tr[aá]nsito|Arrendamiento|Relaciones de consumo) —/,
+  /\bdocumento de origen\b/i,
+  /\bfuentes? internas?\b/i,
+  /\b(documento|material)e?s? titulad[oa]s?\b/i,
+  /\bmateriales? (de respaldo|de consulta|consultado|disponible|interno)/i,
+  /\bseg[uú]n (el|los) documentos?\b/i,
 ];
+
+/**
+ * Las fallas de substring (`contiene`, `contieneAlguno`, `prohibido`) dicen qué
+ * faltó pero no muestran la respuesta, así que no se pueden diagnosticar sin
+ * volver a correr el ítem — y a 90-108s el turno, eso es lo que hace que un
+ * ítem intermitente quede sin explicación por semanas. Cada falla deja acá su
+ * texto completo. El archivo se reescribe en cada corrida.
+ */
+const SUFIJO_LOG = (process.argv.at(2) ?? "").replace(/[^a-z0-9-]/gi, "");
+const LOG_FALLAS = join(
+  dirname(fileURLToPath(import.meta.url)),
+  `../../.evals-fallas${SUFIJO_LOG === "" ? "" : `-${SUFIJO_LOG}`}.log`,
+);
+
+function registrarFalla(dataset: string, mensaje: string, problemas: string[], texto: string): void {
+  appendFileSync(LOG_FALLAS, `\n### ${dataset} — "${mensaje}"\n${problemas.join("; ")}\n---\n${texto}\n`);
+}
+
+
+/**
+ * Títulos del corpus ("Despido — …", "Trabajador rural — …"): el patrón se
+ * arma leyendo la base, no a mano. La lista fija anterior cubría 7 de los 10
+ * prefijos reales, así que el mismo defecto pasaba o fallaba el gate según qué
+ * documento le tocara nombrar al agente — la fuente de flakiness que motivó
+ * esta investigación. Derivarlo de la base deja cubierta toda subcategoría
+ * nueva sin tocar este archivo.
+ */
+let patronTitulosCache: RegExp | null = null;
+
+async function patronDeTitulos(): Promise<RegExp> {
+  if (patronTitulosCache) return patronTitulosCache;
+  const { rows } = await getPool().query<{ prefijo: string }>(
+    `SELECT DISTINCT split_part("title", ' — ', 1) AS prefijo FROM "Document" WHERE "title" LIKE '% — %'`,
+  );
+  if (rows.length === 0) {
+    throw new Error("El corpus no devolvió títulos: el chequeo de fuentes internas quedaría ciego");
+  }
+  const alternativa = rows.map((row) => row.prefijo.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+  patronTitulosCache = new RegExp(`(${alternativa}) —`);
+  return patronTitulosCache;
+}
 
 interface ToolCallInfo {
   toolName: string;
@@ -247,6 +312,7 @@ async function evalCitacion(agent: CategoriaAgent, agentDir: string, label: stri
 async function evalVozFuentes(agent: CategoriaAgent, agentDir: string, label: string): Promise<number> {
   const datasetPath = join(dirname(fileURLToPath(import.meta.url)), `agents/${agentDir}/datasets/voz-fuentes.json`);
   const items = JSON.parse(readFileSync(datasetPath, "utf8")) as VozFuentesItem[];
+  const patrones = [...REFERENCIAS_INTERNAS, await patronDeTitulos()];
 
   let passed = 0;
   const failures: string[] = [];
@@ -259,8 +325,12 @@ async function evalVozFuentes(agent: CategoriaAgent, agentDir: string, label: st
     const text = typeof rawText === "string" ? rawText : "";
 
     const problemas: string[] = [];
-    if (item.esperado.sinReferenciasInternas) {
-      for (const patron of REFERENCIAS_INTERNAS) {
+    // Default-on: no filtrar mecánica interna es una propiedad de TODA respuesta
+    // de este dataset, no de los ítems que se acuerdan de pedirla. El ítem que
+    // no la declaraba (familia, tenencia del perro) filtró "material disponible"
+    // en 2 de 4 corridas sin que el gate lo viera.
+    if (item.esperado.sinReferenciasInternas !== false) {
+      for (const patron of patrones) {
         const match = patron.exec(text);
         if (match) problemas.push(`referencia interna "${match[0]}"`);
       }
@@ -273,11 +343,14 @@ async function evalVozFuentes(agent: CategoriaAgent, agentDir: string, label: st
       problemas.push(`falta alguna de: ${alternativas.map((alt) => `"${alt}"`).join(", ")}`);
     }
     for (const vedado of item.esperado.prohibido ?? []) {
-      if (text.toLowerCase().includes(vedado.toLowerCase())) problemas.push(`afirmó "${vedado}" sin respaldo`);
+      if (afirmaSinRespaldo(text.toLowerCase(), vedado)) problemas.push(`afirmó "${vedado}" sin respaldo`);
     }
 
     if (text.length > 0 && problemas.length === 0) passed += 1;
-    else failures.push(`"${item.mensaje}" → ${text.length === 0 ? "respuesta vacía" : problemas.join("; ")}`);
+    else {
+      failures.push(`"${item.mensaje}" → ${text.length === 0 ? "respuesta vacía" : problemas.join("; ")}`);
+      registrarFalla(`${label} voz-fuentes`, item.mensaje, problemas, text);
+    }
   }
 
   const precision = passed / items.length;
@@ -346,7 +419,8 @@ async function evalFidelidad(agent: CategoriaAgent, agentDir: string, label: str
       requestContext: buildEvalRequestContext(),
     });
     const rawText = (result as { text?: unknown }).text;
-    const text = typeof rawText === "string" ? rawText.toLowerCase() : "";
+    const original = typeof rawText === "string" ? rawText : "";
+    const text = original.toLowerCase();
 
     const problemas: string[] = [];
     for (const requerido of item.esperado.contiene ?? []) {
@@ -357,11 +431,14 @@ async function evalFidelidad(agent: CategoriaAgent, agentDir: string, label: str
       problemas.push(`falta alguna de: ${alternativas.map((alt) => `"${alt}"`).join(", ")}`);
     }
     for (const vedado of item.esperado.prohibido ?? []) {
-      if (text.includes(vedado.toLowerCase())) problemas.push(`afirmó "${vedado}" sin respaldo`);
+      if (afirmaSinRespaldo(text, vedado)) problemas.push(`afirmó "${vedado}" sin respaldo`);
     }
 
     if (text.length > 0 && problemas.length === 0) passed += 1;
-    else failures.push(`"${item.mensaje}" → ${text.length === 0 ? "respuesta vacía" : problemas.join("; ")}`);
+    else {
+      failures.push(`"${item.mensaje}" → ${text.length === 0 ? "respuesta vacía" : problemas.join("; ")}`);
+      registrarFalla(`${label} fidelidad`, item.mensaje, problemas, original);
+    }
   }
 
   const precision = passed / items.length;
@@ -425,19 +502,58 @@ async function evalAntifiltracion(agent: CategoriaAgent, agentDir: string, label
   return precision;
 }
 
+/**
+ * Derivar-tema (plan casos-múltiples, Task 10): the agent must call
+ * derivar-tema when the consultante sums a matter from another área onto the
+ * one already in progress, and must NOT call it for a topic switch that
+ * stays within the same área. The negative side is the one that matters — an
+ * agent that marks de más adds a spurious receptor call every turn.
+ */
+async function evalDerivarTema(agent: CategoriaAgent, agentDir: string, label: string): Promise<number> {
+  const datasetPath = join(dirname(fileURLToPath(import.meta.url)), `agents/${agentDir}/datasets/derivar-tema.json`);
+  const items = JSON.parse(readFileSync(datasetPath, "utf8")) as DerivarTemaItem[];
+
+  let passed = 0;
+  const failures: string[] = [];
+
+  for (const item of items) {
+    const result = await agent.generate(toGenerateMessages(item.mensajes), {
+      requestContext: buildEvalRequestContext(),
+    });
+    const disparo = extractToolCalls(result).some((call) => call.toolName === "derivar-tema");
+    const ok = disparo === item.esperado.derivaTema;
+
+    if (ok) passed += 1;
+    else {
+      const ultimo = item.mensajes.at(-1)?.texto ?? "";
+      failures.push(`"${ultimo}" → esperado derivaTema=${String(item.esperado.derivaTema)}, obtuvo ${String(disparo)}`);
+    }
+  }
+
+  const precision = passed / items.length;
+  console.log(
+    `${label} derivar-tema: ${String(passed)}/${String(items.length)} (${(precision * 100).toFixed(0)}%) — threshold ${String(THRESHOLD * 100)}%`,
+  );
+  for (const failure of failures) console.log(`  FAIL: ${failure}`);
+  return precision;
+}
+
 const EVALS: readonly { nombre: string; run: () => Promise<number>; umbral?: number }[] = [
   { nombre: "receptor", run: evalReceptorClasificacion },
   { nombre: "laboral-citacion", run: () => evalCitacion(laboralAgent, "laboral", "Laboral") },
   { nombre: "laboral-voz-fuentes", run: () => evalVozFuentes(laboralAgent, "laboral", "Laboral") },
   { nombre: "laboral-captacion", run: () => evalCaptacion(laboralAgent, "laboral", "Laboral") },
   { nombre: "laboral-fidelidad", run: () => evalFidelidad(laboralAgent, "laboral", "Laboral") },
+  { nombre: "laboral-derivar-tema", run: () => evalDerivarTema(laboralAgent, "laboral", "Laboral") },
   { nombre: "familia-citacion", run: () => evalCitacion(familiaAgent, "familia", "Familia") },
   { nombre: "familia-voz-fuentes", run: () => evalVozFuentes(familiaAgent, "familia", "Familia") },
   { nombre: "familia-captacion", run: () => evalCaptacion(familiaAgent, "familia", "Familia") },
   { nombre: "familia-fidelidad", run: () => evalFidelidad(familiaAgent, "familia", "Familia") },
+  { nombre: "familia-derivar-tema", run: () => evalDerivarTema(familiaAgent, "familia", "Familia") },
   { nombre: "transito-citacion", run: () => evalCitacion(transitoAgent, "transito", "Tránsito") },
   { nombre: "transito-voz-fuentes", run: () => evalVozFuentes(transitoAgent, "transito", "Tránsito") },
   { nombre: "transito-captacion", run: () => evalCaptacion(transitoAgent, "transito", "Tránsito") },
+  { nombre: "transito-derivar-tema", run: () => evalDerivarTema(transitoAgent, "transito", "Tránsito") },
   {
     nombre: "arrendamiento-citacion",
     run: () => evalCitacion(arrendamientoDesalojoAgent, "arrendamiento-desalojo", "Arrendamiento"),
@@ -455,6 +571,10 @@ const EVALS: readonly { nombre: string; run: () => Promise<number>; umbral?: num
     run: () => evalFidelidad(arrendamientoDesalojoAgent, "arrendamiento-desalojo", "Arrendamiento"),
   },
   {
+    nombre: "arrendamiento-derivar-tema",
+    run: () => evalDerivarTema(arrendamientoDesalojoAgent, "arrendamiento-desalojo", "Arrendamiento"),
+  },
+  {
     nombre: "consumo-citacion",
     run: () => evalCitacion(relacionesConsumoAgent, "relaciones-consumo", "Consumo"),
   },
@@ -465,6 +585,10 @@ const EVALS: readonly { nombre: string; run: () => Promise<number>; umbral?: num
   {
     nombre: "consumo-captacion",
     run: () => evalCaptacion(relacionesConsumoAgent, "relaciones-consumo", "Consumo"),
+  },
+  {
+    nombre: "consumo-derivar-tema",
+    run: () => evalDerivarTema(relacionesConsumoAgent, "relaciones-consumo", "Consumo"),
   },
   // Gates fijados 2026-08-04 con el umbral calibrado por categoría (Tarea 10 del
   // plan, minSimilarityPara). El score de cada dataset es min(recall@5, tasa de
@@ -509,6 +633,7 @@ async function main(): Promise<number> {
     );
     return 1;
   }
+  writeFileSync(LOG_FALLAS, `Respuestas completas de los ítems fallados (${String(seleccion.length)} datasets)\n`);
   const resultados: { nombre: string; precision: number; umbral: number }[] = [];
   for (const evalDef of seleccion) {
     resultados.push({ nombre: evalDef.nombre, precision: await evalDef.run(), umbral: evalDef.umbral ?? THRESHOLD });
@@ -517,6 +642,7 @@ async function main(): Promise<number> {
   for (const r of reprobados) {
     console.log(`\nGATE FALLADO: ${r.nombre} — ${r.precision.toFixed(3)} < ${r.umbral.toFixed(3)}`);
   }
+  if (reprobados.length > 0) console.log(`\nRespuestas completas de las fallas: ${LOG_FALLAS}`);
   return reprobados.length === 0 ? 0 : 1;
 }
 

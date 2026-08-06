@@ -1,0 +1,50 @@
+[
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "me despidieron sin causa después de 6 años y no me pagaron nada" },
+      { "rol": "asistente", "texto": "Lamento lo que estás pasando. Contame si te entregaron algún recibo de liquidación." },
+      { "rol": "usuario", "texto": "no me dieron nada. ah, y aparte tuve un choque el mes pasado y el seguro no me quiere pagar" }
+    ],
+    "esperado": { "derivaTema": true }
+  },
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "tengo un problema con mi jefe, me quiere echar" },
+      { "rol": "asistente", "texto": "Contame un poco más de la situación." },
+      { "rol": "usuario", "texto": "y aparte me estoy separando de mi esposa y no sabemos qué hacer con la casa" }
+    ],
+    "esperado": { "derivaTema": true }
+  },
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "me deben horas extras de todo el año pasado" },
+      { "rol": "asistente", "texto": "Para dimensionarlo necesito saber tu salario y desde cuándo trabajás ahí." },
+      { "rol": "usuario", "texto": "aparte el dueño del apartamento que alquilo me quiere echar sin aviso" }
+    ],
+    "esperado": { "derivaTema": true }
+  },
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "me despidieron y quiero saber qué me corresponde" },
+      { "rol": "asistente", "texto": "Para eso necesito tu antigüedad y tu último salario." },
+      { "rol": "usuario", "texto": "y los días de licencia por estudio que nunca me dieron, los puedo reclamar igual?" }
+    ],
+    "esperado": { "derivaTema": false }
+  },
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "trabajo en el campo y me pagan menos de lo que corresponde" },
+      { "rol": "asistente", "texto": "Contame qué tareas hacés y cuántas horas." },
+      { "rol": "usuario", "texto": "también quiero saber si me tienen que pagar el aguinaldo aparte" }
+    ],
+    "esperado": { "derivaTema": false }
+  },
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "me despidieron estando certificado" },
+      { "rol": "asistente", "texto": "Contame desde cuándo estabas certificado." },
+      { "rol": "usuario", "texto": "y si además me deben el salario vacacional, va todo en el mismo reclamo?" }
+    ],
+    "esperado": { "derivaTema": false }
+  }
+]

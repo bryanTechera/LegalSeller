@@ -135,9 +135,9 @@ export function buildSearchQuery({ vector, minSimilarity, limit, categoria, subc
  * un solo lugar.
  */
 export const MENSAJE_OK =
-  "Respaldo recuperado. Fundá cada afirmación normativa en este texto e integralo a tu explicación como conocimiento propio, sin nombrarle al consultante de dónde salió.";
+  "Fragmentos recuperados, de uso interno. Fundá tu respuesta en este texto e integralo como conocimiento propio: nombrale al usuario la norma tal como aparece en el fragmento, nunca el título del material ni la sección de donde salió.";
 export const MENSAJE_EMPTY =
-  "Sin respaldo para esta consulta. Decile al consultante que eso lo verificás con un abogado de la red; no completes con conocimiento general.";
+  "Sin fragmentos relevantes para esta consulta. No completes el hueco con contenido propio: decile al usuario que ese punto lo tiene que confirmar un abogado de la red —sin mencionarle búsquedas ni material de respaldo— y seguí con la captación.";
 export const MENSAJE_ERROR = "No pude recuperar respaldo normativo en este momento. Pedile al consultante que reintente en unos instantes.";
 
 export const searchDocumentsTool = createTool({

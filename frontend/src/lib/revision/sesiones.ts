@@ -108,6 +108,8 @@ export async function publicarSesionRevision(id: string): Promise<boolean> {
 }
 
 export interface CasoSnapshot {
+  id: string;
+  esActivo: boolean;
   estado: string;
   categoria: string | null;
   subcategorias: string[];
@@ -115,21 +117,30 @@ export interface CasoSnapshot {
   contactoNombre: string | null;
   contactoTelefono: string | null;
   contactoEmail: string | null;
+  correccionAplicada: boolean;
   eventos: { tipo: string; payload: unknown; createdAt: string }[];
 }
 
 /**
- * Snapshot del Caso de una sesión (el id de la sesión ES el Conversation.id).
- * Alimenta el reporte del runner de escenarios y deja el dato disponible
- * para la UI de revisión.
+ * Snapshot de los Casos de una sesión (el id de la sesión ES el
+ * Conversation.id). Devuelve `[]` —no `null`— cuando todavía no hay ninguno:
+ * un null obligaría a cada consumidor a un branch extra que no aporta.
+ * `orderBy createdAt asc` es load-bearing: fija que el Caso inaugural se
+ * renderiza primero y que el orden no baila entre requests (`updatedAt` sí se
+ * mueve). Alimenta el reporte del runner de escenarios y la UI de revisión.
  */
-export async function getCasoDeSesion(conversationId: string): Promise<CasoSnapshot | null> {
-  const caso = await prisma.caso.findUnique({
-    where: { conversationId },
-    include: { eventos: { orderBy: { createdAt: "asc" } } },
-  });
-  if (!caso) return null;
-  return {
+export async function getCasosDeSesion(conversationId: string): Promise<CasoSnapshot[]> {
+  const [conversation, casos] = await Promise.all([
+    prisma.conversation.findUnique({ where: { id: conversationId }, select: { casoActivoId: true } }),
+    prisma.caso.findMany({
+      where: { conversationId },
+      orderBy: { createdAt: "asc" },
+      include: { eventos: { orderBy: { createdAt: "asc" } } },
+    }),
+  ]);
+  return casos.map((caso) => ({
+    id: caso.id,
+    esActivo: caso.id === conversation?.casoActivoId,
     estado: caso.estado,
     categoria: caso.categoria,
     subcategorias: caso.subcategorias,
@@ -137,10 +148,11 @@ export async function getCasoDeSesion(conversationId: string): Promise<CasoSnaps
     contactoNombre: caso.contactoNombre,
     contactoTelefono: caso.contactoTelefono,
     contactoEmail: caso.contactoEmail,
+    correccionAplicada: caso.correccionAplicada,
     eventos: caso.eventos.map((evento) => ({
       tipo: evento.tipo,
       payload: evento.payload,
       createdAt: evento.createdAt.toISOString(),
     })),
-  };
+  }));
 }

@@ -8,9 +8,14 @@ const SECRETO = process.env.AUTH_SECRET ?? "";
 test.skip(!CLAVE || !SECRETO, "Faltan REVISION_CLAVE o AUTH_SECRET — E2E de revisión deshabilitado");
 
 test("ciclo de revisión: sesión → chat → nota inline → responder → resolver", async ({ page }) => {
-  // 240s: el turno real de agente solo (sin board-auth.spec.ts compitiendo por
-  // el mismo backend, ver commit b6cf691) ronda 108s — 120s dejaba un margen
-  // demasiado fino y fallaba en el primer intento, pasando recién en el retry.
+  // 240s por el turno real de agente. Los 108s que motivaron este margen se
+  // midieron con el backend apuntando a la base de Railway: cada ida y vuelta
+  // de memoria y de corpus cruzaba la red. Con `backend/.env` en la base local
+  // el turno completo tarda ~20s. Y si el backend apunta a una base distinta
+  // de la del frontend, este test NO puede pasar por más timeout que le pongas:
+  // Mastra persiste los mensajes en la base del backend y el transcript de
+  // /revision los lee de `mastra.mastra_messages` por Prisma, o sea la del
+  // frontend — el transcript vuelve vacío y el gutter de notas nunca aparece.
   test.setTimeout(240_000);
 
   await iniciarSesionBoard(page);

@@ -168,42 +168,57 @@ export function ListadoChats() {
           <table className={styles.tabla}>
             <thead>
               <tr>
-                <th scope="col">Fecha</th>
+                <th scope="col">Última actividad</th>
                 <th scope="col">Categoría</th>
                 <th scope="col">Estado</th>
+                <th scope="col">Casos</th>
                 <th scope="col">Mensajes</th>
                 <th scope="col">Consulta</th>
                 <th scope="col">Notas</th>
               </tr>
             </thead>
             <tbody>
-              {chats.map((chat) => (
-                <tr key={chat.id}>
-                  <td>{fechaCorta(chat.fecha)}</td>
-                  <td>{chat.categoria ?? "—"}</td>
-                  <td>
-                    {chat.estadoCaso?.replace(/_/g, " ").toLowerCase() ?? "—"}
-                    {chat.intentosExtraccion > 0 && (
-                      <>
-                        {" "}
-                        <span
-                          className={styles.intentos}
-                          title={`Reglas: ${chat.reglasExtraccion.join(", ")}`}
-                        >
-                          Intento de extracción ({chat.intentosExtraccion})
-                        </span>
-                      </>
-                    )}
-                  </td>
-                  <td>{chat.mensajes}</td>
-                  <td>
-                    <Link href={`/board/chats/${chat.id}`} className={styles.link}>
-                      {chat.preview || "Sin mensajes"}
-                    </Link>
-                  </td>
-                  <td>{chat.notas > 0 ? chat.notas : "—"}</td>
-                </tr>
-              ))}
+              {chats.map((chat) => {
+                const actividad = fechaCorta(chat.ultimaActividad);
+                const creacion = fechaCorta(chat.fecha);
+                return (
+                  <tr key={chat.id}>
+                    <td>
+                      {actividad}
+                      {/* La creación solo se muestra cuando difiere de día: es
+                          el dato que explica por qué un chat "viejo" sigue
+                          arriba del listado (ver Task 9: el orden es por
+                          actividad, no por creación). */}
+                      {creacion !== actividad ? (
+                        <span className={styles.etiqueta}> · creado {creacion}</span>
+                      ) : null}
+                    </td>
+                    <td>{chat.categoria ?? "—"}</td>
+                    <td>
+                      {chat.estadoCaso?.replace(/_/g, " ").toLowerCase() ?? "—"}
+                      {chat.intentosExtraccion > 0 && (
+                        <>
+                          {" "}
+                          <span
+                            className={styles.intentos}
+                            title={`Reglas: ${chat.reglasExtraccion.join(", ")}`}
+                          >
+                            Intento de extracción ({chat.intentosExtraccion})
+                          </span>
+                        </>
+                      )}
+                    </td>
+                    <td>{chat.casos}</td>
+                    <td>{chat.mensajes}</td>
+                    <td>
+                      <Link href={`/board/chats/${chat.id}`} className={styles.link}>
+                        {chat.preview || "Sin mensajes"}
+                      </Link>
+                    </td>
+                    <td>{chat.notas > 0 ? chat.notas : "—"}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
 

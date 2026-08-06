@@ -10,7 +10,7 @@ import type { AgentId, ReadOnlyState } from "../../../../models/index.js";
 
 const OBJETIVO = `Tu objetivo de fondo es que el usuario confíe y deje sus datos para que un abogado de nuestra red tome su caso.`;
 
-const REGISTRO = `- Registrá con la herramienta registrar-caso cada dato relevante APENAS aparezca (hechos, fechas, subcategorías, intereses adicionales). Nunca preguntes algo cuya respuesta no vayas a registrar.`;
+const REGISTRO = `- Registrá con la herramienta registrar-caso cada dato relevante APENAS aparezca (hechos, fechas, subcategorías). Nunca preguntes algo cuya respuesta no vayas a registrar.`;
 
 const LIMITES = `- NUNCA vuelvas a preguntar algo que el usuario ya contó en la conversación.
 - NUNCA condiciones una respuesta a que deje sus datos.
@@ -39,6 +39,14 @@ BIEN: "…el telegrama no interrumpe el plazo: lo que lo interrumpe es la citaci
 </ejemplo>
 </captacion>`;
 
+const CAPTACION_CONTACTO_REGISTRADO = `<captacion>
+${OBJETIVO}
+${REGISTRO}
+- Sus datos de contacto ya están registrados en este caso: la captación está hecha. No vuelvas a pedirle teléfono, correo ni nombre, y no le pidas que "deje sus datos" — ya los dejó, y pedirlos de nuevo hace ver que no lo escuchaste. Cuando tu respuesta desemboca en un trámite que hace un abogado, decí con naturalidad que un abogado de la red va a tomar el caso, sin condicionarlo a ningún dato nuevo.
+- Si el usuario corrige o agrega un dato de contacto, registralo con registrar-caso.
+${LIMITES}
+</captacion>`;
+
 const CONTENT: Partial<Record<AgentId, string>> = {
   laboral: CAPTACION_SIN_PEDIDO,
   familia: CAPTACION_SIN_PEDIDO,
@@ -55,7 +63,23 @@ const CONTENT_PEDIDO_HECHO: Partial<Record<AgentId, string>> = {
   "relaciones-consumo": CAPTACION_PEDIDO_HECHO,
 };
 
+const CONTENT_CONTACTO_REGISTRADO: Partial<Record<AgentId, string>> = {
+  laboral: CAPTACION_CONTACTO_REGISTRADO,
+  familia: CAPTACION_CONTACTO_REGISTRADO,
+  transito: CAPTACION_CONTACTO_REGISTRADO,
+  "arrendamiento-desalojo": CAPTACION_CONTACTO_REGISTRADO,
+  "relaciones-consumo": CAPTACION_CONTACTO_REGISTRADO,
+};
+
+/**
+ * Tres estados, no dos. "Ya lo pedimos y no lo dio" y "ya lo tenemos" piden
+ * los dos que el agente no vuelva a pedir contacto, pero por razones opuestas:
+ * el primero es un "todavía no" que hay que respetar sin insistir; el segundo
+ * es una captación hecha, donde el agente puede cerrar con confianza. Una sola
+ * booleana para los dos le afirmaba al modelo la premisa equivocada.
+ */
 export function captacionCasoRule(readOnly: ReadOnlyState | null, agentId: AgentId): string | null {
-  const variante = readOnly?.pedidoContactoHecho === true ? CONTENT_PEDIDO_HECHO : CONTENT;
-  return variante[agentId] ?? null;
+  if (readOnly?.contactoRegistrado === true) return CONTENT_CONTACTO_REGISTRADO[agentId] ?? null;
+  if (readOnly?.pedidoContactoHecho === true) return CONTENT_PEDIDO_HECHO[agentId] ?? null;
+  return CONTENT[agentId] ?? null;
 }

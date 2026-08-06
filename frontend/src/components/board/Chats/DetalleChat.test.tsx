@@ -109,16 +109,21 @@ const detalleBase: DetalleConversacion = {
     },
   ],
   busquedas: [busquedaConFuente, busquedaVacia],
-  caso: {
-    estado: "EN_PROGRESO",
-    categoria: "laboral",
-    subcategorias: ["despido"],
-    resumen: null,
-    contactoNombre: "Juan Pérez",
-    contactoTelefono: "099123456",
-    contactoEmail: null,
-    eventos: [],
-  },
+  casos: [
+    {
+      id: "k1",
+      esActivo: true,
+      estado: "EN_PROGRESO",
+      categoria: "laboral",
+      subcategorias: ["despido"],
+      resumen: null,
+      contactoNombre: "Juan Pérez",
+      contactoTelefono: "099123456",
+      contactoEmail: null,
+      correccionAplicada: false,
+      eventos: [],
+    },
+  ],
   notas: [
     {
       id: "n1",
@@ -268,6 +273,40 @@ describe("DetalleChat", () => {
     expect(screen.getByText(/Juan Pérez/)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Notas de la conversación" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Nota sobre la conversación" })).toBeInTheDocument();
+  });
+
+  // Con un solo caso, el panel tiene que verse igual que antes de la Task 8:
+  // sin encabezado por caso, para no meter ruido visual en el caso más común.
+  it("con un solo caso no aparece el encabezado por caso", () => {
+    render(<DetalleChat id="c1" />);
+
+    expect(screen.queryByRole("heading", { name: /laboral/, level: 3 })).not.toBeInTheDocument();
+    expect(screen.getByText(/Juan Pérez/)).toBeInTheDocument();
+  });
+
+  it("sin casos registrados muestra el mensaje vacío en vez de la ficha", () => {
+    mockDatos({ ...detalleBase, casos: [] });
+    render(<DetalleChat id="c1" />);
+
+    expect(screen.getByText("Todavía no se registró ningún caso en esta conversación.")).toBeInTheDocument();
+  });
+
+  it("con más de un caso, cada uno tiene su encabezado y el activo queda marcado", () => {
+    mockDatos({
+      ...detalleBase,
+      casos: [
+        { ...detalleBase.casos[0], id: "k1", esActivo: false, categoria: "familia" },
+        { ...detalleBase.casos[0], id: "k2", esActivo: true, categoria: "transito" },
+      ],
+    });
+    render(<DetalleChat id="c1" />);
+
+    const familia = screen.getByRole("heading", { name: "familia", level: 3 });
+    const transito = screen.getByRole("heading", { name: /transito/, level: 3 });
+    expect(familia).toBeInTheDocument();
+    expect(transito).toBeInTheDocument();
+    expect(within(transito).getByText(/en curso/)).toBeInTheDocument();
+    expect(within(familia).queryByText(/en curso/)).not.toBeInTheDocument();
   });
 
   it("la nota de un mensaje vive en su solapa, no en el bloque de la conversación", () => {

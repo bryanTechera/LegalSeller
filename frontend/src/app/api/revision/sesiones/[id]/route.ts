@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getIdentidadBoard } from "@/lib/board/identidad";
 import { construirBusquedas } from "@/lib/revision/busquedas";
 import { listarNotasDeSesion } from "@/lib/revision/notas";
-import { getCasoDeSesion, getSesionRevision, publicarSesionRevision } from "@/lib/revision/sesiones";
+import { getCasosDeSesion, getSesionRevision, publicarSesionRevision } from "@/lib/revision/sesiones";
 import { construirTimeline } from "@/lib/revision/timeline";
 import { parseRequestBody, publicarSesionSchema } from "@/lib/validations";
 import { logger } from "@/utils/logger";
@@ -18,11 +18,11 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     const sesion = await getSesionRevision(id);
     if (!sesion) return NextResponse.json({ error: "Sesión no encontrada" }, { status: 404 });
 
-    const [timeline, busquedas, notas, caso] = await Promise.all([
+    const [timeline, busquedas, notas, casos] = await Promise.all([
       construirTimeline(sesion.threadId),
       construirBusquedas(sesion.threadId),
       listarNotasDeSesion(sesion.id),
-      getCasoDeSesion(sesion.id),
+      getCasosDeSesion(sesion.id),
     ]);
     return NextResponse.json({
       sesion: {
@@ -35,7 +35,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       timeline,
       busquedas,
       notas,
-      caso,
+      casos,
     });
   } catch (error) {
     logger.error("revision/sesiones/:id GET failed", { error: error instanceof Error ? error.message : String(error) });
