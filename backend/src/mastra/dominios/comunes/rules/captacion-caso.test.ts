@@ -15,6 +15,18 @@ describe("captacionCasoRule", () => {
     expect(content).not.toContain("una sola vez");
   });
 
+  it("con contactoRegistrado cierra sin volver a pedir, sin afirmar que el usuario no respondió", () => {
+    const content = captacionCasoRule({ userId: "s1", contactoRegistrado: true }, "laboral");
+    expect(content).toContain("ya están registrados");
+    expect(content).not.toContain("ya se hizo");
+    expect(content).not.toContain("una sola vez");
+  });
+
+  it("tener el contacto manda sobre haberlo pedido", () => {
+    const content = captacionCasoRule({ userId: "s1", pedidoContactoHecho: true, contactoRegistrado: true }, "laboral");
+    expect(content).toContain("ya están registrados");
+  });
+
   it("sin ReadOnlyState (startup) devuelve la variante base", () => {
     const content = captacionCasoRule(null, "familia");
     expect(content).toContain("una sola vez");

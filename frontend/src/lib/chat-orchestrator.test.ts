@@ -21,7 +21,7 @@ const { clasificacion, dominios, agentService } = vi.hoisted(() => ({
     abrirCasoFueraDeCobertura: vi.fn(),
   },
   dominios: { subcategoriaUnica: vi.fn(), esCategoriaHabilitada: vi.fn() },
-  agentService: { streamAgentMessage: vi.fn(), appendThreadMessages: vi.fn() },
+  agentService: { streamAgentMessage: vi.fn(), appendThreadMessages: vi.fn(), fetchAssistantTexts: vi.fn() },
 }));
 
 vi.mock("./clasificacion", () => clasificacion);
@@ -54,6 +54,7 @@ describe("orchestrateChatTurn", () => {
     clasificacion.registrarDatosCaso.mockResolvedValue(undefined);
     clasificacion.resolverCasoActivo.mockResolvedValue(null);
     agentService.appendThreadMessages.mockResolvedValue(undefined);
+    agentService.fetchAssistantTexts.mockResolvedValue([]);
     dominios.subcategoriaUnica.mockResolvedValue("despido");
     dominios.esCategoriaHabilitada.mockResolvedValue(true);
   });
@@ -92,7 +93,69 @@ describe("orchestrateChatTurn", () => {
     await drain(await orchestrateChatTurn({ sessionId: "s1", message: "consulta" }));
 
     expect(agentService.streamAgentMessage).toHaveBeenCalledWith(
-      expect.objectContaining({ agentId: "familia", pedidoContactoHecho: true }),
+      expect.objectContaining({ agentId: "familia", contactoRegistrado: true }),
+    );
+  });
+
+  it("con el contacto ya registrado no escanea el historial: el dato manda sobre el pedido", async () => {
+    clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "familia", casoActivoId: "k1" });
+    clasificacion.resolverCasoActivo.mockResolvedValue({
+      id: "k1",
+      categoria: "familia",
+      estado: "CAPTADO",
+      origen: "DOMINIO",
+      correccionAplicada: false,
+    });
+    agentService.streamAgentMessage.mockResolvedValue(sseResponse([{ type: "text-delta", payload: { text: "hola" } }]));
+
+    await drain(await orchestrateChatTurn({ sessionId: "s1", message: "consulta" }));
+
+    expect(agentService.fetchAssistantTexts).not.toHaveBeenCalled();
+    expect(agentService.streamAgentMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ contactoRegistrado: true, pedidoContactoHecho: false }),
+    );
+  });
+
+  it("el pedido ignorado sale del historial, no del estado del caso (hallazgo del review final)", async () => {
+    // Sin contacto el Caso queda EN_CONVERSACION, así que derivar la señal de
+    // `estado === "CAPTADO"` la apagaba justo en el escenario para el que fue
+    // escrita: el usuario ignoró el pedido y siguió preguntando.
+    clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral", casoActivoId: "k1" });
+    clasificacion.resolverCasoActivo.mockResolvedValue({
+      id: "k1",
+      categoria: "laboral",
+      estado: "EN_CONVERSACION",
+      origen: "DOMINIO",
+      correccionAplicada: false,
+    });
+    agentService.fetchAssistantTexts.mockResolvedValue([
+      "Te explico lo de la indemnización. ¿Me dejás tu teléfono así te contactan?",
+    ]);
+    agentService.streamAgentMessage.mockResolvedValue(sseResponse([{ type: "text-delta", payload: { text: "hola" } }]));
+
+    await drain(await orchestrateChatTurn({ sessionId: "s1", message: "y los días de licencia?" }));
+
+    expect(agentService.streamAgentMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ pedidoContactoHecho: true, contactoRegistrado: false }),
+    );
+  });
+
+  it("si la lectura del historial falla, el turno sigue asumiendo que no se pidió", async () => {
+    clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral", casoActivoId: "k1" });
+    clasificacion.resolverCasoActivo.mockResolvedValue({
+      id: "k1",
+      categoria: "laboral",
+      estado: "EN_CONVERSACION",
+      origen: "DOMINIO",
+      correccionAplicada: false,
+    });
+    agentService.fetchAssistantTexts.mockRejectedValue(new Error("mastra caído"));
+    agentService.streamAgentMessage.mockResolvedValue(sseResponse([{ type: "text-delta", payload: { text: "hola" } }]));
+
+    await drain(await orchestrateChatTurn({ sessionId: "s1", message: "consulta" }));
+
+    expect(agentService.streamAgentMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ pedidoContactoHecho: false }),
     );
   });
 

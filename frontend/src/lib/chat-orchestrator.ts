@@ -3,7 +3,7 @@ import "server-only";
 import { createSseLineSplitter, parseSseData } from "@/utils/sse";
 import { logger } from "@/utils/logger";
 
-import { appendThreadMessages, streamAgentMessage } from "./agent-service";
+import { appendThreadMessages, fetchAssistantTexts, streamAgentMessage } from "./agent-service";
 import {
   type AsignacionArgs,
   asignacionArgsSchema,
@@ -21,6 +21,7 @@ import {
   resolverCasoActivo,
 } from "./clasificacion";
 import { esCategoriaHabilitada, subcategoriaUnica } from "./dominios";
+import { contienePedidoContacto } from "./pedido-contacto";
 import { threadIdForSession } from "./session";
 
 const ESCAPES = new Set(["fuera-de-universo", "categoria-no-habilitada"]);
@@ -316,16 +317,38 @@ async function callCategoryAgent(params: {
   message: string;
   casoBrief?: string;
   /** Hecho de la base, no heurística: el Caso activo ya está CAPTADO (spec §5). */
-  pedidoContactoHecho: boolean;
+  contactoRegistrado: boolean;
 }): Promise<Response> {
   const threadId = threadIdForSession(params.sessionId);
+  // Dos hechos distintos, dos señales. "Ya lo tenemos" sale de la base
+  // (`Caso.estado === "CAPTADO"`, incluido el contacto heredado del caso
+  // anterior). "Ya lo pedimos y no lo dio" no está en la base — no deja rastro
+  // salvo el mensaje del asistente — y se deriva del historial del thread con
+  // el mismo scan determinístico de siempre: cuatro iteraciones de prompt
+  // mostraron que el agente no asienta su propio estado a tiempo (plan
+  // 2026-07-22-feedback-captacion-insistente). Sin este scan, el caso para el
+  // que se escribió la variante anti-insistencia —el usuario ignoró el pedido
+  // y siguió preguntando— no se activa nunca, porque sin contacto el Caso
+  // queda EN_CONVERSACION. Si la lectura falla se asume false: el peor caso es
+  // el comportamiento previo, nunca romper el turno.
+  const pedidoContactoHecho = params.contactoRegistrado
+    ? false
+    : await fetchAssistantTexts({ threadId, agentId: params.categoria })
+        .then((texts) => texts.some(contienePedidoContacto))
+        .catch((error: unknown) => {
+          logger.warn("pedido-contacto detection failed; assuming not asked", {
+            error: error instanceof Error ? error.message : String(error),
+          });
+          return false;
+        });
   const upstream = await streamAgentMessage({
     agentId: params.categoria,
     threadId,
     userId: params.sessionId,
     message: params.message,
     casoBrief: params.casoBrief,
-    pedidoContactoHecho: params.pedidoContactoHecho,
+    pedidoContactoHecho,
+    contactoRegistrado: params.contactoRegistrado,
     // NOTE: no client signal — upstream consumption is decoupled from aborts.
   });
   if (!upstream.ok || !upstream.body) {
@@ -364,7 +387,7 @@ export async function orchestrateChatTurn(params: { sessionId: string; message: 
       sessionId: params.sessionId,
       categoria: casoActivo.categoria,
       message: params.message,
-      pedidoContactoHecho: casoActivo.estado === "CAPTADO",
+      contactoRegistrado: casoActivo.estado === "CAPTADO",
     });
   }
 
@@ -402,7 +425,7 @@ export async function orchestrateChatTurn(params: { sessionId: string; message: 
           categoria: asignada.categoria,
           message: params.message,
           casoBrief: outcome.args.brief,
-          pedidoContactoHecho: asignada.casoEstado === "CAPTADO",
+          contactoRegistrado: asignada.casoEstado === "CAPTADO",
         });
       }
     }

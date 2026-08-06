@@ -21,8 +21,10 @@ export interface StreamAgentParams {
   message: string;
   /** Case brief from the receptor's classification, re-injected so the category agent never re-asks. */
   casoBrief?: string;
-  /** true → an assistant message in this thread already asked for contact (BFF-derived; the captacion-caso rule switches variant on it). */
+  /** true → an assistant message in this thread already asked for contact and the user did not answer (BFF-derived from thread history). */
   pedidoContactoHecho?: boolean;
+  /** true → el Caso del turno ya tiene contacto (`estado === "CAPTADO"`, herencia incluida). Manda sobre `pedidoContactoHecho`. */
+  contactoRegistrado?: boolean;
   /** true → the turn persists nothing (receptor runs; the category agent owns the durable turn). */
   memoryReadOnly?: boolean;
   signal?: AbortSignal;
@@ -57,6 +59,7 @@ export async function streamAgentMessage(params: StreamAgentParams): Promise<Res
           userName: params.userName,
           casoBrief: params.casoBrief,
           pedidoContactoHecho: params.pedidoContactoHecho,
+          contactoRegistrado: params.contactoRegistrado,
         },
       },
     }),

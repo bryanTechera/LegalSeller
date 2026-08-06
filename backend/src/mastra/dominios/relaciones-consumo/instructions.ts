@@ -1,5 +1,6 @@
 import type { ReadOnlyState } from "../../../models/index.js";
 import { bloqueContextoTemporal } from "../../common/contexto-temporal.js";
+import { bloqueEstadoCaptacion } from "../../common/estado-captacion.js";
 import { rulesRegistry } from "../../rules/index.js";
 import { staticSkillsRegistry } from "../../skills/index.js";
 
@@ -19,13 +20,6 @@ export function buildRelacionesConsumoInstructions(readOnly: ReadOnlyState | nul
   const userBlock = readOnly?.userName
     ? `\n\n<contexto_usuario>\nEl usuario se llama ${readOnly.userName}. Tratalo de vos.\n</contexto_usuario>`
     : "";
-  // Estado por-request con máxima recencia (misma pieza que en laboral y
-  // familia): el recordatorio del estado va al final del prompt; la política
-  // completa vive en la rule captacion-caso.
-  const pedidoBlock = readOnly?.pedidoContactoHecho
-    ? `\n\n<estado_captacion>\nEl pedido de contacto ya se hizo y el usuario no lo respondió: en esta respuesta no menciones teléfono, correo ni datos de contacto.\n</estado_captacion>`
-    : "";
-
   const bloques = [rules.inicio, skills.inicio, skills.final, rules.final].filter((b) => b !== "");
-  return `${bloques.join("\n\n")}${briefBlock}${userBlock}${bloqueContextoTemporal()}${pedidoBlock}`;
+  return `${bloques.join("\n\n")}${briefBlock}${userBlock}${bloqueContextoTemporal()}${bloqueEstadoCaptacion(readOnly)}`;
 }
