@@ -43,6 +43,14 @@ function encodeSseText(text: string): Uint8Array {
   return new TextEncoder().encode(`data: ${JSON.stringify({ type: "text-delta", payload: { text } })}\n\n`);
 }
 
+function encodeSseError(): Uint8Array {
+  // El mensaje upstream se descarta a propósito: el cliente ya muestra su
+  // propio texto genérico, y reenviarlo filtraría detalle del backend.
+  return new TextEncoder().encode(
+    `data: ${JSON.stringify({ type: "error", payload: { error: "stream-error" } })}\n\n`,
+  );
+}
+
 /** A one-shot SSE response carrying a single text delta (or nothing, if empty). */
 function textOnlyResponse(text: string): Response {
   const stream = new ReadableStream<Uint8Array>({
@@ -169,18 +177,41 @@ async function runReceptor(params: { sessionId: string; message: string }): Prom
 function pipeCategoryTurn(params: {
   sessionId: string;
   upstream: Response;
+  eventosCompletos: boolean;
 }): Response {
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
       const encoder = new TextEncoder();
+      function emitir(bytes: Uint8Array): void {
+        try {
+          controller.enqueue(bytes);
+        } catch {
+          // Client gone — keep draining so tool-calls still persist.
+        }
+      }
       void consumeUpstream(params.upstream, {
-        onRaw: (raw) => {
-          try {
-            controller.enqueue(encoder.encode(`data: ${raw}\n\n`));
-          } catch {
-            // Client gone — keep draining so tool-calls still persist.
-          }
-        },
+        // Allowlist, no denylist: el chat público recibe SOLO el texto y un
+        // error genérico. Reenviar el stream crudo publicaba en la pestaña
+        // Network los tool-call con toolName y args — o sea multi-agente,
+        // recuperación particionada por categoría y captación por tool — sin
+        // que el agente dijera una palabra.
+        //
+        // Con eventosCompletos NO se registran onText/onError: el texto ya
+        // viaja dentro del raw y se duplicaría.
+        ...(params.eventosCompletos
+          ? {
+              onRaw: (raw: string) => {
+                emitir(encoder.encode(`data: ${raw}\n\n`));
+              },
+            }
+          : {
+              onText: (text: string) => {
+                emitir(encodeSseText(text));
+              },
+              onError: () => {
+                emitir(encodeSseError());
+              },
+            }),
         onToolCall: async (toolName, args) => {
           try {
             if (toolName === "registrar-caso") {
@@ -230,6 +261,7 @@ async function callCategoryAgent(params: {
   categoria: string;
   message: string;
   casoBrief?: string;
+  eventosCompletos: boolean;
 }): Promise<Response> {
   const threadId = threadIdForSession(params.sessionId);
   // Estado "pedido de contacto ya hecho": lo deriva el BFF del historial del
@@ -257,7 +289,11 @@ async function callCategoryAgent(params: {
   if (!upstream.ok || !upstream.body) {
     throw new Error(`category agent stream responded ${upstream.status}`);
   }
-  return pipeCategoryTurn({ sessionId: params.sessionId, upstream });
+  return pipeCategoryTurn({
+    sessionId: params.sessionId,
+    upstream,
+    eventosCompletos: params.eventosCompletos,
+  });
 }
 
 /**
@@ -266,7 +302,17 @@ async function callCategoryAgent(params: {
  * (fast-path) or emit the receptor's question (slow-path, appended to the
  * thread since the receptor runs readOnly).
  */
-export async function orchestrateChatTurn(params: { sessionId: string; message: string }): Promise<Response> {
+export async function orchestrateChatTurn(params: {
+  sessionId: string;
+  message: string;
+  /**
+   * Reenvía el stream del agente sin filtrar. Solo para /revision, donde el
+   * runner de escenarios lee los tool-call de acá. Default false: si una ruta
+   * nueva se olvida de pasarlo, cae del lado seguro.
+   */
+  eventosCompletos?: boolean;
+}): Promise<Response> {
+  const eventosCompletos = params.eventosCompletos ?? false;
   const conversation = await getOrCreateConversation(params.sessionId);
 
   if (conversation.categoria) {
@@ -282,6 +328,7 @@ export async function orchestrateChatTurn(params: { sessionId: string; message: 
       sessionId: params.sessionId,
       categoria: conversation.categoria,
       message: params.message,
+      eventosCompletos,
     });
   }
 
@@ -319,6 +366,7 @@ export async function orchestrateChatTurn(params: { sessionId: string; message: 
           categoria: asignada.categoria,
           message: params.message,
           casoBrief: outcome.args.brief,
+          eventosCompletos,
         });
       }
     }

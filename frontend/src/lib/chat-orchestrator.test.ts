@@ -268,4 +268,70 @@ describe("orchestrateChatTurn", () => {
     expect(await drain(response)).toContain("listo");
     expect(clasificacion.registrarDatosCaso).not.toHaveBeenCalled();
   });
+
+  describe("bifurcación del transporte", () => {
+    function turnoDeCategoria(): void {
+      clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral" });
+      agentService.streamAgentMessage.mockResolvedValue(
+        sseResponse([
+          { type: "tool-call", payload: { toolName: "buscar-documentos", args: { categoria: "laboral" } } },
+          { type: "text-delta", payload: { text: "hola" } },
+        ]),
+      );
+    }
+
+    it("el chat público no reenvía los tool-call al browser", async () => {
+      turnoDeCategoria();
+      const emitido = await drain(await orchestrateChatTurn({ sessionId: "s1", message: "hola" }));
+      expect(emitido).not.toContain("tool-call");
+      expect(emitido).not.toContain("buscar-documentos");
+    });
+
+    it("el chat público sí reenvía el texto", async () => {
+      turnoDeCategoria();
+      const emitido = await drain(await orchestrateChatTurn({ sessionId: "s1", message: "hola" }));
+      expect(emitido).toContain("text-delta");
+      expect(emitido).toContain("hola");
+    });
+
+    it("el chat público reenvía un error genérico: sin él la burbuja queda vacía y sin retry", async () => {
+      clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral" });
+      agentService.streamAgentMessage.mockResolvedValue(
+        sseResponse([{ type: "error", payload: { error: "detalle interno del backend" } }]),
+      );
+      const emitido = await drain(await orchestrateChatTurn({ sessionId: "s1", message: "hola" }));
+      expect(emitido).toContain("error");
+      expect(emitido).not.toContain("detalle interno del backend");
+    });
+
+    it("revisión conserva los eventos completos: el runner de escenarios los necesita", async () => {
+      turnoDeCategoria();
+      const emitido = await drain(
+        await orchestrateChatTurn({ sessionId: "s1", message: "hola", eventosCompletos: true }),
+      );
+      expect(emitido).toContain("tool-call");
+      expect(emitido).toContain("buscar-documentos");
+    });
+
+    it("con eventosCompletos el texto no se duplica: ya viaja dentro del raw", async () => {
+      turnoDeCategoria();
+      const emitido = await drain(
+        await orchestrateChatTurn({ sessionId: "s1", message: "hola", eventosCompletos: true }),
+      );
+      expect(emitido.match(/"text":"hola"/g) ?? []).toHaveLength(1);
+    });
+
+    it("los tool-call se siguen observando aunque no se reenvíen", async () => {
+      clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral" });
+      agentService.streamAgentMessage.mockResolvedValue(
+        sseResponse([
+          { type: "tool-call", payload: { toolName: "registrar-caso", args: { contactoNombre: "Ana" } } },
+          { type: "text-delta", payload: { text: "listo" } },
+        ]),
+      );
+      const emitido = await drain(await orchestrateChatTurn({ sessionId: "s1", message: "hola" }));
+      expect(emitido).not.toContain("registrar-caso");
+      expect(clasificacion.registrarDatosCaso).toHaveBeenCalled();
+    });
+  });
 });
