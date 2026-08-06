@@ -23,6 +23,10 @@ export interface ChatResumen {
   mensajes: number;
   preview: string;
   notas: number;
+  /** Cuántas veces el filtro de confidencialidad tuvo que redactar. */
+  intentosExtraccion: number;
+  /** Ids de regla que saltaron (nunca el texto redactado). */
+  reglasExtraccion: string[];
 }
 
 /** Una página del listado. El componente homónimo vive en components/board/Chats. */
@@ -78,6 +82,8 @@ export async function listarConversaciones(filtros: FiltrosChats): Promise<Pagin
       createdAt: true,
       caso: { select: { estado: true } },
       _count: { select: { notas: true } },
+      intentosExtraccion: true,
+      reglasExtraccion: true,
     },
     orderBy: { createdAt: "desc" },
     take: POR_PAGINA,
@@ -114,6 +120,8 @@ export async function listarConversaciones(filtros: FiltrosChats): Promise<Pagin
       mensajes: resumen?.mensajes ?? 0,
       preview: recortar(resumen?.preview ?? ""),
       notas: fila._count.notas,
+      intentosExtraccion: fila.intentosExtraccion,
+      reglasExtraccion: fila.reglasExtraccion,
     };
   });
 
@@ -145,6 +153,8 @@ export interface DetalleConversacion {
   busquedas: BusquedaCorpus[];
   caso: CasoSnapshot | null;
   notas: NotaConRespuestas[];
+  intentosExtraccion: number;
+  reglasExtraccion: string[];
 }
 
 /**
@@ -169,7 +179,14 @@ function sinPayloadDeTools(timeline: ItemTimeline[]): ItemTimeline[] {
 export async function obtenerConversacion(id: string): Promise<DetalleConversacion | null> {
   const conversacion = await prisma.conversation.findFirst({
     where: { id, ...conversacionesReales(null) },
-    select: { id: true, threadId: true, categoria: true, createdAt: true },
+    select: {
+      id: true,
+      threadId: true,
+      categoria: true,
+      createdAt: true,
+      intentosExtraccion: true,
+      reglasExtraccion: true,
+    },
   });
   if (!conversacion) return null;
 
@@ -189,5 +206,7 @@ export async function obtenerConversacion(id: string): Promise<DetalleConversaci
     busquedas,
     caso,
     notas,
+    intentosExtraccion: conversacion.intentosExtraccion,
+    reglasExtraccion: conversacion.reglasExtraccion,
   };
 }

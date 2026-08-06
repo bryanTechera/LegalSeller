@@ -181,7 +181,20 @@ export function ListadoChats() {
                 <tr key={chat.id}>
                   <td>{fechaCorta(chat.fecha)}</td>
                   <td>{chat.categoria ?? "—"}</td>
-                  <td>{chat.estadoCaso?.replace(/_/g, " ").toLowerCase() ?? "—"}</td>
+                  <td>
+                    {chat.estadoCaso?.replace(/_/g, " ").toLowerCase() ?? "—"}
+                    {chat.intentosExtraccion > 0 && (
+                      <>
+                        {" "}
+                        <span
+                          className={styles.intentos}
+                          title={`Reglas: ${chat.reglasExtraccion.join(", ")}`}
+                        >
+                          Intento de extracción ({chat.intentosExtraccion})
+                        </span>
+                      </>
+                    )}
+                  </td>
                   <td>{chat.mensajes}</td>
                   <td>
                     <Link href={`/board/chats/${chat.id}`} className={styles.link}>

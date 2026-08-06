@@ -331,3 +331,39 @@
     overflow-y: visible;
   }
 }
+
+/*
+ * Señal de intento de extracción. El preview del listado es el primer mensaje
+ * del usuario, así que un red-team que arranca con una consulta legítima y
+ * recién después pivotea no se distingue de una conversación normal: este
+ * badge es lo único que lo delata de un vistazo.
+ */
+.intentos {
+  display: inline-block;
+  border: 1px solid var(--state-warning);
+  border-radius: var(--radius-sm, 4px);
+  padding: 0 var(--space-2);
+  color: var(--state-warning);
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.avisoExtraccion {
+  border: 1px solid var(--state-warning);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  margin-bottom: var(--space-4);
+  color: var(--state-warning);
+}
+
+.avisoExtraccion h3 {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  margin: 0 0 var(--space-2);
+}
+
+.avisoExtraccion p {
+  font-size: var(--text-sm);
+  margin: 0;
+}
