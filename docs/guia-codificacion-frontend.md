@@ -138,4 +138,16 @@ export async function POST(request: Request) {
 
 ## 12. SEO y metadata (páginas públicas)
 
-`export const metadata` con `metadataBase` y `title.template`; OG/Twitter images dinámicas; `sitemap.ts`, `robots.ts`, `manifest.ts`; JSON-LD tipado con `schema-dts`. `lang="es"` (o `es-UY` si el producto es local).
+`export const metadata` con `metadataBase` y `title.template`; OG/Twitter images dinámicas; `sitemap.ts`, `robots.ts`, `manifest.ts`; JSON-LD tipado con `schema-dts`. `lang="es-UY"`.
+
+Implementado en la Ola 1 de la auditoría SEO (`docs/plans/2026-08-06-auditoria-seo.md`): `metadataBase`, `title.default`/`template`, `description`, `openGraph`/`twitter` y `opengraph-image.tsx` en `src/app/layout.tsx`; `alternates.canonical` en `src/app/page.tsx`. Pendientes de la Ola 2: `sitemap.ts`, `robots.ts`, `manifest.ts` y el JSON-LD.
+
+Gotchas verificados sobre el HTML construido (no sobre la doc):
+
+- **La metadata se mergea campo a campo del nivel superior, no en profundidad.** Una página que declara `openGraph: { url: "/" }` REEMPLAZA el objeto entero del layout y se lleva puestos `siteName`, `type` y `locale` — sin error ni warning. O el bloque vive completo en el layout y la página solo aporta `alternates`, o la página redeclara todo. Lo mismo vale para `twitter` y `robots`.
+- **`alternates` se hereda.** Declarar `alternates.canonical` en el layout raíz hace que toda ruta hija se declare canónica de esa URL. El canonical va por página.
+- **Nada de `public/`.** El Dockerfile del frontend no copia `public/` a la etapa de producción y el directorio ni siquiera existe: un archivo estático ahí anda en `pnpm dev` y da 404 en producción, sin error de build. Todo lo que se sirve desde la raíz va por convención del App Router (`icon.svg`, `opengraph-image.tsx`, `robots.ts`, `sitemap.ts`), que se compila dentro de `.next` y sí viaja a la imagen.
+- **`ImageResponse` sin `fonts` declaradas.** Usa la tipografía que trae embebida y no sale a la red. Una fuente remota rompería el `docker build`, que corre sin acceso garantizado a internet.
+- **Una página que solo hace `redirect()` se prerenderiza como un 200 con body vacío**, que para un crawler es una página delgada indexable y no una mudanza. Las URLs legacy van en `redirects()` de `next.config.ts` (308 real), que además corre antes que la ruta del filesystem.
+- **La verificación de Search Console va por TXT en DNS o por `metadata.verification`**, nunca por archivo HTML: ver el punto de `public/`.
+- **Preloadear una fuente es una decisión por elemento, no por familia.** El preload de `next/font` es implícito y compite en la ruta crítica: acotalo a las familias que pintan primero, y conservalo en la que renderiza el elemento LCP. El ahorro grande suele estar en clavar el `weight` que el CSS realmente usa en lugar del archivo variable.
