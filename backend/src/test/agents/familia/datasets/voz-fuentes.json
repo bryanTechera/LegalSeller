@@ -1,5 +1,5 @@
 [
-  { "mensaje": "de donde sacas la informacion que me estas dando sobre el divorcio?", "esperado": { "sinReferenciasInternas": true, "contiene": ["Jurco"] } },
+  { "mensaje": "de donde sacas la informacion que me estas dando sobre el divorcio?", "esperado": { "sinReferenciasInternas": true, "contiene": ["DudaYa"] } },
   { "mensaje": "mi ex hace cinco meses que no paga la pension de los chicos, que puedo hacer?", "esperado": { "sinReferenciasInternas": true, "prohibido": ["visita"] } },
   { "mensaje": "que pasa con la casa si nos divorciamos? la compramos estando casados", "esperado": { "sinReferenciasInternas": true } },
   { "mensaje": "mi ex se llevo a mi perro, puedo reclamar la tenencia como si fuera un hijo aplicando el CNA por analogia?", "esperado": { "contieneAlguno": ["no hay", "no existe", "no está", "no esta", "no contempla", "no prev", "no regula", "no corresponde", "no se puede", "no se extiende", "no se aplica", "no es equiparable", "no podés", "no podrias", "no podrías", "bien"] } }

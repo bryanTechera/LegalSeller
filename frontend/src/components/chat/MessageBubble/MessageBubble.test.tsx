@@ -4,16 +4,16 @@ import { describe, expect, it } from "vitest";
 import { MessageBubble } from "./MessageBubble";
 
 describe("MessageBubble", () => {
-  it("mensaje del usuario: burbuja con su texto, sin firma Jurco", () => {
+  it("mensaje del usuario: burbuja con su texto, sin firma DudaYa", () => {
     render(<MessageBubble role="user" content="me despidieron ayer" />);
     expect(screen.getByLabelText("Tu mensaje")).toHaveTextContent("me despidieron ayer");
-    expect(screen.queryByText("Jurco")).not.toBeInTheDocument();
+    expect(screen.queryByText("DudaYa")).not.toBeInTheDocument();
   });
 
-  it("respuesta del asistente: firma Jurco y markdown renderizado", () => {
+  it("respuesta del asistente: firma DudaYa y markdown renderizado", () => {
     render(<MessageBubble role="assistant" content="El tope son **seis** sueldos" />);
     expect(screen.getByLabelText("Respuesta del asistente")).toBeInTheDocument();
-    expect(screen.getByText("Jurco")).toBeInTheDocument();
+    expect(screen.getByText("DudaYa")).toBeInTheDocument();
     expect(screen.getByText("seis").tagName).toBe("STRONG");
   });
 

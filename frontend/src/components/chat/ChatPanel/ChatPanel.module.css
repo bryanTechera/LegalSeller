@@ -164,9 +164,23 @@
 
 /* --- Movimiento (solo si el usuario no pidió reducirlo) --- */
 
-/* Un único fade de opacidad del hero completo — sin stagger ni desplazamiento. */
+/*
+ * Un único fade de opacidad — sin stagger ni desplazamiento.
+ *
+ * El fade NO toca `.heroTitle`: ese `<h2>` es el elemento LCP medido, y una
+ * animación de opacidad corre en el compositor, así que Blink no vuelve a
+ * evaluar el paint timing del texto hasta que la animación termina. Con el fade
+ * puesto sobre el hero entero, el LCP llegaba ~430 ms tarde (A/B con el build
+ * real bajo throttling móvil, auditoría SEO 2026-08-06) y en desktop la
+ * atribución se iba a un `<p>` del footer. El titular entra opaco desde el
+ * primer frame; lo secundario conserva la entrada.
+ */
 @media (prefers-reduced-motion: no-preference) {
-  .hero {
+  .heroMark,
+  .heroSubtitle,
+  .heroComposer,
+  .suggestionsLabel,
+  .suggestions {
     animation: fade 0.4s ease both;
   }
 }

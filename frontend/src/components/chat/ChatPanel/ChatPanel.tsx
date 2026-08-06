@@ -1,13 +1,34 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 
 import { BrandMark } from "@/components/brand/BrandMark";
 import { Composer } from "@/components/chat/Composer";
-import { MessageBubble } from "@/components/chat/MessageBubble";
 import { useChatStream } from "@/hooks/useChatStream";
 
 import styles from "./ChatPanel.module.css";
+
+/*
+ * MessageBubble arrastra react-markdown + remark-gfm: 42,7 KB gzip, el 21,6% del
+ * JS del home, y era el último script en terminar de evaluar (auditoría SEO
+ * 2026-08-06). El home arranca sin mensajes, así que ese parser bloqueaba la
+ * hidratación para renderizar cero burbujas y las tarjetas de sugerencia no
+ * respondían hasta ~2,2 s en móvil throttleado. Diferido, el chunk se pide con
+ * la primera respuesta del agente — un momento en el que el usuario ya está
+ * esperando al modelo, así que el costo percibido es nulo.
+ *
+ * `loading` explícito no es decorativo: sin esa opción, next/dynamic con
+ * ssr:true envuelve en Fragment y no en Suspense, y la suspensión del primer
+ * mensaje burbujearía hasta app/loading.tsx, blanqueando la página entera.
+ *
+ * La pantalla de revisión (SesionView) mantiene el import estático: ahí el
+ * transcript ES el contenido y conviene que llegue renderizado del servidor.
+ */
+const MessageBubble = dynamic(
+  () => import("@/components/chat/MessageBubble").then((m) => m.MessageBubble),
+  { loading: () => null },
+);
 
 const MAX_MESSAGE_LENGTH = 4000;
 

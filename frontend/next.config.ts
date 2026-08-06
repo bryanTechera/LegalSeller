@@ -34,6 +34,18 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      /*
+       * La revisión vive dentro del board desde 2026-08-01. El `redirect()` del
+       * Server Component que hacía esto se prerenderizaba como un 200 con body
+       * vacío (verificado en producción el 2026-08-06): para un crawler eso es
+       * una página delgada indexable, no una mudanza. Un 308 de config sí lo es,
+       * y además corre antes que la ruta del filesystem.
+       */
+      { source: "/revision", destination: "/board/revision", permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -1,10 +1,22 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import { BrandMark } from "@/components/brand/BrandMark";
+import { MARCA } from "@/lib/marca";
 
 import { LoginForm } from "./LoginForm";
 import styles from "./login.module.css";
+
+/**
+ * Puerta del back-office: no aporta nada a una búsqueda y no queremos el acceso
+ * al board en un SERP de marca. El proxy no la cubre (es justamente la pantalla
+ * a la que redirige), así que el `noindex` va acá.
+ */
+export const metadata: Metadata = {
+  title: "Acceso al board",
+  robots: { index: false, follow: false },
+};
 
 export default async function LoginPage({
   searchParams,
@@ -20,7 +32,7 @@ export default async function LoginPage({
       <div className={styles.tarjeta}>
         <span className={styles.wordmark}>
           <BrandMark size={22} />
-          Jurco
+          {MARCA}
         </span>
         <h1 className={styles.titulo}>Board</h1>
         <p className={styles.subtitulo}>Te enviamos un enlace de acceso por correo.</p>

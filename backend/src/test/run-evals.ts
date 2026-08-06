@@ -15,7 +15,7 @@
  * - Voz-fuentes por agente de categoría (revisión feedback legal
  *   2026-07-22): responses must not surface internal corpus mechanics
  *   (document titles, "corpus", "PDF", "material de respaldo") and, when
- *   asked about sources, must answer with the official Jurco phrase (rules
+ *   asked about sources, must answer with the official DudaYa phrase (rules
  *   conducta-*). Los títulos se leen de la base, no de una lista fija, y el
  *   chequeo corre en todo ítem salvo que se apague explícitamente.
  * - Captación por agente de categoría (feedback legal 2026-07-22, corrida

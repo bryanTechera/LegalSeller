@@ -3,7 +3,7 @@ import { conductaArrendamientoRule } from "../dominios/arrendamiento-desalojo/ru
 import { rolEspecialistaArrendamientoRule } from "../dominios/arrendamiento-desalojo/rules/rol-especialista-arrendamiento.js";
 import { captacionCasoRule } from "../dominios/comunes/rules/captacion-caso.js";
 import { confidencialidadSistemaRule } from "../dominios/comunes/rules/confidencialidad-sistema.js";
-import { identidadJurcoRule } from "../dominios/comunes/rules/identidad-jurco.js";
+import { identidadMarcaRule } from "../dominios/comunes/rules/identidad-marca.js";
 import { conductaFamiliaRule } from "../dominios/familia/rules/conducta-familia.js";
 import { rolEspecialistaFamiliaRule } from "../dominios/familia/rules/rol-especialista-familia.js";
 import { conductaLaboralRule } from "../dominios/laboral/rules/conducta-laboral.js";
@@ -22,7 +22,7 @@ import { rolEspecialistaTransitoRule } from "../dominios/transito/rules/rol-espe
  * after the knowledge blocks (spec §4.4).
  */
 const RULES: readonly RegistryItem[] = [
-  { id: "identidad-jurco", fn: identidadJurcoRule, critical: true },
+  { id: "identidad-marca", fn: identidadMarcaRule, critical: true },
   { id: "caso-sensible", fn: casoSensibleRule, critical: true },
   { id: "confidencialidad-sistema", fn: confidencialidadSistemaRule, critical: true },
   { id: "mision-clasificacion", fn: misionClasificacionRule },

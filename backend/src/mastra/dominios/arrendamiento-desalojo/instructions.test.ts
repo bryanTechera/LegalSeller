@@ -9,7 +9,7 @@ describe("instrucciones del agente arrendamiento-desalojo", () => {
     expect(prompt).toContain("<rol>");
     expect(prompt).toContain("<captacion>");
     expect(prompt).toContain("Fundá cada afirmación normativa");
-    expect(prompt).toContain("material inédito y de propiedad intelectual propia desarrollado por Jurco");
+    expect(prompt).toContain("material inédito y de propiedad intelectual propia desarrollado por DudaYa");
     expect(prompt).toContain("materia de arrendamientos y desalojos");
     expect(prompt).toContain("buscar-documentos");
   });

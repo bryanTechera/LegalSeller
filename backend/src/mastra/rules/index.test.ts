@@ -6,7 +6,7 @@ describe("rulesRegistry", () => {
   it("recepcion activa identidad, caso sensible, misión y conducción — en ese orden", () => {
     const result = rulesRegistry.execute(null, "recepcion");
     expect(result.activatedIds).toEqual([
-      "identidad-jurco",
+      "identidad-marca",
       "caso-sensible",
       "confidencialidad-sistema",
       "mision-clasificacion",
@@ -18,7 +18,7 @@ describe("rulesRegistry", () => {
   it("laboral activa identidad, rol, conducta y captación (final)", () => {
     const result = rulesRegistry.execute(null, "laboral");
     expect(result.activatedIds).toEqual([
-      "identidad-jurco",
+      "identidad-marca",
       "confidencialidad-sistema",
       "rol-especialista-laboral",
       "conducta-laboral",
@@ -31,7 +31,7 @@ describe("rulesRegistry", () => {
   it("familia activa identidad, caso sensible, rol, conducta y captación (final)", () => {
     const result = rulesRegistry.execute(null, "familia");
     expect(result.activatedIds).toEqual([
-      "identidad-jurco",
+      "identidad-marca",
       "caso-sensible",
       "confidencialidad-sistema",
       "rol-especialista-familia",
@@ -46,7 +46,7 @@ describe("rulesRegistry", () => {
   it("transito activa identidad, rol, conducta y captación (final) — sin protocolo sensible propio", () => {
     const result = rulesRegistry.execute(null, "transito");
     expect(result.activatedIds).toEqual([
-      "identidad-jurco",
+      "identidad-marca",
       "confidencialidad-sistema",
       "rol-especialista-transito",
       "conducta-transito",
@@ -59,7 +59,7 @@ describe("rulesRegistry", () => {
   it("arrendamiento-desalojo activa identidad, rol, conducta y captación (final)", () => {
     const result = rulesRegistry.execute(null, "arrendamiento-desalojo");
     expect(result.activatedIds).toEqual([
-      "identidad-jurco",
+      "identidad-marca",
       "confidencialidad-sistema",
       "rol-especialista-arrendamiento",
       "conducta-arrendamiento",
@@ -72,7 +72,7 @@ describe("rulesRegistry", () => {
   it("relaciones-consumo activa identidad, rol, conducta y captación (final), sin caso sensible propio", () => {
     const result = rulesRegistry.execute(null, "relaciones-consumo");
     expect(result.activatedIds).toEqual([
-      "identidad-jurco",
+      "identidad-marca",
       "confidencialidad-sistema",
       "rol-especialista-consumo",
       "conducta-consumo",
@@ -84,7 +84,7 @@ describe("rulesRegistry", () => {
 
   it("las rules críticas son las del spec", () => {
     expect(CRITICAL_RULE_IDS).toEqual([
-      "identidad-jurco",
+      "identidad-marca",
       "caso-sensible",
       "confidencialidad-sistema",
       "conducta-laboral",
