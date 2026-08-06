@@ -8,6 +8,7 @@ describe("rulesRegistry", () => {
     expect(result.activatedIds).toEqual([
       "identidad-jurco",
       "caso-sensible",
+      "confidencialidad-sistema",
       "mision-clasificacion",
       "conduccion-triage",
     ]);
@@ -18,6 +19,7 @@ describe("rulesRegistry", () => {
     const result = rulesRegistry.execute(null, "laboral");
     expect(result.activatedIds).toEqual([
       "identidad-jurco",
+      "confidencialidad-sistema",
       "rol-especialista-laboral",
       "conducta-laboral",
       "captacion-caso",
@@ -31,6 +33,7 @@ describe("rulesRegistry", () => {
     expect(result.activatedIds).toEqual([
       "identidad-jurco",
       "caso-sensible",
+      "confidencialidad-sistema",
       "rol-especialista-familia",
       "conducta-familia",
       "captacion-caso",
@@ -44,6 +47,7 @@ describe("rulesRegistry", () => {
     const result = rulesRegistry.execute(null, "transito");
     expect(result.activatedIds).toEqual([
       "identidad-jurco",
+      "confidencialidad-sistema",
       "rol-especialista-transito",
       "conducta-transito",
       "captacion-caso",
@@ -56,6 +60,7 @@ describe("rulesRegistry", () => {
     const result = rulesRegistry.execute(null, "arrendamiento-desalojo");
     expect(result.activatedIds).toEqual([
       "identidad-jurco",
+      "confidencialidad-sistema",
       "rol-especialista-arrendamiento",
       "conducta-arrendamiento",
       "captacion-caso",
@@ -68,6 +73,7 @@ describe("rulesRegistry", () => {
     const result = rulesRegistry.execute(null, "relaciones-consumo");
     expect(result.activatedIds).toEqual([
       "identidad-jurco",
+      "confidencialidad-sistema",
       "rol-especialista-consumo",
       "conducta-consumo",
       "captacion-caso",
@@ -80,6 +86,7 @@ describe("rulesRegistry", () => {
     expect(CRITICAL_RULE_IDS).toEqual([
       "identidad-jurco",
       "caso-sensible",
+      "confidencialidad-sistema",
       "conducta-laboral",
       "conducta-familia",
       "conducta-transito",
