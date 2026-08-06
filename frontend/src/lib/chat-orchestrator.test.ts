@@ -29,6 +29,8 @@ vi.mock("./clasificacion", () => clasificacion);
 vi.mock("./dominios", () => dominios);
 vi.mock("./agent-service", () => agentService);
 
+import { logger } from "@/utils/logger";
+
 import { orchestrateChatTurn } from "./chat-orchestrator";
 
 function sseResponse(events: object[]): Response {
@@ -244,6 +246,41 @@ describe("orchestrateChatTurn", () => {
     );
   });
 
+  // Mismo blindaje que registrar-caso, por prevención: hoy el receptor corre
+  // Gemini y omite los opcionales, así que esta ruta nunca falló en
+  // producción. Queda a un cambio de modelo de repetir el bug — y acá el
+  // descarte es peor todavía, porque sin clasificación el turno no encadena al
+  // agente de categoría y la conversación entera se queda sin caso.
+  it("la clasificación con opcionales en null se persiste igual", async () => {
+    clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: null });
+    agentService.streamAgentMessage
+      .mockResolvedValueOnce(
+        sseResponse([
+          {
+            type: "tool-call",
+            payload: {
+              toolName: "asignar-clasificacion",
+              args: {
+                brief: "Despido en período de prueba.",
+                categoria: "laboral",
+                confianza: "alta",
+                casoSensible: false,
+                subcategoria: "despido",
+                temaDetectado: null,
+              },
+            },
+          },
+        ]),
+      )
+      .mockResolvedValueOnce(sseResponse([{ type: "text-delta", payload: { text: "Sobre tu despido..." } }]));
+
+    await drain(await orchestrateChatTurn({ sessionId: "s1", message: "me despidieron a prueba" }));
+
+    expect(clasificacion.asignarClasificacion).toHaveBeenCalledWith(
+      expect.objectContaining({ categoria: "laboral", subcategoria: "despido" }),
+    );
+  });
+
   it("slow-path: sin clasificación emite la pregunta del receptor y la appendea al thread", async () => {
     clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: null });
     agentService.streamAgentMessage.mockResolvedValueOnce(
@@ -407,6 +444,51 @@ describe("orchestrateChatTurn", () => {
     );
   });
 
+  // Regresión (conversación real cmshuemeu0001sb02s3pjd6kh, 2026-08-06): los
+  // agentes de categoría corren GPT-5.6 desde el 2026-08-02 y mandan los
+  // opcionales que no tienen como `null` explícito, no omitidos. Con
+  // `.optional()` puro, un solo `contactoEmail: null` invalidaba el objeto
+  // entero y el observador descartaba la llamada COMPLETA — se perdían el
+  // nombre y el teléfono que venían al lado, con la tool devolviendo `ok`.
+  it("los opcionales en null no descartan el contacto que viene al lado", async () => {
+    clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral", casoActivoId: "k1" });
+    clasificacion.resolverCasoActivo.mockResolvedValue({
+      id: "k1",
+      categoria: "laboral",
+      estado: "EN_CONVERSACION",
+      origen: "DOMINIO",
+      correccionAplicada: false,
+    });
+    agentService.streamAgentMessage.mockResolvedValue(
+      sseResponse([
+        {
+          type: "tool-call",
+          payload: {
+            toolName: "registrar-caso",
+            args: {
+              hechos: "Dejó datos para derivación.",
+              contactoEmail: null,
+              subcategorias: ["despido", "rubros-laborales"],
+              contactoNombre: "Michael Pintos",
+              contactoTelefono: "098 652 262",
+            },
+          },
+        },
+        { type: "text-delta", payload: { text: "Gracias, Michael." } },
+      ]),
+    );
+
+    await drain(await orchestrateChatTurn({ sessionId: "s1", message: "Michael Pintos\n098 652 262" }));
+
+    expect(clasificacion.registrarDatosCaso).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contactoNombre: "Michael Pintos",
+        contactoTelefono: "098 652 262",
+        subcategorias: ["despido", "rubros-laborales"],
+      }),
+    );
+  });
+
   it("args de tool-call con forma inválida se descartan sin persistir ni romper el stream", async () => {
     clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral", casoActivoId: "k1" });
     clasificacion.resolverCasoActivo.mockResolvedValue({
@@ -426,6 +508,44 @@ describe("orchestrateChatTurn", () => {
     const response = await orchestrateChatTurn({ sessionId: "s1", message: "..." });
     expect(await drain(response)).toContain("listo");
     expect(clasificacion.registrarDatosCaso).not.toHaveBeenCalled();
+  });
+
+  // El descarte es silencioso por diseño (nunca romper el stream del usuario),
+  // así que el log es la ÚNICA señal de que un turno perdió datos. Sin el campo
+  // que falló, el warn no distingue "el modelo cambió de shape" de "payload
+  // adversarial" — fue lo que dejó correr 4 días el bug de los null. Van las
+  // rutas y los códigos de Zod, nunca los valores: son PII del consultante.
+  it("el descarte por forma inválida reporta qué campo falló", async () => {
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+    clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral", casoActivoId: "k1" });
+    clasificacion.resolverCasoActivo.mockResolvedValue({
+      id: "k1",
+      categoria: "laboral",
+      estado: "EN_CONVERSACION",
+      origen: "DOMINIO",
+      correccionAplicada: false,
+    });
+    agentService.streamAgentMessage.mockResolvedValue(
+      sseResponse([
+        {
+          type: "tool-call",
+          payload: {
+            toolName: "registrar-caso",
+            args: { subcategorias: "despido", contactoNombre: "Michael Pintos" },
+          },
+        },
+      ]),
+    );
+
+    await drain(await orchestrateChatTurn({ sessionId: "s1", message: "..." }));
+
+    expect(warn).toHaveBeenCalledWith(
+      "tool-call args failed validation",
+      expect.objectContaining({ toolName: "registrar-caso", campos: ["subcategorias"] }),
+    );
+    // El valor descartado es PII: se reporta la ruta, nunca el contenido.
+    expect(JSON.stringify(warn.mock.calls)).not.toContain("Michael Pintos");
+    warn.mockRestore();
   });
 
   describe("bifurcación del transporte", () => {
