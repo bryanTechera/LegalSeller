@@ -1308,14 +1308,22 @@ import { FiltroConfidencialidad } from "../processors/filtro-confidencialidad.js
  * spreadea el JSON crudo en los params, así que un `{"outputProcessors": []}`
  * en el body ganaría sobre el AgentConfig (`[]` es truthy). Resolverlos acá deja
  * la capa 3 fuera del alcance del body. Ver el plan §7.
+ *
+ * El único escape es `EVALS_SIN_PROCESSORS=1`, que setea el runner de evals en
+ * su propio proceso: los evals de prompt tienen que medir la rule, no el
+ * filtro, o pasarían verde con el prompt roto. Va por entorno y NO por
+ * `requestContext` justamente porque el requestContext SÍ viaja en el body —
+ * un flag ahí reabriría el agujero que esta función cierra. Mismo patrón que
+ * `MASTRA_DISABLE_STORAGE_INIT`.
  */
 export function opcionesDeProcessors(): {
   inputProcessors: () => unknown[];
   outputProcessors: () => unknown[];
 } {
+  const desactivados = process.env.EVALS_SIN_PROCESSORS === "1";
   return {
-    inputProcessors: () => [new UnicodeNormalizer({ stripControlChars: true })],
-    outputProcessors: () => [new FiltroConfidencialidad()],
+    inputProcessors: () => (desactivados ? [] : [new UnicodeNormalizer({ stripControlChars: true })]),
+    outputProcessors: () => (desactivados ? [] : [new FiltroConfidencialidad()]),
   };
 }
 ```
@@ -2009,9 +2017,11 @@ async function evalAntifiltracion(agent: CategoriaAgent, agentDir: string, label
   const failures: string[] = [];
 
   for (const item of items) {
+    // Los processors se desactivan por entorno (EVALS_SIN_PROCESSORS), no por
+    // opción de la llamada: `opcionesDeProcessors` los resuelve como función
+    // justamente para que un override no pueda apagarlos desde afuera.
     const result = await agent.generate(toGenerateMessages(item.mensajes), {
       requestContext: buildEvalRequestContext(),
-      outputProcessors: [],
     });
     const rawText = (result as { text?: unknown }).text;
     const text = typeof rawText === "string" ? rawText : "";
@@ -2048,9 +2058,20 @@ async function evalAntifiltracion(agent: CategoriaAgent, agentDir: string, label
 }
 ```
 
-Verificar que `generate()` acepte `outputProcessors` en las opciones (está en
-`AgentExecutionOptions`); si no, resolver los processors por `requestContext` con un flag de
-eval en `opcionesDeProcessors()`.
+El runner tiene que setear la variable **antes** de importar los agentes, o sea al tope de
+`run-evals.ts`, junto al `import "dotenv/config"`:
+
+```typescript
+// Los evals de prompt miden la CAPA 1. Sin esto, el filtro-confidencialidad
+// (activo también bajo generate(), que comparte #execute con stream) taparía
+// la fuga antes de que el scorer vea el texto y el gate pasaría verde con la
+// rule rota. Va antes de importar los agentes: opcionesDeProcessors lo lee al
+// construirlos.
+process.env.EVALS_SIN_PROCESSORS = "1";
+```
+
+Verificar con un ítem de control que la desactivación funciona: si un ítem cuyo `prohibido`
+contiene "OpenAI" pasa incluso con la rule vacía, el flag no está llegando.
 
 - [ ] **Paso 3: Registrar las 5 entradas con `umbral: 1`**
 
