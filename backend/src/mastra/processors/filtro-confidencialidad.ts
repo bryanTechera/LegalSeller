@@ -123,7 +123,15 @@ export class FiltroConfidencialidad implements Processor<"filtro-confidencialida
       for (const regla of reglas) estado.reglas.add(regla);
       estado.cola = "";
       if (estado.reglas.size > 0) {
-        await args.writer?.custom({ type: TIPO_SENIAL, data: { reglas: [...estado.reglas] } });
+        // `transient: true` = se streamea pero NO se persiste en storage. Sin
+        // eso el nombre de la regla queda escrito en el mensaje y vuelve al
+        // modelo en el turno siguiente: la señal fuera de banda se convertiría
+        // en un canal dentro de banda, que es exactamente lo que no queremos.
+        await args.writer?.custom({
+          type: TIPO_SENIAL,
+          data: { reglas: [...estado.reglas] },
+          transient: true,
+        });
       }
       if (texto.length === 0) return part;
       // Dos partes desde una llamada: el delta final se emite ahora y el

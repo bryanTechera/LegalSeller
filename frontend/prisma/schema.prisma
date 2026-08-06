@@ -87,6 +87,12 @@ model Conversation {
   origenRevision     RevisionOrigen?
   /// Corrida autónoma aún no publicada: fuera del listado del equipo legal.
   borrador           Boolean   @default(false)
+  /// Cuántas veces el filtro de confidencialidad redactó una respuesta de esta
+  /// conversación. La señal es de la conversación y no del Caso: un intento de
+  /// extracción puede ocurrir antes de que exista un Caso (FK obligatoria).
+  intentosExtraccion Int       @default(0)
+  /// Ids de regla que saltaron (nunca el texto redactado).
+  reglasExtraccion   String[]  @default([])
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 

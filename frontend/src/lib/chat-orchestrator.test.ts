@@ -16,6 +16,7 @@ const { clasificacion, dominios, agentService } = vi.hoisted(() => ({
     asignarClasificacion: vi.fn(),
     registrarDatosCaso: vi.fn(),
     corregirClasificacion: vi.fn(),
+    registrarIntentoExtraccion: vi.fn(),
   },
   dominios: { subcategoriaUnica: vi.fn(), esCategoriaHabilitada: vi.fn() },
   agentService: { streamAgentMessage: vi.fn(), appendThreadMessages: vi.fn(), fetchAssistantTexts: vi.fn() },
@@ -49,6 +50,7 @@ describe("orchestrateChatTurn", () => {
     vi.clearAllMocks();
     clasificacion.asignarClasificacion.mockResolvedValue({ categoria: "laboral", aplicada: true });
     clasificacion.registrarDatosCaso.mockResolvedValue(undefined);
+    clasificacion.registrarIntentoExtraccion.mockResolvedValue(undefined);
     agentService.appendThreadMessages.mockResolvedValue(undefined);
     agentService.fetchAssistantTexts.mockResolvedValue([]);
     dominios.subcategoriaUnica.mockResolvedValue("despido");
@@ -319,6 +321,33 @@ describe("orchestrateChatTurn", () => {
         await orchestrateChatTurn({ sessionId: "s1", message: "hola", eventosCompletos: true }),
       );
       expect(emitido.match(/"text":"hola"/g) ?? []).toHaveLength(1);
+    });
+
+    it("persiste el intento de extracción y no reenvía la señal al browser", async () => {
+      clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral" });
+      agentService.streamAgentMessage.mockResolvedValue(
+        sseResponse([
+          { type: "data-confidencialidad", data: { reglas: ["proveedor"] } },
+          { type: "text-delta", payload: { text: "listo" } },
+        ]),
+      );
+      const emitido = await drain(await orchestrateChatTurn({ sessionId: "s1", message: "hola" }));
+      // Decirle al atacante qué regla saltó es confirmarle qué preguntó bien.
+      expect(emitido).not.toContain("data-confidencialidad");
+      expect(emitido).not.toContain("proveedor");
+      expect(clasificacion.registrarIntentoExtraccion).toHaveBeenCalledWith({
+        sessionId: "s1",
+        reglas: ["proveedor"],
+      });
+    });
+
+    it("una señal sin reglas no escribe nada", async () => {
+      clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral" });
+      agentService.streamAgentMessage.mockResolvedValue(
+        sseResponse([{ type: "data-confidencialidad", data: {} }]),
+      );
+      await drain(await orchestrateChatTurn({ sessionId: "s1", message: "hola" }));
+      expect(clasificacion.registrarIntentoExtraccion).not.toHaveBeenCalled();
     });
 
     it("los tool-call se siguen observando aunque no se reenvíen", async () => {

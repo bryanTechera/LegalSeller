@@ -16,6 +16,7 @@ import {
   corregirClasificacion,
   getOrCreateConversation,
   registrarDatosCaso,
+  registrarIntentoExtraccion,
 } from "./clasificacion";
 import { esCategoriaHabilitada, subcategoriaUnica } from "./dominios";
 import { threadIdForSession } from "./session";
@@ -92,6 +93,7 @@ async function consumeUpstream(
     onToolCall?: (toolName: string, args: Record<string, unknown>) => void | Promise<void>;
     onError?: () => void | Promise<void>;
     onRaw?: (rawLine: string) => void | Promise<void>;
+    onData?: (tipo: string, data: Record<string, unknown>) => void | Promise<void>;
   },
 ): Promise<void> {
   if (!upstream.body) return;
@@ -108,8 +110,35 @@ async function consumeUpstream(
       if (event.kind === "text") await handlers.onText?.(event.text, data);
       if (event.kind === "tool-call") await handlers.onToolCall?.(event.toolName, event.args);
       if (event.kind === "error") await handlers.onError?.();
+      if (event.kind === "data") await handlers.onData?.(event.tipo, event.data);
     }
   }
+}
+
+/**
+ * Handler de la señal fuera de banda del filtro de confidencialidad. El chunk
+ * `data-confidencialidad` NO está en la allowlist del transporte público
+ * (Tarea 10): se consume acá, server-side, y nunca llega al browser — decirle
+ * al atacante qué regla saltó sería confirmarle qué preguntó bien.
+ */
+function observarSenialConfidencialidad(
+  sessionId: string,
+): (tipo: string, data: Record<string, unknown>) => Promise<void> {
+  return async (tipo, data) => {
+    if (tipo !== "data-confidencialidad") return;
+    const reglas = Array.isArray(data.reglas)
+      ? data.reglas.filter((r): r is string => typeof r === "string")
+      : [];
+    if (reglas.length === 0) return;
+    try {
+      await registrarIntentoExtraccion({ sessionId, reglas });
+    } catch (error) {
+      // La persistencia nunca rompe el stream del usuario.
+      logger.error("registrarIntentoExtraccion failed", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  };
 }
 
 /** Runs the receptor turn (readOnly memory), buffering everything. */
@@ -164,6 +193,7 @@ async function runReceptor(params: { sessionId: string; message: string }): Prom
     onError: () => {
       logger.warn("receptor stream error event", {});
     },
+    onData: observarSenialConfidencialidad(params.sessionId),
   });
 
   if (asignacion) {
@@ -212,6 +242,7 @@ function pipeCategoryTurn(params: {
                 emitir(encodeSseError());
               },
             }),
+        onData: observarSenialConfidencialidad(params.sessionId),
         onToolCall: async (toolName, args) => {
           try {
             if (toolName === "registrar-caso") {
