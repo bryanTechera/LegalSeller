@@ -10,7 +10,7 @@ import { z } from "zod";
  */
 export const derivarTemaTool = createTool({
   id: "derivar-tema",
-  description: `Marcá que el usuario trajo un asunto de OTRA área legal, además del que venís atendiendo. Pasá el tema en las palabras del usuario: la clasificación no la hacés vos. Ante la duda de si es un asunto nuevo, marcá igual — si termina siendo de tu área no pasa nada, pero el que no marcás se pierde como caso.`,
+  description: `Marcá que el usuario trajo un asunto de OTRA área legal, además del que venís atendiendo. Un tema de tu misma área, aunque toque otra subcategoría, seguí atendiéndolo vos sin marcar. Pasá el tema en las palabras del usuario: la clasificación no la hacés vos. Ante la duda de si el asunto cae fuera de tu área, marcá igual — si termina siendo tuyo no pasa nada, pero el que no marcás se pierde como caso.`,
   inputSchema: z.object({
     tema: z.string().min(1).meta({ description: "El asunto nuevo en las palabras del usuario" }),
   }),
