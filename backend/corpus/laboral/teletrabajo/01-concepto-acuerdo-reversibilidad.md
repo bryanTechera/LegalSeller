@@ -1,0 +1,25 @@
+# Teletrabajo — Concepto, acuerdo escrito y reversibilidad
+
+## Concepto y ámbito
+
+El teletrabajo es la prestación del trabajo, total o parcial, fuera del ámbito físico proporcionado por el empleador, utilizando preponderantemente las tecnologías de la información y de la comunicación, en forma interactiva o no (online - offline). Está regulado por la ley n.º 19.978 del 20 de agosto de 2021, aplicable a las relaciones de subordinación y dependencia con empleadores privados o personas públicas no estatales.
+
+El teletrabajo modifica única y exclusivamente la modalidad en que se efectúa el trabajo: no afecta los derechos individuales y colectivos del trabajador, que goza de las mismas condiciones que los presenciales (igualdad, no discriminación, descanso, intimidad, seguridad e higiene, libertad sindical).
+
+## Voluntariedad y acuerdo escrito
+
+El teletrabajo es **voluntario**: requiere el consentimiento del trabajador, que debe constar **por escrito**. La modalidad se pacta al inicio o durante la relación laboral, en el contrato de trabajo o en un documento anexo (artículos 3 y 5 de la ley n.º 19.978).
+
+El trabajador y el empleador determinan el **lugar** donde se prestan las tareas: puede ser el domicilio del trabajador u otro sitio definido en el contrato, e incluso pactarse la libre elección o alternancia de lugares. El trabajador **no puede exigir al empleador que le proporcione el lugar** donde teletrabajar (artículo 6).
+
+## Reversibilidad: volver a la modalidad anterior
+
+- **Si el vínculo empezó presencial** y el teletrabajo se acordó después: tanto el trabajador como el empleador tienen derecho a **retornar a la modalidad presencial dentro de los 90 días** de iniciado el teletrabajo, con aviso previo a la otra parte de no menos de 7 días (artículo 7).
+- **Si el teletrabajo fue la modalidad originalmente adoptada**: pasar a la modalidad presencial requiere el consentimiento de ambas partes recabado por escrito, y debe constar en la planilla de trabajo.
+- Toda modificación permanente de modalidad (presencial a teletrabajo o viceversa) requiere común acuerdo documentado por escrito.
+
+## Herramientas y equipos
+
+Las partes acuerdan la forma de provisión de las tecnologías necesarias, dejándola consignada en el contrato. **En caso de desacuerdo, es el empleador quien debe proporcionar los equipos, insumos, servicios y demás herramientas**, y son de su cargo los costos de operación, funcionamiento, reemplazo y mantenimiento (artículo 12).
+
+Los equipos, insumos y servicios que provee el empleador (directamente o asumiendo su costo) **no se consideran a ningún efecto parte del salario**, ni materia gravada ni asignación computable.

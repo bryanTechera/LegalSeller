@@ -31,3 +31,9 @@ Se entiende que tiene naturaleza salarial.
 ## Oportunidad de pago
 
 El artículo 25 de la ley n.º 12.590 establece que «el pago de la remuneración correspondiente a todo el período de licencia, deberá hacerse efectivo antes de comenzar la misma, excepto a los trabajadores con remuneración mensual». Es decir, jornaleros y con remuneración variable la cobran antes de salir y el trabajador mensual cobra el mismo con el recibo de sueldo.
+
+## Reajuste y reliquidación de diferencias
+
+Si se producen aumentos salariales mientras el trabajador está en uso de licencia, el jornal de vacaciones se reajusta respecto de los días no gozados, y las diferencias se pagan en el curso del mes siguiente a la terminación de la licencia (artículo 3 de la ley n.º 13.556, en la redacción del decreto-ley n.º 14.328).
+
+Además, cuando el cálculo de la licencia no se ajustó a las reglas legales, el empleador debe reliquidar y pagar al trabajador las diferencias que correspondan al último año (artículo 4 de la ley n.º 13.556).

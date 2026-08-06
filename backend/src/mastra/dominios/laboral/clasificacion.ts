@@ -14,7 +14,10 @@ export const laboralClasificacion = {
     "Trabaja en el campo, una estancia, un tambo o una chacra (peón, capataz, trabajador rural)",
     "Trabaja en una casa de familia (empleada o empleado doméstico, limpieza, cuidados) — es laboral aunque el régimen doméstico no aparezca como subcategoría",
     "Es operador o teleoperador de un call center o centro de atención telefónica",
-    "Pide días o le descontaron días por estudio o exámenes, casamiento, duelo, nacimiento de un hijo o cuidado de un familiar con discapacidad o enfermedad",
+    "Pide días o le descontaron días por estudio o exámenes, casamiento, duelo, nacimiento de un hijo, controles de embarazo o cuidado de un familiar con discapacidad o enfermedad",
+    "Lo mandaron al seguro de paro (subsidio por desempleo) o pregunta si le corresponde cobrarlo",
+    "Reparte o maneja para una aplicación (delivery o transporte de pasajeros) — bloqueo de cuenta, pagos o condiciones de trabajo",
+    "Hace teletrabajo desde su casa y el problema es de horario, desconexión o equipos",
   ],
   habilitada: true,
   subcategorias: [
@@ -49,7 +52,28 @@ export const laboralClasificacion = {
       id: "licencias-especiales",
       nombre: "Licencias especiales",
       descripcion:
-        "Licencias especiales pagas del trabajador privado: estudio, paternidad y adopción, matrimonio, duelo, hijos con discapacidad y familiares a cargo con discapacidad o enfermedad terminal. La licencia anual común y el salario vacacional van por rubros-laborales.",
+        "Licencias especiales pagas del trabajador privado: estudio, paternidad y adopción, matrimonio, duelo, hijos con discapacidad, familiares a cargo con discapacidad o enfermedad terminal, y controles de embarazo (propios o acompañando a la pareja). La licencia anual común y el salario vacacional van por rubros-laborales.",
+      habilitada: true,
+    },
+    {
+      id: "seguro-desempleo",
+      nombre: "Seguro de desempleo",
+      descripcion:
+        "Subsidio por desempleo del BPS (seguro de paro): quiénes acceden y por qué causales (despido, suspensión, reducción), requisitos y plazo de solicitud, monto y duración, cese del beneficio, y el despido ficto cuando la suspensión se agota sin reintegro.",
+      habilitada: true,
+    },
+    {
+      id: "teletrabajo",
+      nombre: "Teletrabajo",
+      descripcion:
+        "Régimen del teletrabajo: acuerdo escrito y reversibilidad, jornada con límite semanal y compensación de horas, derecho a la desconexión, herramientas y equipos, seguridad e higiene en el domicilio. Aplica solo a quien trabaja fuera del local del empleador usando tecnologías de la información.",
+      habilitada: true,
+    },
+    {
+      id: "plataformas-digitales",
+      nombre: "Plataformas digitales",
+      descripcion:
+        "Trabajo mediante plataformas digitales de reparto o de transporte de pasajeros (apps de delivery o de viajes): bloqueo o suspensión de la cuenta y decisiones automatizadas, tiempo de trabajo por logueo, retribución mínima, modalidad dependiente o autónoma. Aplica solo a quien trabaja a través de una de esas aplicaciones.",
       habilitada: true,
     },
     { id: "accidentes-laborales", nombre: "Accidentes laborales", descripcion: "Accidentes de trabajo y enfermedades profesionales.", habilitada: false },

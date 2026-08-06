@@ -25,3 +25,11 @@ El recién mencionado artículo 3 dispone que si la relación laboral finaliza p
 La jurisprudencia es conteste en señalar que si se pagó aguinaldo, aunque no se haya pagado despido, no existe notoria mala conducta. Es decir que los magistrados toman el pago del aguinaldo como un elemento adicional para determinar si existió despido por notoria mala conducta.
 
 El aguinaldo es materia gravada, puesto que está sujeto al mismo régimen legal que el salario.
+
+## No acumulación con beneficios análogos
+
+El artículo 5 de la ley n.º 12.840 dispone que el aguinaldo legal no se acumula a retribuciones similares reconocidas convencional o legalmente a los trabajadores: en esos casos rige, cada año, el régimen más favorable para el trabajador. Distinto es el caso del aguinaldo complementario o voluntario que la empresa paga además del legal, que se suma como una partida adicional.
+
+## Multa al empleador que incumple
+
+El artículo 7 de la ley n.º 12.840 sanciona al patrono que viola la ley con una multa equivalente al doble del monto del sueldo anual complementario correspondiente a cada trabajador afectado. Esta multa es una sanción administrativa (su percepción y destino se rigen por la ley n.º 5.427) y no sustituye el reclamo del propio aguinaldo impago, que el trabajador conserva con sus multas y recargos legales.
