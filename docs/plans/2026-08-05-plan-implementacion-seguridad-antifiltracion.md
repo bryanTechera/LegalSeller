@@ -365,18 +365,29 @@ git commit -m "fix(tools): registrar-caso de cada especialista ve solo sus subca
 
 ---
 
-### Tarea 4: El roadmap deja de viajar en el prompt del receptor
+### Tarea 4: El roadmap deja de viajar en el prompt del receptor — DESCARTADA (2026-08-06)
 
-**Archivos:**
-- Modificar: `backend/src/mastra/dominios/recepcion/static-skills/universo-categorias.ts:19-21`
-- Test: `backend/src/mastra/dominios/recepcion/static-skills/universo-categorias.test.ts`
+**No se implementa.** Se ejecutó, se midió y se revirtió: el gate del receptor cae de
+**50/51 (98%) a 47/51 (92%)**. Las dos fallas nuevas atribuibles son exactamente los casos
+que el escape existe para atrapar — el empleador demandado porque su empleado atropelló a un
+ciclista pasa a rutear a `transito` (categoría **habilitada**, cuyo especialista no tiene
+corpus de responsabilidad por hecho del dependiente), y la compraventa de una moto usada
+entre particulares cae en `fuera-de-universo`. Un misrouting a una categoría habilitada es
+peor que la métrica: el caso aterriza en un especialista que va a responder sin material.
 
-**Interfaces:**
-- Consume: nada. Produce: nada (cambio de contenido generado).
+La premisa era falsa. El texto que la tarea sacaba del prompt no es roadmap: es criterio de
+clasificación puro — qué comprende Civil, qué no, y las remisiones explícitas a `familia` y
+`relaciones-consumo` que previenen justamente ese misrouting. No contiene fechas, planes ni
+"próximamente"; lo único con olor a roadmap ("área declarada, aún sin agente ni corpus") vive
+en un comentario de código que nunca se inyecta.
 
-**Por qué:** `<temas_aun_no_cubiertos>` inyecta hoy la descripción larga de la categoría
-Civil — el roadmap de producto. El receptor necesita saber qué **no** está habilitado para
-emitir el escape `categoria-no-habilitada`; le alcanza con el nombre del tema.
+El objetivo de confidencialidad que motivaba la tarea queda cubierto por las otras capas: la
+rule `confidencialidad-sistema` (Tarea 5) ya ordena "no enumeres qué normas o qué temas tenés
+disponibles", y el processor de la Fase 2 lo hace determinístico. Lo que la tarea protegía no
+era el secreto sino la capacidad de clasificar.
+
+<details>
+<summary>Pasos originales (no ejecutar)</summary>
 
 - [ ] **Paso 1: Escribir el test que falla**
 
@@ -425,6 +436,8 @@ cd backend && pnpm typecheck && pnpm lint
 git add backend/src/mastra/dominios/recepcion
 git commit -m "fix(prompt): los temas no cubiertos van por nombre, sin el roadmap"
 ```
+
+</details>
 
 ---
 
