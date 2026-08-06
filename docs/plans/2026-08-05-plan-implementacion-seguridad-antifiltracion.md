@@ -30,8 +30,12 @@ Postgres/pgvector, vitest, Playwright.
   palabra "skill" no aparece nunca en contenido inyectado.
 - Contenido inyectado sin información temporal ni números de versión
   (`.claude/rules/rules-and-skills-taxonomy.md`).
-- Conventional commits. Antes de cada commit: `pnpm typecheck` y `pnpm lint` del servicio
-  tocado, más `pnpm test` (backend) o `pnpm test:unit` (frontend).
+- Conventional commits. Antes de cada commit, según el servicio tocado:
+  - **backend**: `pnpm lint` + `pnpm test`. **No existe `pnpm typecheck` acá** — su ESLint
+    corre `strictTypeChecked` con `projectService: true`, así que `pnpm lint` ya es
+    type-aware. Donde este plan diga `cd backend && pnpm typecheck`, ignorá esa mitad.
+  - **frontend**: `pnpm typecheck` + `pnpm lint` + `pnpm test:unit` (`pnpm test` es e2e y
+    necesita el backend Mastra arriba).
 - Comandos backend desde `backend/`, frontend desde `frontend/`.
 - **El orden de las tareas es parte del diseño**: la Tarea 10 (transporte) es prerequisito
   de la Tarea 11 (señal) — sin ella el chunk `data-confidencialidad` viajaría al browser y
