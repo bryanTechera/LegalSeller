@@ -272,6 +272,39 @@ describe("asignarClasificacion", () => {
     expect(result).toEqual({ categoria: "laboral", aplicada: true, casoId: "k1", casoEstado: "EN_CONVERSACION" });
   });
 
+  it("no devuelve al principio del funnel un caso que ya tiene contacto (hallazgo del review final)", async () => {
+    // Turno 1: el receptor escapa y el usuario deja su teléfono, así que el
+    // caso queda CAPTADO todavía sin categoría. Turno 2: pivotea a un tema
+    // cubierto y la clasificación real adopta ese mismo caso. Si el promote
+    // pisa el estado, el agente vuelve a pedir el teléfono que el usuario dio
+    // un mensaje antes, y el caso deja de poder heredarle contacto al Caso N.
+    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: null, casoActivoId: "k1" });
+    tx.caso.findUnique
+      .mockResolvedValueOnce({
+        id: "k1",
+        categoria: null,
+        origen: "DOMINIO",
+        subcategorias: [],
+        resumen: null,
+        estado: "CAPTADO",
+      })
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ estado: "CAPTADO" });
+    tx.caso.update.mockResolvedValue({ id: "k1" });
+    tx.caso.create.mockResolvedValue({ id: "k2" });
+
+    const result = await asignarClasificacion({ sessionId: "s1", categoria: "laboral" });
+
+    expect(tx.caso.create).not.toHaveBeenCalled();
+    expect(tx.caso.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ categoria: "laboral", origen: "DOMINIO" }) }),
+    );
+    expect(tx.caso.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.not.objectContaining({ estado: expect.anything() }) }),
+    );
+    expect(result.casoEstado).toBe("CAPTADO");
+  });
+
   it("marca el huérfano como escape sobre la misma fila, sin crear un segundo caso", async () => {
     tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: null, casoActivoId: "k1" });
     tx.caso.findUnique

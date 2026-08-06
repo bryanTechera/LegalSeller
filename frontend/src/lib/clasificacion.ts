@@ -164,7 +164,7 @@ export async function asignarClasificacion(params: {
       ? casoActivoSinCategoria
       : ((await tx.caso.findUnique({
           where: { conversationId_categoria: { conversationId: conversation.id, categoria: params.categoria } },
-          select: { id: true, categoria: true, origen: true, subcategorias: true, resumen: true },
+          select: { id: true, categoria: true, origen: true, estado: true, subcategorias: true, resumen: true },
         })) ?? casoActivoSinCategoria);
 
     let caso: { id: string } | undefined;
@@ -191,7 +191,7 @@ export async function asignarClasificacion(params: {
         // blow up.
         casoExistente = await tx.caso.findUnique({
           where: { conversationId_categoria: { conversationId: conversation.id, categoria: params.categoria } },
-          select: { id: true, categoria: true, origen: true, subcategorias: true, resumen: true },
+          select: { id: true, categoria: true, origen: true, estado: true, subcategorias: true, resumen: true },
         });
         if (!casoExistente) throw error;
       }
@@ -210,6 +210,15 @@ export async function asignarClasificacion(params: {
           // registro (ni categoria, ni un escape previo), así que esta ES su
           // clasificación — se marca sobre la misma fila en vez de abrir una
           // segunda (el defecto que este fix cierra).
+          //
+          // Acá el estado SÍ se pisa aunque el huérfano estuviera CAPTADO, al
+          // revés que en el promote de abajo. No es un descuido: `estado` hoy
+          // carga con la etapa del funnel Y con la cobertura, y las métricas
+          // cuentan captados y fuera-de-cobertura como conjuntos disjuntos
+          // sobre esa misma columna (`metricas-funnel.ts`). Preservar CAPTADO
+          // acá movería números del board, y la redefinición del funnel quedó
+          // fuera de alcance por decisión de la spec (§7). El hecho de la
+          // cobertura queda igual en `origen`.
           caso = await tx.caso.update({
             where: { id: casoExistente.id },
             data: { estado: "FUERA_DE_COBERTURA", origen: "FUERA_DE_COBERTURA" },
@@ -236,7 +245,13 @@ export async function asignarClasificacion(params: {
           where: { id: casoExistente.id },
           data: {
             categoria: params.categoria,
-            estado: "EN_CONVERSACION",
+            // Un caso que ya tiene contacto sigue captado: la clasificación le
+            // pone categoría, no lo devuelve al principio del funnel. Pisarlo
+            // con EN_CONVERSACION apagaba dos cosas a la vez — el agente volvía
+            // a pedir el teléfono que el usuario acababa de dar, y el caso
+            // dejaba de ser fuente de herencia de contacto para el Caso N
+            // (`contactoHeredable` filtra por CAPTADO).
+            ...(casoExistente.estado === "CAPTADO" ? {} : { estado: "EN_CONVERSACION" as const }),
             origen: "DOMINIO",
             ...(subcategorias ? { subcategorias } : {}),
             ...(params.brief ? { resumen: { ...resumenExistente, brief: params.brief } } : {}),
