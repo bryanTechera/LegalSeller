@@ -7,7 +7,16 @@ import {
   CATEGORIAS_CALIBRADAS,
   categoriaSinCalibrar,
   minSimilarityPara,
+  searchDocumentsTool,
 } from "./buscar-documentos-tool.js";
+
+describe("buscar-documentos — vocabulario que ve el modelo", () => {
+  it("la description no usa el léxico que las rules prohíben pronunciar", () => {
+    const description = searchDocumentsTool.description;
+    expect(description.toLowerCase()).not.toContain("corpus");
+    expect(description.toLowerCase()).not.toContain("documentos legales");
+  });
+});
 
 describe("buildSearchQuery", () => {
   it("sin filtro: no agrega condiciones de partición", () => {

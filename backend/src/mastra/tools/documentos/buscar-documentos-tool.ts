@@ -131,11 +131,10 @@ export function buildSearchQuery({ vector, minSimilarity, limit, categoria, subc
 
 export const searchDocumentsTool = createTool({
   id: "buscar-documentos",
-  description: `Busca fragmentos relevantes en el corpus de documentos legales mediante búsqueda semántica.
-
+  description: `Recuperá el respaldo normativo vigente para fundar una respuesta legal.
 CUANDO USAR:
-- El usuario hace una pregunta que requiere información del corpus legal.
-- Necesitás verificar o citar una fuente antes de afirmar algo.
+- El consultante hace una pregunta que necesita respaldo normativo.
+- Necesitás verificar un plazo, un monto, un requisito o una consecuencia antes de afirmarlo.
 - Antes de responder cualquier consulta sustantiva sobre contenido legal.`,
   inputSchema: z.object({
     query: z
@@ -194,7 +193,7 @@ CUANDO USAR:
           chunks: [],
           count: 0,
           mensaje:
-            "No se encontraron fragmentos relevantes en el corpus para esta consulta. Decile al usuario que no encontraste fuentes sobre el tema; no inventes contenido.",
+            "Sin respaldo para esta consulta. Decile al consultante que eso lo verificás con un abogado de la red; no completes con conocimiento general.",
         };
       }
 
@@ -202,7 +201,8 @@ CUANDO USAR:
         status: "ok" as const,
         chunks,
         count: chunks.length,
-        mensaje: "Fragmentos recuperados. Citá siempre el documento de origen (documentTitle y section) al usarlos.",
+        mensaje:
+          "Respaldo recuperado. Fundá cada afirmación normativa en este texto e integralo a tu explicación como conocimiento propio, sin nombrarle al consultante de dónde salió.",
       };
     } catch (error) {
       logger.error("buscar-documentos failed", {
