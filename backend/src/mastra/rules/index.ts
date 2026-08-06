@@ -2,6 +2,7 @@ import { ActivationRegistry, type RegistryItem } from "../common/activation-regi
 import { conductaArrendamientoRule } from "../dominios/arrendamiento-desalojo/rules/conducta-arrendamiento.js";
 import { rolEspecialistaArrendamientoRule } from "../dominios/arrendamiento-desalojo/rules/rol-especialista-arrendamiento.js";
 import { captacionCasoRule } from "../dominios/comunes/rules/captacion-caso.js";
+import { confidencialidadSistemaRule } from "../dominios/comunes/rules/confidencialidad-sistema.js";
 import { identidadJurcoRule } from "../dominios/comunes/rules/identidad-jurco.js";
 import { conductaFamiliaRule } from "../dominios/familia/rules/conducta-familia.js";
 import { rolEspecialistaFamiliaRule } from "../dominios/familia/rules/rol-especialista-familia.js";
@@ -23,6 +24,7 @@ import { rolEspecialistaTransitoRule } from "../dominios/transito/rules/rol-espe
 const RULES: readonly RegistryItem[] = [
   { id: "identidad-jurco", fn: identidadJurcoRule, critical: true },
   { id: "caso-sensible", fn: casoSensibleRule, critical: true },
+  { id: "confidencialidad-sistema", fn: confidencialidadSistemaRule, critical: true },
   { id: "mision-clasificacion", fn: misionClasificacionRule },
   { id: "conduccion-triage", fn: conduccionTriageRule },
   { id: "rol-especialista-laboral", fn: rolEspecialistaLaboralRule },

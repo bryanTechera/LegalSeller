@@ -49,6 +49,8 @@ const detalleBase: DetalleConversacion = {
   threadId: "t1",
   categoria: "laboral",
   fecha: "2026-08-04T10:00:00.000Z",
+  intentosExtraccion: 0,
+  reglasExtraccion: [],
   timeline: [
     {
       tipo: "mensaje",
@@ -429,5 +431,20 @@ describe("DetalleChat", () => {
 
     const detalle = screen.getByText("Detalle técnico").closest("details");
     expect(within(detalle as HTMLElement).getByText("Consultas sin respuesta")).toBeInTheDocument();
+  });
+
+  it("avisa de los intentos de extracción con las reglas que saltaron", () => {
+    mockDatos({ ...detalleBase, intentosExtraccion: 2, reglasExtraccion: ["proveedor", "infra"] });
+    render(<DetalleChat id="c1" />);
+
+    expect(screen.getByText("Intentos de extracción: 2")).toBeInTheDocument();
+    expect(screen.getByText(/proveedor, infra/)).toBeInTheDocument();
+  });
+
+  it("sin intentos no muestra el aviso", () => {
+    mockDatos(detalleBase);
+    render(<DetalleChat id="c1" />);
+
+    expect(screen.queryByText(/Intentos de extracción/)).not.toBeInTheDocument();
   });
 });

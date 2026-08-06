@@ -126,6 +126,7 @@ Tags canónicos del proyecto:
 | Tag | Bloque | Origen |
 |---|---|---|
 | `<personalidad>` | Identidad y voz del asistente | rule `identidad-jurco` |
+| `<confidencialidad>` | Límite de lo que el agente cuenta sobre el sistema | rule `confidencialidad-sistema` |
 | `<rol>` | Rol del especialista de categoría | rule `rol-especialista-laboral` |
 | `<mision>` | Misión del receptor | rule `mision-clasificacion` |
 | `<reglas>` | Reglas de conducción / conducta | rules `conduccion-triage`, `conducta-laboral` |
@@ -134,7 +135,7 @@ Tags canónicos del proyecto:
 | `<categorias_habilitadas>` · `<temas_aun_no_cubiertos>` | Universo de categorías | static skill `universo-categorias` |
 | `<subcategorias>` | Subcategorías de la categoría | static skill `subcategorias-laboral` |
 | `<proceso_derivacion>` | Qué pasa después de captar el caso | tool skill `proceso-derivacion` |
-| `<caso_recabado>` · `<contexto_usuario>` · `<contexto_temporal>` · `<estado_captacion>` | Bloques volátiles (brief / nombre del usuario / fecha actual / pedido de contacto ya hecho) | `instructions.ts` + `common/contexto-temporal.ts` (no vienen de una rule) |
+| `<caso_recabado>` · `<contexto_usuario>` · `<contexto_temporal>` · `<estado_captacion>` · `<recordatorio_confidencialidad>` | Bloques volátiles (brief / nombre del usuario / fecha actual / pedido de contacto ya hecho / refuerzo posicional de confidencialidad, último absoluto) | `instructions.ts` + `common/contexto-temporal.ts` (no vienen de una rule) |
 
 **Anti-colisión con IDs de tools**: un tag XML NUNCA debe coincidir con el ID de una tool (`buscar-documentos`, `registrar-caso`, `asignar-clasificacion`, `corregir-clasificacion`, `guia-<id>`). El LLM puede leer un tag que se llama igual que una tool como una referencia a esa tool e intentar invocarla — la misma familia de bug que la regla "avoid the word skill" (abajo).
 

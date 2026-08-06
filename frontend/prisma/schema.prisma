@@ -68,27 +68,33 @@ enum ProcessingStatus {
 /// history itself lives in Mastra storage (thread) — this row only pins the
 /// conversation to a category (spec §6).
 model Conversation {
-  id             String          @id @default(cuid())
-  sessionId      String          @unique
-  threadId       String          @unique
-  categoria      String?
-  clasificadaEn  DateTime?
+  id                 String          @id @default(cuid())
+  sessionId          String          @unique
+  threadId           String          @unique
+  categoria          String?
+  clasificadaEn      DateTime?
   /// Puntero al Caso que atiende el turno actual. Escalar suelto, sin relación
   /// Prisma (evita desambiguar dos relaciones Conversation<->Caso).
-  casoActivoId   String?
+  casoActivoId       String?
   /// Sesión creada por el equipo legal en /revision. Los Caso de estas
   /// conversaciones se EXCLUYEN de toda métrica de negocio (join por este flag).
-  esRevision     Boolean         @default(false)
+  esRevision         Boolean         @default(false)
   /// Nombre visible en el listado compartido de revisión.
-  titulo         String?
+  titulo             String?
   /// Nombre del experto que creó la sesión (listado compartido).
-  creadaPor      String?
+  creadaPor          String?
   /// Quién originó la sesión de revisión (null = conversación normal del home).
-  origenRevision RevisionOrigen?
+  origenRevision     RevisionOrigen?
   /// Corrida autónoma aún no publicada: fuera del listado del equipo legal.
-  borrador       Boolean         @default(false)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  borrador           Boolean         @default(false)
+  /// Cuántas veces el filtro de confidencialidad redactó una respuesta de esta
+  /// conversación. La señal es de la conversación y no del Caso: un intento de
+  /// extracción puede ocurrir antes de que exista un Caso (FK obligatoria).
+  intentosExtraccion Int             @default(0)
+  /// Ids de regla que saltaron (nunca el texto redactado).
+  reglasExtraccion   String[]        @default([])
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
 
   casos Caso[]
   notas NotaRevision[]

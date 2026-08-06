@@ -43,7 +43,7 @@ pnpm dev               # http://localhost:3000
 |---|---|---|
 | backend | `pnpm dev` / `pnpm build` / `pnpm start` | Server de Mastra |
 | backend | `pnpm test` / `pnpm lint` | Vitest / ESLint (señal de calidad; `tsc` no se usa como gate) |
-| backend | `pnpm evals` | Evals LLM-as-judge (pendiente de implementar) |
+| backend | `pnpm evals [filtro]` | Gate programático de agentes: 34 datasets (clasificación, citación, voz-fuentes, captación, fidelidad, antifiltración, retrieval). Acepta un filtro por nombre, ej. `pnpm evals antifiltracion` |
 | backend | `pnpm ingest <archivo.txt> --title "<título>"` | Ingesta un documento al corpus RAG (re-ejecutable; fuentes en `backend/corpus/`) |
 | frontend | `pnpm dev` / `pnpm build` | Next.js |
 | frontend | `pnpm typecheck` / `pnpm lint` | Gates de calidad |

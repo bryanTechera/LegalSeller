@@ -16,6 +16,7 @@ const { clasificacion, dominios, agentService } = vi.hoisted(() => ({
     asignarClasificacion: vi.fn(),
     registrarDatosCaso: vi.fn(),
     corregirClasificacion: vi.fn(),
+    registrarIntentoExtraccion: vi.fn(),
     resolverCasoActivo: vi.fn(),
     abrirOReactivarCaso: vi.fn(),
     abrirCasoFueraDeCobertura: vi.fn(),
@@ -52,6 +53,7 @@ describe("orchestrateChatTurn", () => {
     vi.resetAllMocks();
     clasificacion.asignarClasificacion.mockResolvedValue({ categoria: "laboral", aplicada: true });
     clasificacion.registrarDatosCaso.mockResolvedValue(undefined);
+    clasificacion.registrarIntentoExtraccion.mockResolvedValue(undefined);
     clasificacion.resolverCasoActivo.mockResolvedValue(null);
     agentService.appendThreadMessages.mockResolvedValue(undefined);
     agentService.fetchAssistantTexts.mockResolvedValue([]);
@@ -424,5 +426,111 @@ describe("orchestrateChatTurn", () => {
     const response = await orchestrateChatTurn({ sessionId: "s1", message: "..." });
     expect(await drain(response)).toContain("listo");
     expect(clasificacion.registrarDatosCaso).not.toHaveBeenCalled();
+  });
+
+  describe("bifurcación del transporte", () => {
+    // El ruteo va por el Caso activo, no por Conversation.categoria: sin este
+    // mock el turno cae al receptor y nunca llega a pipeCategoryTurn.
+    function casoActivoLaboral(): void {
+      clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral", casoActivoId: "k1" });
+      clasificacion.resolverCasoActivo.mockResolvedValue({
+        id: "k1",
+        categoria: "laboral",
+        estado: "EN_CONVERSACION",
+        origen: "DOMINIO",
+        correccionAplicada: false,
+      });
+    }
+
+    function turnoDeCategoria(): void {
+      casoActivoLaboral();
+      agentService.streamAgentMessage.mockResolvedValue(
+        sseResponse([
+          { type: "tool-call", payload: { toolName: "buscar-documentos", args: { categoria: "laboral" } } },
+          { type: "text-delta", payload: { text: "hola" } },
+        ]),
+      );
+    }
+
+    it("el chat público no reenvía los tool-call al browser", async () => {
+      turnoDeCategoria();
+      const emitido = await drain(await orchestrateChatTurn({ sessionId: "s1", message: "hola" }));
+      expect(emitido).not.toContain("tool-call");
+      expect(emitido).not.toContain("buscar-documentos");
+    });
+
+    it("el chat público sí reenvía el texto", async () => {
+      turnoDeCategoria();
+      const emitido = await drain(await orchestrateChatTurn({ sessionId: "s1", message: "hola" }));
+      expect(emitido).toContain("text-delta");
+      expect(emitido).toContain("hola");
+    });
+
+    it("el chat público reenvía un error genérico: sin él la burbuja queda vacía y sin retry", async () => {
+      casoActivoLaboral();
+      agentService.streamAgentMessage.mockResolvedValue(
+        sseResponse([{ type: "error", payload: { error: "detalle interno del backend" } }]),
+      );
+      const emitido = await drain(await orchestrateChatTurn({ sessionId: "s1", message: "hola" }));
+      expect(emitido).toContain("error");
+      expect(emitido).not.toContain("detalle interno del backend");
+    });
+
+    it("revisión conserva los eventos completos: el runner de escenarios los necesita", async () => {
+      turnoDeCategoria();
+      const emitido = await drain(
+        await orchestrateChatTurn({ sessionId: "s1", message: "hola", eventosCompletos: true }),
+      );
+      expect(emitido).toContain("tool-call");
+      expect(emitido).toContain("buscar-documentos");
+    });
+
+    it("con eventosCompletos el texto no se duplica: ya viaja dentro del raw", async () => {
+      turnoDeCategoria();
+      const emitido = await drain(
+        await orchestrateChatTurn({ sessionId: "s1", message: "hola", eventosCompletos: true }),
+      );
+      expect(emitido.match(/"text":"hola"/g) ?? []).toHaveLength(1);
+    });
+
+    it("persiste el intento de extracción y no reenvía la señal al browser", async () => {
+      clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral" });
+      agentService.streamAgentMessage.mockResolvedValue(
+        sseResponse([
+          { type: "data-confidencialidad", data: { reglas: ["proveedor"] } },
+          { type: "text-delta", payload: { text: "listo" } },
+        ]),
+      );
+      const emitido = await drain(await orchestrateChatTurn({ sessionId: "s1", message: "hola" }));
+      // Decirle al atacante qué regla saltó es confirmarle qué preguntó bien.
+      expect(emitido).not.toContain("data-confidencialidad");
+      expect(emitido).not.toContain("proveedor");
+      expect(clasificacion.registrarIntentoExtraccion).toHaveBeenCalledWith({
+        sessionId: "s1",
+        reglas: ["proveedor"],
+      });
+    });
+
+    it("una señal sin reglas no escribe nada", async () => {
+      clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral" });
+      agentService.streamAgentMessage.mockResolvedValue(
+        sseResponse([{ type: "data-confidencialidad", data: {} }]),
+      );
+      await drain(await orchestrateChatTurn({ sessionId: "s1", message: "hola" }));
+      expect(clasificacion.registrarIntentoExtraccion).not.toHaveBeenCalled();
+    });
+
+    it("los tool-call se siguen observando aunque no se reenvíen", async () => {
+      clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral" });
+      agentService.streamAgentMessage.mockResolvedValue(
+        sseResponse([
+          { type: "tool-call", payload: { toolName: "registrar-caso", args: { contactoNombre: "Ana" } } },
+          { type: "text-delta", payload: { text: "listo" } },
+        ]),
+      );
+      const emitido = await drain(await orchestrateChatTurn({ sessionId: "s1", message: "hola" }));
+      expect(emitido).not.toContain("registrar-caso");
+      expect(clasificacion.registrarDatosCaso).toHaveBeenCalled();
+    });
   });
 });

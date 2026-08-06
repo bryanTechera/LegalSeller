@@ -175,12 +175,14 @@ Dos tiers, `PinoLogger` de `@mastra/loggers`, nunca instanciado directo:
 
 **Unit (Vitest)** — lógica determinista: activación de rules/skills, validadores, parsers, chunking, merges. Gotchas heredados: registries singleton sin reset → IDs únicos por test; mocks parciales de `mastra` deben incluir stub de `getLogger`; preferir `() => Promise.resolve()` a `async () => {}` en mocks.
 
-**Evals (LLM-as-judge)** — el mecanismo de calidad de los agentes:
+**Evals** — el mecanismo de calidad de los agentes. Todos los checks son **programáticos** (match de tool-call, substring, regex): no hay scorers LLM-as-judge todavía, y `createScorer`/`makeLLMScorer` no están cableados. Ver `.claude/rules/eval-design.md` para cuándo y cómo introducirlos.
 
-- Runner propio (`src/test/run-evals.ts`, `pnpm run evals`): crea un agente fresco por ítem con tools interceptadas (write tools mockeadas, read tools pass-through con tracing), corre scorers y un matcher programático de tool calls, persiste a SQLite y aplica **quality gates por thresholds**.
-- Scorers con `createScorer` de `@mastra/core/evals` + factory `makeLLMScorer` (`.analyze()` con outputSchema Zod, `.generateScore()`, `.generateReason()`); juez = modelo lite barato. Sentinel `-1` para "criterio no aplica".
-- Datasets JSON versionados por agente (`src/test/agents/<id>/datasets/`) + thresholds por dataset. Para LegalSeller los datasets críticos (gated, bloquean build) serían: **fidelidad a las fuentes / no alucinación de citas**, **corrección jurídica de la respuesta**, **cumplimiento de rules**. El resto, informativos.
-- Flujo iterativo: medir → analizar diagnósticos → ajustar prompt/tools → verificar → estabilizar 2-3 corridas → subir threshold.
+- Runner propio (`src/test/run-evals.ts`, `pnpm evals [filtro]`): corre cada ítem con `agent.generate()` —sin memoria, cada ítem es un primer mensaje aislado— y aplica **quality gates por threshold**. Sale con código 1 si algún dataset queda por debajo. No persiste resultados: el output es la consola.
+- Familias de dataset: `receptor` (matcher de `asignar-clasificacion` contra el golden set), `citacion` (la consulta sustantiva dispara `buscar-documentos`), `voz-fuentes` (la respuesta no expone mecánica interna del corpus), `captacion` (no repetir el pedido de contacto), `fidelidad` (respetar las condiciones del régimen), `antifiltracion` (no entregar cómo está construido el sistema) y `retrieval` (recall@5 y vacío correcto contra el golden set de `src/test/retrieval/`).
+- Thresholds: `THRESHOLD = 0.9` global; por dataset se sube con `umbral` en la entrada de `EVALS` — `retrieval-*` va en 0.95 y `*-antifiltracion` en 1 (no existe des-filtrar una respuesta ya entregada).
+- Los datasets viven versionados por agente en `src/test/agents/<id>/datasets/`.
+- **`EVALS_SIN_PROCESSORS=1`**: el runner lo setea antes de importar los agentes. Los evals de prompt miden la rule; sin el flag, el `filtro-confidencialidad` taparía la fuga antes de que el check vea el texto y el gate pasaría verde con el prompt roto.
+- Flujo iterativo: medir → analizar los FAIL sobre el texto real → ajustar prompt/tools → verificar → estabilizar 2-3 corridas. Un gate en rojo nunca se resuelve bajando el umbral.
 
 ## 10. Manejo de errores (resumen)
 

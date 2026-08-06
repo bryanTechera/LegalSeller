@@ -6,8 +6,53 @@ import {
   buildSearchQuery,
   CATEGORIAS_CALIBRADAS,
   categoriaSinCalibrar,
+  MENSAJE_EMPTY,
+  MENSAJE_ERROR,
+  MENSAJE_OK,
   minSimilarityPara,
+  searchDocumentsTool,
 } from "./buscar-documentos-tool.js";
+
+/** El léxico que las cinco rules `conducta-*` le prohíben pronunciar al modelo. */
+const LEXICO_PROHIBIDO = ["corpus", "documentos legales"];
+
+function noUsaLexicoProhibido(texto: string): void {
+  for (const termino of LEXICO_PROHIBIDO) {
+    expect(texto.toLowerCase()).not.toContain(termino);
+  }
+}
+
+describe("buscar-documentos — vocabulario que ve el modelo", () => {
+  it("la description de la tool no usa el léxico que las rules prohíben pronunciar", () => {
+    noUsaLexicoProhibido(searchDocumentsTool.description);
+  });
+
+  it("las description de los parámetros del inputSchema no usan el léxico prohibido", () => {
+    // El modelo recibe la definición completa de la tool (incluidos los
+    // parámetros) en cada turno donde está disponible — mayor frecuencia de
+    // exposición incluso que los `mensaje` de branch. Se listan los cuatro
+    // parámetros a mano (en vez de iterar el shape) porque el tipo de
+    // `inputSchema.shape` no resuelve a algo que `Object.entries` acepte
+    // sin `any` bajo `strictTypeChecked`.
+    const shape = searchDocumentsTool.inputSchema.shape;
+    const descripcionesDeParametros: (string | undefined)[] = [
+      shape.query.meta()?.description,
+      shape.limit.meta()?.description,
+      shape.categoria.meta()?.description,
+      shape.subcategorias.meta()?.description,
+    ];
+    for (const description of descripcionesDeParametros) {
+      expect(description).toBeDefined();
+      noUsaLexicoProhibido(description ?? "");
+    }
+  });
+
+  it("los mensaje de los tres branches (ok, empty, error) no usan el léxico prohibido", () => {
+    noUsaLexicoProhibido(MENSAJE_OK);
+    noUsaLexicoProhibido(MENSAJE_EMPTY);
+    noUsaLexicoProhibido(MENSAJE_ERROR);
+  });
+});
 
 describe("buildSearchQuery", () => {
   it("sin filtro: no agrega condiciones de partición", () => {

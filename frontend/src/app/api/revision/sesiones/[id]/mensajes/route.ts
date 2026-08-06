@@ -33,7 +33,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const validation = await parseRequestBody(request, mensajeRevisionSchema);
     if (!validation.success) return validation.response;
 
-    return await orchestrateChatTurn({ sessionId: sesion.sessionId, message: validation.data.message });
+    return await orchestrateChatTurn({
+      sessionId: sesion.sessionId,
+      message: validation.data.message,
+      // Solo acá: el runner de escenarios evalúa sus expectativas sobre los
+      // tool-call del stream. Nunca desde datos del request.
+      eventosCompletos: true,
+    });
   } catch (error) {
     logger.error("revision/mensajes failed", { error: error instanceof Error ? error.message : String(error) });
     return NextResponse.json(

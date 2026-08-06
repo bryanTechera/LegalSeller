@@ -470,6 +470,29 @@ export async function corregirClasificacion(params: {
   });
 }
 
+/**
+ * Deja rastro de que el filtro de confidencialidad tuvo que redactar. Guarda
+ * los ids de regla, nunca el texto: el texto redactado es justamente lo que no
+ * queremos que quede escrito.
+ *
+ * Va sobre Conversation y no sobre CasoEvento porque `CasoEvento.casoId` es FK
+ * obligatoria a `Caso`, y un atacante que arranca directo con preguntas meta
+ * —y solo recibe preguntas del receptor— no tiene fila `Caso`: el evento no
+ * tendría dónde escribirse y la detección se perdería en silencio.
+ */
+export async function registrarIntentoExtraccion(params: {
+  sessionId: string;
+  reglas: string[];
+}): Promise<void> {
+  await prisma.conversation.update({
+    where: { sessionId: params.sessionId },
+    data: {
+      intentosExtraccion: { increment: 1 },
+      reglasExtraccion: { push: params.reglas },
+    },
+  });
+}
+
 /** Qué hizo la derivación con el puntero — el orquestador loguea sobre esto. */
 export type ResultadoDerivacion =
   | { accion: "sin-conversacion" }

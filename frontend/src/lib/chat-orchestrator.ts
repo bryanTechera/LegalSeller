@@ -18,6 +18,7 @@ import {
   corregirClasificacion,
   getOrCreateConversation,
   registrarDatosCaso,
+  registrarIntentoExtraccion,
   resolverCasoActivo,
 } from "./clasificacion";
 import { esCategoriaHabilitada, subcategoriaUnica } from "./dominios";
@@ -45,6 +46,14 @@ function sseHeaders(): HeadersInit {
 
 function encodeSseText(text: string): Uint8Array {
   return new TextEncoder().encode(`data: ${JSON.stringify({ type: "text-delta", payload: { text } })}\n\n`);
+}
+
+function encodeSseError(): Uint8Array {
+  // El mensaje upstream se descarta a propósito: el cliente ya muestra su
+  // propio texto genérico, y reenviarlo filtraría detalle del backend.
+  return new TextEncoder().encode(
+    `data: ${JSON.stringify({ type: "error", payload: { error: "stream-error" } })}\n\n`,
+  );
 }
 
 /** A one-shot SSE response carrying a single text delta (or nothing, if empty). */
@@ -88,6 +97,7 @@ async function consumeUpstream(
     onToolCall?: (toolName: string, args: Record<string, unknown>) => void | Promise<void>;
     onError?: () => void | Promise<void>;
     onRaw?: (rawLine: string) => void | Promise<void>;
+    onData?: (tipo: string, data: Record<string, unknown>) => void | Promise<void>;
   },
 ): Promise<void> {
   if (!upstream.body) return;
@@ -104,8 +114,35 @@ async function consumeUpstream(
       if (event.kind === "text") await handlers.onText?.(event.text, data);
       if (event.kind === "tool-call") await handlers.onToolCall?.(event.toolName, event.args);
       if (event.kind === "error") await handlers.onError?.();
+      if (event.kind === "data") await handlers.onData?.(event.tipo, event.data);
     }
   }
+}
+
+/**
+ * Handler de la señal fuera de banda del filtro de confidencialidad. El chunk
+ * `data-confidencialidad` NO está en la allowlist del transporte público
+ * (Tarea 10): se consume acá, server-side, y nunca llega al browser — decirle
+ * al atacante qué regla saltó sería confirmarle qué preguntó bien.
+ */
+function observarSenialConfidencialidad(
+  sessionId: string,
+): (tipo: string, data: Record<string, unknown>) => Promise<void> {
+  return async (tipo, data) => {
+    if (tipo !== "data-confidencialidad") return;
+    const reglas = Array.isArray(data.reglas)
+      ? data.reglas.filter((r): r is string => typeof r === "string")
+      : [];
+    if (reglas.length === 0) return;
+    try {
+      await registrarIntentoExtraccion({ sessionId, reglas });
+    } catch (error) {
+      // La persistencia nunca rompe el stream del usuario.
+      logger.error("registrarIntentoExtraccion failed", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  };
 }
 
 /** Runs the receptor turn (readOnly memory), buffering everything. */
@@ -168,6 +205,7 @@ async function runReceptor(params: {
     onError: () => {
       logger.warn("receptor stream error event", {});
     },
+    onData: observarSenialConfidencialidad(params.sessionId),
   });
 
   if (asignacion) {
@@ -231,19 +269,44 @@ function pipeCategoryTurn(params: {
   message: string;
   categoriaActiva: string;
   upstream: Response;
+  eventosCompletos: boolean;
 }): Response {
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
       const encoder = new TextEncoder();
+      function emitir(bytes: Uint8Array): void {
+        try {
+          controller.enqueue(bytes);
+        } catch {
+          // Client gone — keep draining so tool-calls still persist.
+        }
+      }
+
       let temaDerivado: string | null = null;
       void consumeUpstream(params.upstream, {
-        onRaw: (raw) => {
-          try {
-            controller.enqueue(encoder.encode(`data: ${raw}\n\n`));
-          } catch {
-            // Client gone — keep draining so tool-calls still persist.
-          }
-        },
+        // Allowlist, no denylist: el chat público recibe SOLO el texto y un
+        // error genérico. Reenviar el stream crudo publicaba en la pestaña
+        // Network los tool-call con toolName y args — o sea multi-agente,
+        // recuperación particionada por categoría y captación por tool — sin
+        // que el agente dijera una palabra.
+        //
+        // Con eventosCompletos NO se registran onText/onError: el texto ya
+        // viaja dentro del raw y se duplicaría.
+        ...(params.eventosCompletos
+          ? {
+              onRaw: (raw: string) => {
+                emitir(encoder.encode(`data: ${raw}\n\n`));
+              },
+            }
+          : {
+              onText: (text: string) => {
+                emitir(encodeSseText(text));
+              },
+              onError: () => {
+                emitir(encodeSseError());
+              },
+            }),
+        onData: observarSenialConfidencialidad(params.sessionId),
         onToolCall: async (toolName, args) => {
           try {
             if (toolName === "registrar-caso") {
@@ -316,6 +379,7 @@ async function callCategoryAgent(params: {
   categoria: string;
   message: string;
   casoBrief?: string;
+  eventosCompletos: boolean;
   /** Hecho de la base, no heurística: el Caso activo ya está CAPTADO (spec §5). */
   contactoRegistrado: boolean;
 }): Promise<Response> {
@@ -359,6 +423,7 @@ async function callCategoryAgent(params: {
     message: params.message,
     categoriaActiva: params.categoria,
     upstream,
+    eventosCompletos: params.eventosCompletos,
   });
 }
 
@@ -368,7 +433,17 @@ async function callCategoryAgent(params: {
  * (fast-path) or emit the receptor's question (slow-path, appended to the
  * thread since the receptor runs readOnly).
  */
-export async function orchestrateChatTurn(params: { sessionId: string; message: string }): Promise<Response> {
+export async function orchestrateChatTurn(params: {
+  sessionId: string;
+  message: string;
+  /**
+   * Reenvía el stream del agente sin filtrar. Solo para /revision, donde el
+   * runner de escenarios lee los tool-call de acá. Default false: si una ruta
+   * nueva se olvida de pasarlo, cae del lado seguro.
+   */
+  eventosCompletos?: boolean;
+}): Promise<Response> {
+  const eventosCompletos = params.eventosCompletos ?? false;
   await getOrCreateConversation(params.sessionId);
 
   // El ruteo pasa a ser por el Caso activo: `Conversation.categoria` queda como
@@ -387,6 +462,7 @@ export async function orchestrateChatTurn(params: { sessionId: string; message: 
       sessionId: params.sessionId,
       categoria: casoActivo.categoria,
       message: params.message,
+      eventosCompletos,
       contactoRegistrado: casoActivo.estado === "CAPTADO",
     });
   }
@@ -425,6 +501,7 @@ export async function orchestrateChatTurn(params: { sessionId: string; message: 
           categoria: asignada.categoria,
           message: params.message,
           casoBrief: outcome.args.brief,
+          eventosCompletos,
           contactoRegistrado: asignada.casoEstado === "CAPTADO",
         });
       }

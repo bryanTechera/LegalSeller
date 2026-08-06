@@ -20,7 +20,19 @@ export interface SseToolCallEvent {
   args: Record<string, unknown>;
 }
 
-export type SseEvent = SseTextEvent | SseErrorEvent | SseToolCallEvent | null;
+/**
+ * Chunk `data-*` emitido por `writer.custom()` de un output processor del
+ * backend. Es una señal fuera de banda para el BFF (hoy: el filtro de
+ * confidencialidad avisando qué reglas saltaron); el chat público NO la
+ * reenvía al browser.
+ */
+export interface SseDataEvent {
+  kind: "data";
+  tipo: string;
+  data: Record<string, unknown>;
+}
+
+export type SseEvent = SseTextEvent | SseErrorEvent | SseToolCallEvent | SseDataEvent | null;
 
 /** Parses one `data: ...` payload. Returns null for events without user-visible text. */
 export function parseSseData(data: string): SseEvent {
@@ -56,6 +68,16 @@ export function parseSseData(data: string): SseEvent {
     if (typeof rawName !== "string" || rawName.length === 0) return null;
     const args = rawArgs && typeof rawArgs === "object" ? (rawArgs as Record<string, unknown>) : {};
     return { kind: "tool-call", toolName: rawName, args };
+  }
+  if (type.startsWith("data-")) {
+    // writer.custom() de Mastra emite un data-part de AI SDK: el payload va en
+    // `data`, no anidado en `payload` como el resto del stream nativo.
+    const raw = event.data ?? nested.data;
+    return {
+      kind: "data",
+      tipo: type,
+      data: raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {},
+    };
   }
   return null;
 }

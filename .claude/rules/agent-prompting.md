@@ -126,6 +126,7 @@ El proyecto **no** envuelve rules/skills en un wrapper de capa: cada bloque llev
 | Tag | Bloque |
 |---|---|
 | `<personalidad>` | Identidad y voz del asistente |
+| `<confidencialidad>` | Límite de lo que el agente cuenta sobre el sistema |
 | `<rol>` | Rol del especialista de categoría |
 | `<mision>` | Misión del receptor |
 | `<reglas>` | Reglas de conducción / conducta |
@@ -134,7 +135,7 @@ El proyecto **no** envuelve rules/skills en un wrapper de capa: cada bloque llev
 | `<categorias_habilitadas>` · `<temas_aun_no_cubiertos>` | Universo de categorías |
 | `<subcategorias>` | Subcategorías de la categoría |
 | `<proceso_derivacion>` | Qué pasa después de captar el caso |
-| `<caso_recabado>` · `<contexto_usuario>` · `<contexto_temporal>` · `<estado_captacion>` | Bloques volátiles (brief / nombre del usuario / fecha actual / pedido de contacto ya hecho) |
+| `<caso_recabado>` · `<contexto_usuario>` · `<contexto_temporal>` · `<estado_captacion>` · `<recordatorio_confidencialidad>` | Bloques volátiles (brief / nombre del usuario / fecha actual / pedido de contacto ya hecho / refuerzo de confidencialidad) |
 
 **Reglas de tags:** en español; self-documenting (que alguien no técnico intuya su significado); no colisionan con IDs de tools; el tag no lleva el nombre del agente (`<rol>`, no `<rol_laboral>`). Si un bloque tiene una única sección sin sub-estructura, alcanza con el tag canónico; si necesitás sub-secciones que el modelo deba distinguir, anidá tags en español snake_case dentro del canónico.
 

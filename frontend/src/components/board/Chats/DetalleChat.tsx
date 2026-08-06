@@ -133,6 +133,16 @@ export function DetalleChat({ id }: { id: string }) {
           <p className={styles.etiqueta}>{hora(data.fecha)}</p>
         </header>
 
+        {data.intentosExtraccion > 0 && (
+          <div className={styles.avisoExtraccion} role="status">
+            <h3>Intentos de extracción: {data.intentosExtraccion}</h3>
+            <p>
+              El filtro de confidencialidad tuvo que redactar la respuesta. Reglas que saltaron:{" "}
+              {data.reglasExtraccion.join(", ")}.
+            </p>
+          </div>
+        )}
+
         <ol className={styles.timeline}>
           {mensajes.map((item) => {
             const resumen = item.rol === "assistant" ? resumenes.get(item.id) : undefined;

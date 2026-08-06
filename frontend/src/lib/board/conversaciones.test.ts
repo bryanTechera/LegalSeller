@@ -34,6 +34,8 @@ function filaConversacion(id: string) {
     createdAt: new Date("2026-07-30T10:00:00.000Z"),
     casos: [{ estado: "CAPTADO" }],
     _count: { notas: 2 },
+    intentosExtraccion: 0,
+    reglasExtraccion: [],
   };
 }
 
@@ -67,8 +69,21 @@ describe("listarConversaciones", () => {
         mensajes: 6,
         preview: "Me despidieron sin causa",
         notas: 2,
+        intentosExtraccion: 0,
+        reglasExtraccion: [],
       },
     ]);
+  });
+
+  it("el listado expone el contador de intentos de extracción", async () => {
+    // El preview del listado es el primer mensaje del usuario, así que un
+    // red-team que arranca con una consulta legítima y recién después pivotea
+    // no se distingue de una conversación normal sin este contador.
+    prismaMock.prisma.conversation.findMany.mockResolvedValue([
+      { ...filaConversacion("c1"), intentosExtraccion: 2, reglasExtraccion: ["proveedor", "infra"] },
+    ]);
+    const { chats } = await listarConversaciones({ rango: "30d" });
+    expect(chats[0]).toMatchObject({ intentosExtraccion: 2, reglasExtraccion: ["proveedor", "infra"] });
   });
 
   it("ordena por última actividad, no por creación", async () => {

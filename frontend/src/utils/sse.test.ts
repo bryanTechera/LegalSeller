@@ -52,6 +52,23 @@ describe("parseSseData tool-call", () => {
   });
 });
 
+describe("parseSseData data-*", () => {
+  it("parsea los chunks data-* que hoy se descartaban en silencio", () => {
+    const evento = parseSseData(
+      JSON.stringify({ type: "data-confidencialidad", data: { reglas: ["proveedor"] } }),
+    );
+    expect(evento).toEqual({
+      kind: "data",
+      tipo: "data-confidencialidad",
+      data: { reglas: ["proveedor"] },
+    });
+  });
+
+  it("sigue devolviendo null para tipos desconocidos que no son data-*", () => {
+    expect(parseSseData(JSON.stringify({ type: "step-start" }))).toBeNull();
+  });
+});
+
 describe("createSseLineSplitter", () => {
   it("splits complete data lines and buffers partial ones", () => {
     const feed = createSseLineSplitter();
