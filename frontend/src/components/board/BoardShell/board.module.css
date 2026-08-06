@@ -19,8 +19,8 @@
   align-items: center;
   gap: var(--space-2);
   font-family: var(--font-family-display);
-  letter-spacing: var(--tracking-display);
-  text-transform: uppercase;
+  /* Caja mixta y sin tracking de versalitas: ver .wordmark de page.module.css. */
+  letter-spacing: 0;
 }
 
 .nav {

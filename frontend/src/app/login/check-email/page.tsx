@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { BrandMark } from "@/components/brand/BrandMark";
-import { MARCA } from "@/lib/marca";
+import { Wordmark } from "@/components/brand/Wordmark";
 
 import styles from "../login.module.css";
 
@@ -17,7 +17,7 @@ export default function CheckEmailPage() {
       <div className={styles.tarjeta}>
         <span className={styles.wordmark}>
           <BrandMark size={22} />
-          {MARCA}
+          <Wordmark />
         </span>
         <h1 className={styles.titulo}>Revisá tu correo</h1>
         <p className={styles.subtitulo}>

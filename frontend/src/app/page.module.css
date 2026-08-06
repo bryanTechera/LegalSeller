@@ -21,8 +21,13 @@
   font-family: var(--font-family-display);
   font-size: var(--text-lg);
   font-weight: 600;
-  letter-spacing: var(--tracking-display);
-  text-transform: uppercase;
+  /*
+   * El wordmark es la excepción a las versalitas con tracking del resto de la
+   * identidad: "DUDAYA" en mayúsculas fusiona las dos palabras del compuesto.
+   * En caja mixta se leen las dos, y el tracking de versalitas (0.05em) queda
+   * demasiado aireado, así que va en 0.
+   */
+  letter-spacing: 0;
   color: var(--navy);
 }
 

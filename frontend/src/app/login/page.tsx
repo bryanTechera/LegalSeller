@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import { BrandMark } from "@/components/brand/BrandMark";
-import { MARCA } from "@/lib/marca";
+import { Wordmark } from "@/components/brand/Wordmark";
 
 import { LoginForm } from "./LoginForm";
 import styles from "./login.module.css";
@@ -32,7 +32,7 @@ export default async function LoginPage({
       <div className={styles.tarjeta}>
         <span className={styles.wordmark}>
           <BrandMark size={22} />
-          {MARCA}
+          <Wordmark />
         </span>
         <h1 className={styles.titulo}>Board</h1>
         <p className={styles.subtitulo}>Te enviamos un enlace de acceso por correo.</p>
