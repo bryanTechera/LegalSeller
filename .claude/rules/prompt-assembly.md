@@ -10,6 +10,12 @@
    Mastra lo auto-mergea al RuntimeContext (no hay middleware custom — solo lectores
    tipados en `common/middleware/index.ts`). El `ReadOnlyState` viaja bajo la key
    `readOnly` y se lee con `getReadOnlyFromContext`.
+1b. Los `inputProcessors` del agente corren sobre el mensaje entrante y los
+   `outputProcessors` sobre cada chunk de la respuesta y sobre el resultado
+   final (`crearAgente` -> `opcionesDeProcessors`). Se resuelven como función y
+   no como array: el `bodySchema` de `/api/agents/:id/stream` no se valida en
+   runtime, así que un `outputProcessors: []` en el body ganaría sobre el
+   AgentConfig.
 2. `crearAgente` resuelve instructions vía `buildDynamicInstructions` (null-guard
    asimétrico: startup sin contexto → string vacío; request real → throw si el
    build falla).
@@ -45,11 +51,15 @@
   dominio + registrarla en TOOL_SKILLS de `src/mastra/skills/tool-skills/index.ts`.
   La tool se publica como `guia-<id>`. Revisar si necesita anchor en una rule
   (ver rules-and-skills-taxonomy.md y la skill procesar-documento-legal).
+- **Processor nuevo**: clase en `src/mastra/processors/` que implemente
+  `Processor<"<id>">`, más su test. Se cablea en `opcionesDeProcessors`
+  (`common/crear-agente.ts`), NO agente por agente. Si emite una señal fuera de
+  banda con `writer.custom()`, el chunk `data-*` va con `transient: true` (se
+  streamea pero no se persiste) y el BFF decide si lo reenvía: la allowlist de
+  `chat-orchestrator.ts` deja pasar al browser solo texto y un error genérico.
+
 - **Byte-igualdad como técnica**: para refactors de estructura de prompt sin cambio
-  de contenido, congelar el prompt actual en un fixture y asertar igualdad exacta
-  (ver src/test/instructions-migracion.test.ts). Para cambios de contenido, el gate
-  es `pnpm evals`. El gate de la era de migración (`instructions-migracion.test.ts`
-  + su fixture) es transitorio: se elimina —no se "arregla"— en el primer cambio
-  deliberado de contenido (ej. la skill `procesar-documento-legal` reescribiendo
-  una rule o skill); de ahí en más, todo cambio de contenido se valida con
-  `pnpm evals`.
+  de contenido, congelar el prompt actual en un fixture y asertar igualdad exacta.
+  El gate de la era de migración (`instructions-migracion.test.ts` + su fixture) ya
+  cumplió su ciclo y se eliminó en el primer cambio deliberado de contenido, como
+  estaba previsto: hoy **todo** cambio de contenido se valida con `pnpm evals`.
