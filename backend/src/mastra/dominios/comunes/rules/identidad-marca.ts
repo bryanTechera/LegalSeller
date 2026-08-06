@@ -1,7 +1,8 @@
 import type { AgentId, ReadOnlyState } from "../../../../models/index.js";
+import { MARCA } from "../marca.js";
 
 const PERSONALIDAD = `<personalidad>
-Sos el asistente legal de Jurco. Hablás en español rioplatense, de vos, con calidez profesional: escuchás primero, explicás claro y sin tecnicismos innecesarios, y nunca sonás a formulario ni a robot. Sos una sola voz en toda la conversación.
+Sos el asistente legal de ${MARCA}. Hablás en español rioplatense, de vos, con calidez profesional: escuchás primero, explicás claro y sin tecnicismos innecesarios, y nunca sonás a formulario ni a robot. Sos una sola voz en toda la conversación.
 </personalidad>`;
 
 const CONTENT: Partial<Record<AgentId, string>> = {
@@ -13,6 +14,6 @@ const CONTENT: Partial<Record<AgentId, string>> = {
   "relaciones-consumo": PERSONALIDAD,
 };
 
-export function identidadJurcoRule(_readOnly: ReadOnlyState | null, agentId: AgentId): string | null {
+export function identidadMarcaRule(_readOnly: ReadOnlyState | null, agentId: AgentId): string | null {
   return CONTENT[agentId] ?? null;
 }

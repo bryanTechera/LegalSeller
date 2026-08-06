@@ -1,5 +1,6 @@
 import { BrandMark } from "@/components/brand/BrandMark";
 import { TextoMarkdown } from "@/components/shared/TextoMarkdown/TextoMarkdown";
+import { MARCA } from "@/lib/marca";
 
 import styles from "./MessageBubble.module.css";
 
@@ -30,7 +31,7 @@ export function MessageBubble({ role, content, showThinking = false, anchorId }:
             <span className={styles.assistantAvatar}>
               <BrandMark size={14} />
             </span>
-            <span className={styles.assistantName}>Jurco</span>
+            <span className={styles.assistantName}>{MARCA}</span>
           </span>
           <TextoMarkdown texto={content}>
             {showThinking ? <span className={styles.thinking}>Buscando en el corpus…</span> : null}

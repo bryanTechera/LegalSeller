@@ -8,7 +8,7 @@ describe("instrucciones del agente laboral", () => {
     expect(prompt).toContain("<personalidad>");
     expect(prompt).toContain("<captacion>");
     expect(prompt).toContain("Fundá cada afirmación normativa");
-    expect(prompt).toContain("material inédito y de propiedad intelectual propia desarrollado por Jurco");
+    expect(prompt).toContain("material inédito y de propiedad intelectual propia desarrollado por DudaYa");
     expect(prompt).toContain("buscar-documentos");
   });
 
@@ -66,6 +66,6 @@ describe("instrucciones del agente laboral", () => {
   it("no nombra el proyecto interno en el prompt", () => {
     const prompt = buildLaboralInstructions(null);
     expect(prompt).not.toContain("LegalSeller");
-    expect(prompt).toContain("Jurco");
+    expect(prompt).toContain("DudaYa");
   });
 });

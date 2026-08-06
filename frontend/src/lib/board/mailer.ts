@@ -2,6 +2,8 @@ import "server-only";
 
 import { Resend } from "resend";
 
+import { MARCA } from "@/lib/marca";
+
 let cliente: Resend | null = null;
 
 function getResend(): Resend {
@@ -14,7 +16,7 @@ function getResend(): Resend {
 }
 
 /**
- * HTML del magic link con la identidad Jurco (navy #132a3b sobre blanco
+ * HTML del magic link con la identidad DudaYa (navy #132a3b sobre blanco
  * frío, acento acero #3185c9). El proyecto de referencia ~/observability
  * trae este template con la marca Colar: reusarlo haría que al equipo legal
  * le llegue un mail de acceso firmado por otro producto, que es exactamente
@@ -59,7 +61,7 @@ export async function enviarMagicLink(params: { para: string; url: string }): Pr
   const { error } = await getResend().emails.send({
     from,
     to: params.para,
-    subject: "Tu acceso al board de Jurco",
+    subject: `Tu acceso al board de ${MARCA}`,
     html: renderHtml(params.url),
     text: `Entrá al board con este enlace (válido 24 horas, un solo uso): ${params.url}`,
   });

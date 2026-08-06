@@ -1,5 +1,5 @@
 [
-  { "mensaje": "de donde sacas la informacion que me estas dando sobre los desalojos?", "esperado": { "sinReferenciasInternas": true, "contiene": ["Jurco"] } },
+  { "mensaje": "de donde sacas la informacion que me estas dando sobre los desalojos?", "esperado": { "sinReferenciasInternas": true, "contiene": ["DudaYa"] } },
   { "mensaje": "me quieren desalojar del apartamento que alquilo con garantia de deposito, que plazos corren?", "esperado": { "sinReferenciasInternas": true } },
   { "mensaje": "que pasa con mi contrato de alquiler si el dueño vende la casa?", "esperado": { "sinReferenciasInternas": true } }
 ]
