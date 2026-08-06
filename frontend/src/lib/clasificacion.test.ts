@@ -238,6 +238,98 @@ describe("asignarClasificacion", () => {
 
     await expect(asignarClasificacion({ sessionId: "s1", categoria: "laboral" })).rejects.toThrow("db down");
   });
+
+  it("adopta el huérfano del turno inaugural en vez de crear un segundo caso (defecto E2E)", async () => {
+    // El puntero ya apunta al Caso que registrar-caso creó inline, sin
+    // categoría todavía (origen DOMINIO): asignar-clasificacion llega recién
+    // después de drenar el stream, en el mismo turno.
+    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: null, casoActivoId: "k1" });
+    tx.caso.findUnique
+      .mockResolvedValueOnce({
+        id: "k1",
+        categoria: null,
+        origen: "DOMINIO",
+        subcategorias: [],
+        resumen: { hechos: "lo despidieron sin causa" },
+        estado: "EN_CONVERSACION",
+      }) // casoActivo, resuelto por casoActivoId
+      .mockResolvedValueOnce(null) // casoExistente por clave compuesta: todavía no hay caso "laboral"
+      .mockResolvedValueOnce({ estado: "EN_CONVERSACION" }); // relectura final tras promover
+    tx.caso.update.mockResolvedValue({ id: "k1" });
+    // Si el predicado no adopta el huérfano, esto es lo que crea el defecto:
+    // un segundo Caso con la clasificación real, huérfano abandonado aparte.
+    tx.caso.create.mockResolvedValue({ id: "k2" });
+
+    const result = await asignarClasificacion({ sessionId: "s1", categoria: "laboral", subcategoria: "despido" });
+
+    expect(tx.caso.create).not.toHaveBeenCalled();
+    expect(tx.caso.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "k1" },
+        data: expect.objectContaining({ categoria: "laboral", estado: "EN_CONVERSACION", origen: "DOMINIO" }),
+      }),
+    );
+    expect(result).toEqual({ categoria: "laboral", aplicada: true, casoId: "k1", casoEstado: "EN_CONVERSACION" });
+  });
+
+  it("marca el huérfano como escape sobre la misma fila, sin crear un segundo caso", async () => {
+    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: null, casoActivoId: "k1" });
+    tx.caso.findUnique
+      .mockResolvedValueOnce({
+        id: "k1",
+        categoria: null,
+        origen: "DOMINIO",
+        subcategorias: [],
+        resumen: { hechos: "consulta sobre una herencia" },
+        estado: "EN_CONVERSACION",
+      }) // casoActivo, resuelto por casoActivoId
+      .mockResolvedValueOnce({ estado: "FUERA_DE_COBERTURA" }); // relectura final
+    tx.caso.update.mockResolvedValue({ id: "k1" });
+    // Si el predicado no adopta el huérfano, esto es lo que crea el defecto:
+    // un segundo Caso congelado aparte del huérfano.
+    tx.caso.create.mockResolvedValue({ id: "k2" });
+
+    const result = await asignarClasificacion({
+      sessionId: "s1",
+      categoria: "categoria-no-habilitada",
+      temaDetectado: "sucesiones",
+    });
+
+    expect(tx.caso.create).not.toHaveBeenCalled();
+    expect(tx.caso.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "k1" },
+        data: { estado: "FUERA_DE_COBERTURA", origen: "FUERA_DE_COBERTURA" },
+      }),
+    );
+    expect(result).toEqual({ categoria: null, aplicada: false, casoId: "k1", casoEstado: "FUERA_DE_COBERTURA" });
+  });
+
+  it("no muta un caso activo que ya tiene categoría (no-regresión)", async () => {
+    // El caso activo ya tiene clasificación de registro (categoria: "laboral"):
+    // una clasificación distinta que llega no debe pisarlo ni crear sobre él.
+    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: null, casoActivoId: "k1" });
+    tx.caso.findUnique
+      .mockResolvedValueOnce({
+        id: "k1",
+        categoria: "laboral",
+        origen: "DOMINIO",
+        subcategorias: [],
+        resumen: null,
+        estado: "EN_CONVERSACION",
+      }) // casoActivo, resuelto por casoActivoId
+      .mockResolvedValueOnce(null) // casoExistente por clave compuesta: todavía no hay caso "familia"
+      .mockResolvedValueOnce({ estado: "EN_CONVERSACION" }); // relectura final
+    tx.caso.create.mockResolvedValue({ id: "k2" });
+
+    const result = await asignarClasificacion({ sessionId: "s1", categoria: "familia" });
+
+    expect(tx.caso.update).not.toHaveBeenCalledWith(expect.objectContaining({ where: { id: "k1" } }));
+    expect(tx.caso.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ categoria: "familia" }) }),
+    );
+    expect(result.casoId).toBe("k2");
+  });
 });
 
 describe("corregirClasificacion", () => {

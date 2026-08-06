@@ -147,21 +147,25 @@ export async function asignarClasificacion(params: {
     }
 
     const esEscape = ESCAPES.has(params.categoria);
-    // El caso activo puede ser el que dejó congelado un escape previo
-    // (categoria null, origen FUERA_DE_COBERTURA). Un escape nuevo lo REUSA
-    // (nadie afirmó que el tema sea distinto — puede ser la misma consulta
-    // reformulada) en vez de abrir otro; una clasificación real lo PROMUEVE
-    // fuera del estado congelado. `abrirCasoFueraDeCobertura` (Task 4) es la
-    // única vía que crea siempre, porque ahí el agente marcó explícitamente
-    // un tema nuevo con derivar-tema.
-    const casoActivoEscapado =
-      casoActivo?.categoria === null && casoActivo.origen === "FUERA_DE_COBERTURA" ? casoActivo : null;
+    // El caso activo puede llegar sin categoría por dos vías, y esta
+    // clasificación es SUYA en ambas: (a) un escape previo lo dejó congelado
+    // (origen FUERA_DE_COBERTURA) o (b) el turno inaugural lo creó huérfano
+    // vía registrar-caso, que en chat-orchestrator persiste inline mientras
+    // asignar-clasificacion recién corre después de drenar el stream (origen
+    // DOMINIO todavía sin categoria). Un escape nuevo REUSA el caso — si ya
+    // estaba congelado, nadie afirmó que el tema sea distinto; si es un
+    // huérfano fresco, esta es su primera clasificación y también es un
+    // escape. Una clasificación real lo PROMUEVE fuera de cualquiera de los
+    // dos estados. `abrirCasoFueraDeCobertura` (Task 4) es la única vía que
+    // crea siempre, porque ahí el agente marcó explícitamente un tema nuevo
+    // con derivar-tema.
+    const casoActivoSinCategoria = casoActivo?.categoria === null ? casoActivo : null;
     let casoExistente = esEscape
-      ? casoActivoEscapado
+      ? casoActivoSinCategoria
       : ((await tx.caso.findUnique({
           where: { conversationId_categoria: { conversationId: conversation.id, categoria: params.categoria } },
           select: { id: true, categoria: true, origen: true, subcategorias: true, resumen: true },
-        })) ?? casoActivoEscapado);
+        })) ?? casoActivoSinCategoria);
 
     let caso: { id: string } | undefined;
     if (!casoExistente) {
@@ -201,8 +205,21 @@ export async function asignarClasificacion(params: {
         throw new Error("clasificacion: no se pudo resolver el caso");
       }
       if (esEscape) {
-        // Escapes never mutate an existing caso — demand signal only.
-        caso = casoExistente;
+        if (casoExistente.origen === "DOMINIO") {
+          // Huérfano del turno inaugural: todavía no tenía clasificación de
+          // registro (ni categoria, ni un escape previo), así que esta ES su
+          // clasificación — se marca sobre la misma fila en vez de abrir una
+          // segunda (el defecto que este fix cierra).
+          caso = await tx.caso.update({
+            where: { id: casoExistente.id },
+            data: { estado: "FUERA_DE_COBERTURA", origen: "FUERA_DE_COBERTURA" },
+            select: { id: true },
+          });
+        } else {
+          // Ya congelado por un escape anterior: un escape nuevo lo reusa sin
+          // mutar — demand signal only, no fragmenta la señal de mercado.
+          caso = casoExistente;
+        }
       } else {
         // Promote (Critical fix): the caso may have been created earlier by an
         // escape (categoria: null, estado/origen FUERA_DE_COBERTURA) — a real
