@@ -24,6 +24,14 @@
  *   2026-07-23): substring/ban checks derived from real failures — the
  *   answer must keep the retrieved text's conditions (no triple for a
  *   readmitted worker; no invented sector-laudo benefits for nocturnidad).
+ * - Derivar-tema por agente de categoría (plan casos-múltiples, Task 10,
+ *   2026-08-05): multi-turn — the agent must call derivar-tema when the
+ *   consultante brings a matter from ANOTHER área while the current one
+ *   keeps going, and must NOT call it for a topic switch within the same
+ *   área (a different subcategoría, or — for tránsito, which has none — a
+ *   different señal of the same category). The negative side is the one
+ *   that matters: an agent that over-triggers adds a spurious receptor call
+ *   per turn.
  */
 import "dotenv/config";
 
@@ -74,6 +82,11 @@ interface VozFuentesItem {
 interface CaptacionItem {
   mensajes: MensajeHistoria[];
   esperado: { sinNuevoPedidoContacto: boolean };
+}
+
+interface DerivarTemaItem {
+  mensajes: MensajeHistoria[];
+  esperado: { derivaTema: boolean };
 }
 
 function toGenerateMessages(mensajes: MensajeHistoria[]): { role: "user" | "assistant"; content: string }[] {
@@ -354,19 +367,58 @@ async function evalFidelidad(agent: CategoriaAgent, agentDir: string, label: str
   return precision;
 }
 
+/**
+ * Derivar-tema (plan casos-múltiples, Task 10): the agent must call
+ * derivar-tema when the consultante sums a matter from another área onto the
+ * one already in progress, and must NOT call it for a topic switch that
+ * stays within the same área. The negative side is the one that matters — an
+ * agent that marks de más adds a spurious receptor call every turn.
+ */
+async function evalDerivarTema(agent: CategoriaAgent, agentDir: string, label: string): Promise<number> {
+  const datasetPath = join(dirname(fileURLToPath(import.meta.url)), `agents/${agentDir}/datasets/derivar-tema.json`);
+  const items = JSON.parse(readFileSync(datasetPath, "utf8")) as DerivarTemaItem[];
+
+  let passed = 0;
+  const failures: string[] = [];
+
+  for (const item of items) {
+    const result = await agent.generate(toGenerateMessages(item.mensajes), {
+      requestContext: buildEvalRequestContext(),
+    });
+    const disparo = extractToolCalls(result).some((call) => call.toolName === "derivar-tema");
+    const ok = disparo === item.esperado.derivaTema;
+
+    if (ok) passed += 1;
+    else {
+      const ultimo = item.mensajes.at(-1)?.texto ?? "";
+      failures.push(`"${ultimo}" → esperado derivaTema=${String(item.esperado.derivaTema)}, obtuvo ${String(disparo)}`);
+    }
+  }
+
+  const precision = passed / items.length;
+  console.log(
+    `${label} derivar-tema: ${String(passed)}/${String(items.length)} (${(precision * 100).toFixed(0)}%) — threshold ${String(THRESHOLD * 100)}%`,
+  );
+  for (const failure of failures) console.log(`  FAIL: ${failure}`);
+  return precision;
+}
+
 const EVALS: readonly { nombre: string; run: () => Promise<number>; umbral?: number }[] = [
   { nombre: "receptor", run: evalReceptorClasificacion },
   { nombre: "laboral-citacion", run: () => evalCitacion(laboralAgent, "laboral", "Laboral") },
   { nombre: "laboral-voz-fuentes", run: () => evalVozFuentes(laboralAgent, "laboral", "Laboral") },
   { nombre: "laboral-captacion", run: () => evalCaptacion(laboralAgent, "laboral", "Laboral") },
   { nombre: "laboral-fidelidad", run: () => evalFidelidad(laboralAgent, "laboral", "Laboral") },
+  { nombre: "laboral-derivar-tema", run: () => evalDerivarTema(laboralAgent, "laboral", "Laboral") },
   { nombre: "familia-citacion", run: () => evalCitacion(familiaAgent, "familia", "Familia") },
   { nombre: "familia-voz-fuentes", run: () => evalVozFuentes(familiaAgent, "familia", "Familia") },
   { nombre: "familia-captacion", run: () => evalCaptacion(familiaAgent, "familia", "Familia") },
   { nombre: "familia-fidelidad", run: () => evalFidelidad(familiaAgent, "familia", "Familia") },
+  { nombre: "familia-derivar-tema", run: () => evalDerivarTema(familiaAgent, "familia", "Familia") },
   { nombre: "transito-citacion", run: () => evalCitacion(transitoAgent, "transito", "Tránsito") },
   { nombre: "transito-voz-fuentes", run: () => evalVozFuentes(transitoAgent, "transito", "Tránsito") },
   { nombre: "transito-captacion", run: () => evalCaptacion(transitoAgent, "transito", "Tránsito") },
+  { nombre: "transito-derivar-tema", run: () => evalDerivarTema(transitoAgent, "transito", "Tránsito") },
   {
     nombre: "arrendamiento-citacion",
     run: () => evalCitacion(arrendamientoDesalojoAgent, "arrendamiento-desalojo", "Arrendamiento"),
@@ -384,6 +436,10 @@ const EVALS: readonly { nombre: string; run: () => Promise<number>; umbral?: num
     run: () => evalFidelidad(arrendamientoDesalojoAgent, "arrendamiento-desalojo", "Arrendamiento"),
   },
   {
+    nombre: "arrendamiento-derivar-tema",
+    run: () => evalDerivarTema(arrendamientoDesalojoAgent, "arrendamiento-desalojo", "Arrendamiento"),
+  },
+  {
     nombre: "consumo-citacion",
     run: () => evalCitacion(relacionesConsumoAgent, "relaciones-consumo", "Consumo"),
   },
@@ -394,6 +450,10 @@ const EVALS: readonly { nombre: string; run: () => Promise<number>; umbral?: num
   {
     nombre: "consumo-captacion",
     run: () => evalCaptacion(relacionesConsumoAgent, "relaciones-consumo", "Consumo"),
+  },
+  {
+    nombre: "consumo-derivar-tema",
+    run: () => evalDerivarTema(relacionesConsumoAgent, "relaciones-consumo", "Consumo"),
   },
   // Gates fijados 2026-08-04 con el umbral calibrado por categoría (Tarea 10 del
   // plan, minSimilarityPara). El score de cada dataset es min(recall@5, tasa de

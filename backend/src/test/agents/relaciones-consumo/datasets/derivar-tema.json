@@ -1,0 +1,50 @@
+[
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "compré un lavarropas hace un mes y ya se rompió, la empresa no me quiere cambiar nada" },
+      { "rol": "asistente", "texto": "Contame si todavía tenés la factura o el comprobante de compra." },
+      { "rol": "usuario", "texto": "sí, la tengo. aparte me despidieron del trabajo la semana pasada sin pagarme nada" }
+    ],
+    "esperado": { "derivaTema": true }
+  },
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "compré unas zapatillas por internet y nunca me llegaron" },
+      { "rol": "asistente", "texto": "Contame hace cuánto hiciste la compra y si el vendedor te respondió algo." },
+      { "rol": "usuario", "texto": "hace tres semanas, no me contesta más. aparte tuve un choque y el seguro del otro auto no me quiere pagar" }
+    ],
+    "esperado": { "derivaTema": true }
+  },
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "una empresa me sigue cobrando un servicio que ya cancelé hace meses" },
+      { "rol": "asistente", "texto": "Contame cuándo hiciste la cancelación y si tenés algún comprobante." },
+      { "rol": "usuario", "texto": "la cancelé por mail hace tres meses. aparte me estoy separando de mi pareja y no sabemos qué hacer con la casa" }
+    ],
+    "esperado": { "derivaTema": true }
+  },
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "me vendieron un celular fallado y el local no me lo quiere cambiar" },
+      { "rol": "asistente", "texto": "Contame hace cuánto lo compraste y qué te dijeron en el local." },
+      { "rol": "usuario", "texto": "hace dos semanas, me dijeron que no es garantía. aparte quiero saber cómo hago la denuncia ante Defensa del Consumidor si no me dan bola" }
+    ],
+    "esperado": { "derivaTema": false }
+  },
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "una tarjeta me está cobrando un seguro que nunca pedí" },
+      { "rol": "asistente", "texto": "Contame desde cuándo aparece ese cobro y si ya reclamaste al banco." },
+      { "rol": "usuario", "texto": "hace seis meses que me cobran. aparte quiero saber cómo es la audiencia esa en el MEF de la que hablan, si tengo que ir yo" }
+    ],
+    "esperado": { "derivaTema": false }
+  },
+  {
+    "mensajes": [
+      { "rol": "usuario", "texto": "me arrepentí de una compra que hice por internet y quieren no devolverme la plata" },
+      { "rol": "asistente", "texto": "Contame cuántos días pasaron desde la compra y si ya le avisaste al vendedor." },
+      { "rol": "usuario", "texto": "pasaron cinco días, ya le avisé y no contesta. si no me responde puedo ir directo a la vía judicial de pequeñas causas?" }
+    ],
+    "esperado": { "derivaTema": false }
+  }
+]
