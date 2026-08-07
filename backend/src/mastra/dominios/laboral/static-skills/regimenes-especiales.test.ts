@@ -11,7 +11,7 @@ describe("skill regimenes-especiales", () => {
     expect(regimenesEspecialesSkill(null, "familia")).toBeNull();
   });
 
-  it("cubre los cuatro regímenes habilitados y los deja ensamblados en el prompt laboral", () => {
+  it("cubre los cinco regímenes habilitados y los deja ensamblados en el prompt laboral", () => {
     const prompt = buildLaboralInstructions(null);
     expect(prompt).toContain("<regimenes_especiales>");
     // Las subcategorías nuevas llegan al prompt vía la skill subcategorias-laboral (registry).
@@ -19,6 +19,7 @@ describe("skill regimenes-especiales", () => {
     expect(prompt).toContain("call-center");
     expect(prompt).toContain("teletrabajo");
     expect(prompt).toContain("plataformas-digitales");
+    expect(prompt).toContain("trabajo-domestico");
   });
 
   it("no embebe números normativos que pertenecen al corpus (dato temporal)", () => {

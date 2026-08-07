@@ -34,8 +34,10 @@ describe("registry de dominios", () => {
       "rubros-laborales",
       "trabajador-rural",
       "call-center",
+      "trabajo-domestico",
       "licencias-especiales",
       "seguro-desempleo",
+      "asignaciones-familiares",
       "teletrabajo",
       "plataformas-digitales",
     ]);

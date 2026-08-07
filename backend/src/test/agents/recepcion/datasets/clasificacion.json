@@ -30,8 +30,7 @@
   {
     "mensaje": "soy empleada domestica y me dijeron que no vaya mas, sin pagarme nada",
     "esperado": {
-      "categoria": "laboral",
-      "subcategoria": "despido"
+      "categoria": "laboral"
     }
   },
   {
@@ -361,6 +360,18 @@
   },
   {
     "mensaje": "hago teletrabajo y me exigen estar conectado a cualquier hora, hasta los fines de semana",
+    "esperado": {
+      "categoria": "laboral"
+    }
+  },
+  {
+    "mensaje": "me suspendieron la asignacion familiar del bps porque mi hijo falto a clases, como hago para volver a cobrarla?",
+    "esperado": {
+      "categoria": "laboral"
+    }
+  },
+  {
+    "mensaje": "trabajo sin retiro en una casa de familia y no me respetan el descanso de noche, esta bien eso?",
     "esperado": {
       "categoria": "laboral"
     }
