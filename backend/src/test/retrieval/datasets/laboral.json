@@ -174,5 +174,65 @@
     "consulta": "trabajo de albañil en una obra y la empresa no me pagó el aguinaldo ni la licencia",
     "categoria": "laboral",
     "esperado": ["Laboral — Construcción: licencia, aguinaldo y salario vacacional se cobran por BPS"]
+  },
+  {
+    "consulta": "me suspendieron la asignación familiar porque mi hijo dejó de ir a la escuela, ¿cómo la recupero?",
+    "categoria": "laboral",
+    "subcategorias": ["asignaciones-familiares"],
+    "esperado": ["Asignaciones familiares — Plan de Equidad (hogares en situación de vulnerabilidad)"]
+  },
+  {
+    "consulta": "¿hasta qué edad se cobra la asignación familiar por mi hijo?",
+    "categoria": "laboral",
+    "subcategorias": ["asignaciones-familiares"],
+    "esperado": ["Asignaciones familiares — Régimen contributivo de los trabajadores", "Asignaciones familiares — Plan de Equidad (hogares en situación de vulnerabilidad)"]
+  },
+  {
+    "consulta": "estoy embarazada de mellizos, ¿me corresponde más asignación prenatal?",
+    "categoria": "laboral",
+    "subcategorias": ["asignaciones-familiares"],
+    "esperado": ["Asignaciones familiares — Embarazo y nacimiento múltiple (mellizos, trillizos)"]
+  },
+  {
+    "consulta": "¿cuántos días le corresponden a mi marido por el nacimiento del bebé?",
+    "categoria": "laboral",
+    "subcategorias": ["licencias-especiales"],
+    "esperado": ["Licencias especiales — Licencia por paternidad"]
+  },
+  {
+    "consulta": "quiero trabajar medio horario para cuidar a mi bebé recién nacido, ¿existe algo así?",
+    "categoria": "laboral",
+    "subcategorias": ["licencias-especiales"],
+    "esperado": ["Licencias especiales — Subsidio parental para cuidados del recién nacido (medio horario)"]
+  },
+  {
+    "consulta": "volví de la licencia por paternidad y a la semana me despidieron, ¿pueden hacer eso?",
+    "categoria": "laboral",
+    "subcategorias": ["despido"],
+    "esperado": ["Despido — Protección de la paternidad y la adopción ante el despido"]
+  },
+  {
+    "consulta": "soy empleada doméstica con retiro, ¿cuántas horas por día pueden hacerme trabajar?",
+    "categoria": "laboral",
+    "subcategorias": ["trabajo-domestico"],
+    "esperado": ["Trabajo doméstico — Concepto, jornada, descansos y horas extras"]
+  },
+  {
+    "consulta": "trabajo con cama en una casa de familia y me descuentan del sueldo por la comida y la pieza, ¿es legal?",
+    "categoria": "laboral",
+    "subcategorias": ["trabajo-domestico"],
+    "esperado": ["Trabajo doméstico — Salario, alimentación, vivienda y recibo"]
+  },
+  {
+    "consulta": "soy empleada doméstica, ¿tengo derecho al seguro de paro?",
+    "categoria": "laboral",
+    "subcategorias": ["trabajo-domestico"],
+    "esperado": ["Trabajo doméstico — Seguro de paro, enfermedad y salud"]
+  },
+  {
+    "consulta": "¿qué tiene que decir el acuerdo de teletrabajo que firmo con la empresa?",
+    "categoria": "laboral",
+    "subcategorias": ["teletrabajo"],
+    "esperado": ["Teletrabajo — Concepto, acuerdo escrito y reversibilidad"]
   }
 ]

@@ -12,7 +12,8 @@ export const laboralClasificacion = {
     "Habla de liquidación, aguinaldo, salario vacacional, horas extra",
     "Relata un accidente o enfermedad vinculada al trabajo",
     "Trabaja en el campo, una estancia, un tambo o una chacra (peón, capataz, trabajador rural)",
-    "Trabaja en una casa de familia (empleada o empleado doméstico, limpieza, cuidados) — es laboral aunque el régimen doméstico no aparezca como subcategoría",
+    "Trabaja en una casa de familia (empleada o empleado doméstico, limpieza, cuidados, con retiro o sin retiro)",
+    "Pregunta por la asignación familiar o la asignación prenatal del BPS (monto, suspensión del pago, hasta qué edad se cobra) — es laboral, no de familia",
     "Es operador o teleoperador de un call center o centro de atención telefónica",
     "Pide días o le descontaron días por estudio o exámenes, casamiento, duelo, nacimiento de un hijo, controles de embarazo o cuidado de un familiar con discapacidad o enfermedad",
     "Lo mandaron al seguro de paro (subsidio por desempleo) o pregunta si le corresponde cobrarlo",
@@ -49,10 +50,17 @@ export const laboralClasificacion = {
       habilitada: true,
     },
     {
+      id: "trabajo-domestico",
+      nombre: "Trabajo doméstico",
+      descripcion:
+        "Régimen especial del trabajo doméstico (empleadas y empleados de casas de familia, con retiro o sin retiro): jornada de 8 horas y 44 semanales, descansos intermedio, semanal y nocturno, alimentación y vivienda con sus deducciones, salario por Consejo de Salarios, seguro de paro y subsidio por enfermedad con requisitos propios. Aplica solo a quien trabaja en tareas del hogar sin generar ganancia económica directa al empleador.",
+      habilitada: true,
+    },
+    {
       id: "licencias-especiales",
       nombre: "Licencias especiales",
       descripcion:
-        "Licencias especiales pagas del trabajador privado: estudio, paternidad y adopción, matrimonio, duelo, hijos con discapacidad, familiares a cargo con discapacidad o enfermedad terminal, y controles de embarazo (propios o acompañando a la pareja). La licencia anual común y el salario vacacional van por rubros-laborales.",
+        "Licencias especiales pagas del trabajador privado: estudio, paternidad y adopción (incluidos el subsidio por paternidad del BPS y el medio horario para cuidados del recién nacido), matrimonio, duelo, hijos con discapacidad, familiares a cargo con discapacidad o enfermedad terminal, y controles de embarazo (propios o acompañando a la pareja). La licencia anual común y el salario vacacional van por rubros-laborales.",
       habilitada: true,
     },
     {
@@ -60,6 +68,13 @@ export const laboralClasificacion = {
       nombre: "Seguro de desempleo",
       descripcion:
         "Subsidio por desempleo del BPS (seguro de paro): quiénes acceden y por qué causales (despido, suspensión, reducción), requisitos y plazo de solicitud, monto y duración, cese del beneficio, y el despido ficto cuando la suspensión se agota sin reintegro.",
+      habilitada: true,
+    },
+    {
+      id: "asignaciones-familiares",
+      nombre: "Asignaciones familiares",
+      descripcion:
+        "Asignaciones familiares del BPS: régimen contributivo de los trabajadores y Plan de Equidad para hogares en situación de vulnerabilidad, asignación prenatal, montos y hasta qué edad se cobran, suspensión por incumplimiento de controles de educación o salud, y embarazo o nacimiento múltiple (mellizos, trillizos).",
       habilitada: true,
     },
     {

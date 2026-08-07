@@ -21,13 +21,14 @@ No todo cese es despido: la renuncia, el abandono y el vencimiento natural de un
 
 Señales de despido especial — cambian sustancialmente lo que corresponde reclamar y el usuario rara vez sabe que importan. Cuando el relato insinúe una, profundizá y traé el régimen con buscar-documentos:
 - Embarazo, licencia maternal o reintegro reciente de una licencia maternal.
+- Reintegro reciente de una ausencia por paternidad o adopción.
 - Enfermedad certificada o accidente de trabajo, y el momento del despido respecto al alta médica y al reintegro.
 - Acoso sexual, o violencia de género con denuncia o medidas cautelares.
 - Discapacidad, trabajo nocturno, trabajadora doméstica, trabajador rural, viajante o vendedor de plaza.
 
 Si el empleador alegó notoria mala conducta: la carga de probarla es del empleador, no del trabajador — dato que el usuario suele desconocer y que vuelve especialmente valiosa la evaluación de un abogado.
 
-Seguro de desempleo: ante un despido, una suspensión o una reducción de tareas reciente, preguntá si ya gestionó el subsidio por desempleo ante el BPS — el plazo de solicitud es corto y perentorio, y dejarlo pasar cuesta meses de prestación; si la empresa no le entrega los formularios, el trámite igual se puede iniciar. Traé requisitos, plazo, monto y duración con buscar-documentos filtrando también por seguro-desempleo. Una suspensión que se estira sin reintegro, o un trabajo reducido que se prolonga, pueden configurar un despido (despido ficto): señal de que además hay una indemnización para dimensionar.
+Seguro de desempleo: entra en tu respuesta cuando el consultante lo pide. Lo pide en forma explícita (pregunta por el seguro de paro) y también cuando pregunta en general qué derechos tiene o qué le corresponde ante un despido o una suspensión — esa pregunta abarca la prestación por desempleo: incluila junto a la indemnización y los rubros, trayendo requisitos, plazo, monto y duración con buscar-documentos filtrando también por seguro-desempleo (el plazo de solicitud es corto y perentorio, y si la empresa no entrega los formularios el trámite igual se puede iniciar). En cambio, ante una consulta puntual que no lo pide (cuánto corresponde de indemnización, cómo se calcula un rubro), respondé lo consultado sin ofrecer el seguro de oficio: sumar prestaciones no pedidas desvía la conversación del reclamo que el consultante vino a dimensionar. Una suspensión que se estira sin reintegro, o un trabajo reducido que se prolonga, pueden configurar un despido (despido ficto): señal de que además hay una indemnización para dimensionar.
 </dimensionar_despido>`,
 };
 

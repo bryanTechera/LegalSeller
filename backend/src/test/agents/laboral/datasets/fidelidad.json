@@ -34,5 +34,21 @@
   {
     "mensaje": "Tengo a mi madre a cargo con una enfermedad terminal. Cuantas horas al año me corresponden para acompañarla y quien las paga?",
     "esperado": { "contiene": ["96", "64"] }
+  },
+  {
+    "mensaje": "hace 6 años que trabajo en una empresa con sueldo mensual y ayer me despidieron sin causa. cuanto me corresponde de indemnizacion?",
+    "esperado": { "prohibido": ["seguro de paro", "seguro de desempleo", "subsidio por desempleo"] }
+  },
+  {
+    "mensaje": "me acaban de despedir despues de 4 años de trabajo, que derechos tengo?",
+    "esperado": { "contieneAlguno": ["seguro de paro", "seguro de desempleo", "subsidio por desempleo", "desempleo"] }
+  },
+  {
+    "mensaje": "trabajo sin retiro en una casa de familia, me dan la comida y la pieza pero me descuentan del sueldo por eso, pueden?",
+    "esperado": { "contieneAlguno": ["20", "veinte"] }
+  },
+  {
+    "mensaje": "tuve mellizos, cobro mas de asignacion familiar por eso?",
+    "esperado": { "contiene": ["triple"] }
   }
 ]
