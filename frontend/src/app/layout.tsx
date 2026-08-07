@@ -4,7 +4,8 @@ import type { Metadata } from "next";
 import { Open_Sans, Poppins, Source_Serif_4 } from "next/font/google";
 import type { ReactNode } from "react";
 
-import { MARCA, SITIO_URL } from "@/lib/marca";
+import { grafoDelSitio, serializarJsonLd } from "@/lib/datos-estructurados";
+import { DESCRIPCION_SITIO, MARCA, SITIO_URL, TITULO_HOME } from "@/lib/marca";
 
 /*
  * Identidad tipográfica: serif editorial para el titular (big-law de
@@ -38,9 +39,6 @@ const sourceSerif = Source_Serif_4({
   display: "swap",
 });
 
-const DESCRIPCION =
-  "Contá tu situación y recibí orientación legal clara sobre despido, familia, alquileres, tránsito y consumo en Uruguay. Si necesitás un abogado, te derivamos.";
-
 /*
  * `metadataBase` es el prerrequisito de todo lo demás: sin él, Next emite las
  * URLs de Open Graph y el canonical en relativo y ningún cliente los resuelve.
@@ -52,10 +50,10 @@ const DESCRIPCION =
 export const metadata: Metadata = {
   metadataBase: new URL(SITIO_URL),
   title: {
-    default: "Consultas legales en Uruguay, al instante | DudaYa",
+    default: `${TITULO_HOME} | ${MARCA}`,
     template: `%s · ${MARCA}`,
   },
-  description: DESCRIPCION,
+  description: DESCRIPCION_SITIO,
   applicationName: MARCA,
   /*
    * El objeto `openGraph` se REEMPLAZA entero cuando una página declara el
@@ -69,20 +67,32 @@ export const metadata: Metadata = {
     siteName: MARCA,
     locale: "es_UY",
     url: "/",
-    title: "Consultas legales en Uruguay, al instante",
-    description: DESCRIPCION,
+    title: TITULO_HOME,
+    description: DESCRIPCION_SITIO,
   },
   twitter: {
     card: "summary_large_image",
-    title: "Consultas legales en Uruguay, al instante",
-    description: DESCRIPCION,
+    title: TITULO_HOME,
+    description: DESCRIPCION_SITIO,
   },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="es-UY" className={`${openSans.variable} ${poppins.variable} ${sourceSerif.variable}`}>
-      <body>{children}</body>
+      <body>
+        {/*
+         * El grafo de identidad va en el layout y no en la página: describe al
+         * sitio y a quien lo publica, no a una URL. Inline y no por `next/script`
+         * porque tiene que estar en el HTML del prerender, sin esperar a que
+         * hidrate; la CSP lo admite (`script-src 'self' 'unsafe-inline'`).
+         */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: serializarJsonLd(grafoDelSitio()) }}
+        />
+        {children}
+      </body>
     </html>
   );
 }

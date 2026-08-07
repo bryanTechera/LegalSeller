@@ -27,3 +27,17 @@ export const MARCA_ACENTO = "Ya";
  * dominio de producción y le robe el canonical.
  */
 export const SITIO_URL = process.env.NEXT_PUBLIC_SITIO_URL ?? "https://dudaya.com";
+
+/**
+ * Copy del home, en un solo lugar: lo consumen el `<title>`, el Open Graph, la
+ * imagen de OG y el JSON-LD. Estaba repetido tres veces en layout.tsx, que es
+ * como se desincronizan entre sí.
+ *
+ * El título va SIN la marca: quien lo usa decide si le agrega el sufijo (el
+ * `<title>` sí, el `og:title` no, porque ahí el nombre ya viaja en
+ * `og:site_name`).
+ */
+export const TITULO_HOME = "Consultas legales en Uruguay, al instante";
+
+export const DESCRIPCION_SITIO =
+  "Contá tu situación y recibí orientación legal clara sobre despido, familia, alquileres, tránsito y consumo en Uruguay. Si necesitás un abogado, te derivamos.";
