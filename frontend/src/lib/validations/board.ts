@@ -11,3 +11,8 @@ export const filtrosChatsSchema = z.object({
 });
 
 export type FiltrosChats = z.infer<typeof filtrosChatsSchema>;
+
+/** Nota del equipo legal sobre un caso. El autor sale de la sesión, no del body. */
+export const crearNotaCasoSchema = z.object({
+  texto: z.string().min(1).max(4000),
+});
