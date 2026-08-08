@@ -32,10 +32,25 @@ El beneficiario casado o en concubinato (acreditado ante BPS), o con familiares 
 
 ## Mínimos y máximos
 
-- **Mínimo**: 1 BPC para relaciones de 25 jornadas mensuales y 8 horas diarias, proporcional en jornadas menores.
-- **Máximos para despedidos**: decrecientes por mes — 11 BPC el primero, 9,5 el segundo, 8 el tercero, 7 el cuarto, 6,5 el quinto y 6 el sexto.
-- **Máximo para suspensión total o trabajo reducido**: 8 BPC por mes.
-- El valor de la BPC es el vigente a la fecha de la causal; al mínimo y máximo se les adiciona el suplemento del 20 % si corresponde.
+El subsidio tiene un piso y un techo, ambos expresados en Bases de Prestaciones y Contribuciones (BPC). **Los valores que el Banco de Previsión Social aplica en 2026** son:
+
+| Tramo | Máximo por mes |
+|---|---|
+| Primer mes | 13,5715 BPC |
+| Segundo mes | 11,7199 BPC |
+| Tercer mes | 9,8709 BPC |
+| Cuarto mes | 8,6374 BPC |
+| Quinto mes | 8,0193 BPC |
+| Sexto mes | 7,4012 BPC |
+
+- **Mínimo**: 1,2335 BPC, tomado a enero de cada año, para relaciones de 25 jornadas mensuales y 8 horas diarias, proporcional en jornadas menores.
+- **Máximo para suspensión total, trabajo reducido o multiempleo**: 9,8709 BPC por mes.
+
+Con la BPC a $ 6.864, el techo del primer mes equivale a unos $ 93.100 y el piso a unos $ 8.500.
+
+Las cifras nominales del decreto-ley n.º 15.180 (artículos 7.7 y 7.8, replicados en los artículos 20 y 21 del decreto n.º 162/009) son inferiores a las que el BPS aplica: 1 BPC de mínimo, 11 / 9,5 / 8 / 7 / 6,5 / 6 BPC de máximo del primer al sexto mes, y 8 BPC para suspensión y trabajo reducido. Para responder cuánto se cobra rigen los valores que aplica el BPS.
+
+El valor de la BPC que se toma es el vigente **a la fecha de la causal**, no el del momento del cobro (artículo 7.9 del decreto-ley n.º 15.180). Al mínimo y al máximo se les adiciona el suplemento del 20 % si corresponde.
 
 ## Despidos sucesivos
 

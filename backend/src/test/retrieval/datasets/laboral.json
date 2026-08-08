@@ -282,5 +282,47 @@
     "categoria": "laboral",
     "subcategorias": ["trabajo-domestico"],
     "esperado": ["Trabajo doméstico — Salario, alimentación, vivienda y recibo"]
+  },
+  {
+    "consulta": "¿qué es la BPC y cuánto vale?",
+    "categoria": "laboral",
+    "subcategorias": ["generales"],
+    "esperado": ["Generales — La Base de Prestaciones y Contribuciones (BPC)"]
+  },
+  {
+    "consulta": "estoy certificado por enfermedad hace dos semanas, ¿cuánto me paga el BPS?",
+    "categoria": "laboral",
+    "subcategorias": ["licencias-especiales"],
+    "esperado": ["Licencias especiales — Subsidio por enfermedad del BPS"]
+  },
+  {
+    "consulta": "me dieron certificado médico por unos días, ¿me pagan desde el primer día?",
+    "categoria": "laboral",
+    "subcategorias": ["licencias-especiales"],
+    "esperado": ["Licencias especiales — Subsidio por enfermedad del BPS"]
+  },
+  {
+    "consulta": "tuve mellizos y uno falleció, ¿sigo cobrando la asignación triplicada?",
+    "categoria": "laboral",
+    "subcategorias": ["asignaciones-familiares"],
+    "esperado": ["Asignaciones familiares — Embarazo y nacimiento múltiple (mellizos, trillizos)"]
+  },
+  {
+    "consulta": "trabajo en casa de familia y me despidieron, ¿me corresponde seguro de paro?",
+    "categoria": "laboral",
+    "subcategorias": ["seguro-desempleo", "trabajo-domestico"],
+    "esperado": ["Seguro de desempleo — Requisitos y plazo de solicitud", "Trabajo doméstico — Seguro de paro, enfermedad y salud"]
+  },
+  {
+    "consulta": "estar certificado por enfermedad, ¿me hace perder días de licencia?",
+    "categoria": "laboral",
+    "subcategorias": ["licencias-especiales"],
+    "esperado": ["Licencias especiales — Subsidio por enfermedad del BPS"]
+  },
+  {
+    "consulta": "¿hay un máximo de lo que se puede cobrar por mes de seguro de paro?",
+    "categoria": "laboral",
+    "subcategorias": ["seguro-desempleo"],
+    "esperado": ["Seguro de desempleo — Duración y monto del subsidio"]
   }
 ]

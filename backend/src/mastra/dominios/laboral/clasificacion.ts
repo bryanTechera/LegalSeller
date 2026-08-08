@@ -60,7 +60,7 @@ export const laboralClasificacion = {
       id: "licencias-especiales",
       nombre: "Licencias especiales",
       descripcion:
-        "Licencias especiales pagas del trabajador privado: estudio, paternidad y adopción (incluidos el subsidio por paternidad del BPS y el medio horario para cuidados del recién nacido), matrimonio, duelo, hijos con discapacidad, familiares a cargo con discapacidad o enfermedad terminal, y controles de embarazo (propios o acompañando a la pareja). La licencia anual común y el salario vacacional van por rubros-laborales.",
+        "Licencias especiales pagas del trabajador privado: estudio, paternidad y adopción (incluidos el subsidio por paternidad del BPS y el medio horario para cuidados del recién nacido), matrimonio, duelo, hijos con discapacidad, familiares a cargo con discapacidad o enfermedad terminal, y controles de embarazo (propios o acompañando a la pareja). También el subsidio por enfermedad del BPS: qué se cobra estando certificado, desde qué día y por cuánto tiempo. La licencia anual común y el salario vacacional van por rubros-laborales.",
       habilitada: true,
     },
     {

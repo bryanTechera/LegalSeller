@@ -34,21 +34,23 @@ Cuando uno de los hijos fuera sostén del hogar, ese hijo es el atributario y su
 
 ## Monto y tope de ingresos del hogar
 
-El monto depende del **nivel de ingresos del hogar**: hay dos franjas y un tope por encima del cual no se genera derecho. La estructura legal está en los artículos 26 a 28 de la ley n.º 16.697:
+El monto depende del **nivel de ingresos del hogar**: hay dos franjas y un tope por encima del cual no se genera derecho.
 
-- **Primera franja** (artículo 26, inciso 1): corresponde el monto mayor cuando el atributario percibe ingresos que no superan el equivalente a seis salarios mínimos nacionales mensuales.
-- **Segunda franja** (artículo 26, inciso 2): corresponde la mitad de ese monto cuando los ingresos superan seis y llegan hasta diez salarios mínimos nacionales mensuales.
-- **Tope** (artículo 27): quienes perciben ingresos superiores a diez salarios mínimos nacionales mensuales **no generan derecho** al cobro. Cuando del atributario dependan **tres o más beneficiarios**, ese tope se incrementa a razón de un salario mínimo nacional por cada beneficiario que exceda el mínimo de dos.
-- **Cómputo de los ingresos** (artículo 28): se computan los ingresos salariales de **ambos cónyuges, o del concubino que resida en el mismo domicilio** del atributario — no solo los del trabajador que genera la prestación.
+La estructura legal está en los artículos 26 a 28 de la ley n.º 16.697, que la expresan en salarios mínimos nacionales: el monto mayor hasta seis salarios mínimos nacionales de ingreso, la mitad de ese monto entre seis y diez, y ningún derecho por encima de diez (artículo 27), con un incremento del tope por cada beneficiario que exceda el mínimo de dos. Esas referencias al salario mínimo nacional **quedaron sustituidas por la Base de Prestaciones y Contribuciones (BPC)** por el artículo 1 de la ley n.º 17.856, de modo que hoy la escala se aplica en BPC y no sobre el salario mínimo nacional, que es una magnitud distinta y muy superior.
 
-Los importes concretos de cada franja y de cada tope los publica y actualiza el Banco de Previsión Social. **Valores vigentes a enero de 2026** (montos nominales por mes y por beneficiario, para familias con hasta dos beneficiarios):
+**La escala que aplica el Banco de Previsión Social**, tomando la suma de los ingresos del atributario y de su cónyuge o concubino:
 
-| Tope de ingresos del hogar | Monto por mes y por beneficiario |
+| Ingresos del hogar | Monto por mes y por beneficiario |
 |---|---|
-| Hasta $ 50.502 | $ 1.347 |
-| Hasta $ 84.688 | $ 674 |
+| Hasta 7,4012 BPC | 0,1963 BPC |
+| Más de 7,4012 y hasta 12,3380 BPC | 0,0982 BPC |
+| Más de 12,3380 BPC | No corresponde |
 
-El tope se incrementa en $ 8.468,80 (1,2338 BPC) por cada beneficiario adicional: con tres hijos es $ 93.156,80; con cuatro, $ 101.625,60; con cinco, $ 110.094,40. En esos casos el monto a percibir es el de la segunda franja por mes y por beneficiario.
+A partir del **tercer beneficiario**, y por cada beneficiario adicional, el tope se incrementa en 1,2338 BPC.
+
+**Importes en pesos que publica el BPS** (vigencia 1/2026, por mes y por beneficiario, para familias con hasta dos beneficiarios): **$ 1.347** en la primera franja y **$ 674** en la segunda, con topes de ingresos del hogar de **$ 50.502** y **$ 84.688** respectivamente. El incremento del tope por cada beneficiario adicional es de **$ 8.468,80**: con tres hijos el tope es $ 93.156,80; con cuatro, $ 101.625,60; con cinco, $ 110.094,40. En esos casos el monto a percibir es el de la segunda franja.
+
+**Cómputo de los ingresos** (artículo 28 de la ley n.º 16.697): se computan los ingresos salariales de **ambos cónyuges, o del concubino que resida en el mismo domicilio** del atributario — no solo los del trabajador que genera la prestación.
 
 Quienes perciben ingresos salariales superiores al tope **no generan derecho al cobro, pero mantienen el derecho a la asistencia materno-infantil** del BPS.
 

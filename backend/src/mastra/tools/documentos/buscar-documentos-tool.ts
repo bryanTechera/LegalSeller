@@ -33,6 +33,15 @@ import { getPool } from "../../config/storage.js";
  * FIRST but below any viable threshold, so those queries return empty. That is
  * a query-scale problem (candidate for query-side expansion), not a ranking
  * problem — reranking stays discarded (recall@20−recall@5 = 0).
+ *
+ * Laboral margin re-measured 2026-08-08 and NOT recalibrated: the positive
+ * floor is now 0.700, not the 0.703 recorded above, so the margin over the
+ * 0.693 threshold is +0.007 rather than ±0.010. It thinned because rewriting
+ * an existing corpus doc re-chunks it and moves the similarity of golden-set
+ * items that already pointed at it — measuring only the items added alongside
+ * new material misses that. Recalibrating to ~0.691 would restore symmetry
+ * against the 0.683 negative ceiling; that decision is still open, so the
+ * threshold stays where it is and this note records the real number.
  */
 const MIN_SIMILARITY_POR_CATEGORIA: Record<string, number> = {
   laboral: 0.693,

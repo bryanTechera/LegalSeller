@@ -1,6 +1,6 @@
 # Preguntas al equipo legal — Montos de asignaciones familiares y convenio doméstico (agosto 2026)
 
-**Estado: PENDIENTE de respuesta**
+**Estado: RESPONDIDA (2026-08-08)** — respuestas del equipo legal transcritas debajo de cada pregunta; procesadas en `docs/plans/2026-08-08-procesamiento-bpc-y-prestaciones-bps.md`. La pregunta 4 quedó sin respuesta y se reformula, junto con tres preguntas nuevas, en `docs/preguntas-legales/2026-08-08-topes-bps-y-licencia-domestica.md`.
 
 **Material de referencia:** documentación enviada por ustedes el 7 de agosto de 2026 — Ley 16.697, páginas del BPS «Asignación familiar» y «Plan de equidad», acta del Consejo de Salarios del Grupo 21 «Servicio Doméstico» del 6 de julio de 2026, y página del Ministerio de Trabajo sobre trabajo doméstico. Todo ese material ya está incorporado: el asistente explica hoy las franjas y los topes de la asignación familiar con los importes vigentes, y orienta sobre las categorías, los mínimos y los beneficios del convenio del sector doméstico.
 
@@ -18,6 +18,10 @@ Nuestra lectura es que el «salario mínimo nacional» de esos artículos funcio
 
 **Pregunta: ¿confirman esa lectura?** Y si es así, **¿cómo conviene explicárselo a quien pregunta «cuánto me corresponde»**: dando directamente el importe publicado por el BPS, o explicando además el porcentaje legal con la aclaración de que se calcula sobre un valor de referencia propio?
 
+> **Respuesta del equipo legal (2026-08-08):** «En 2004 se aprobó la Ley 17.856, que creó la Base de Prestaciones y Contribuciones. Su artículo 1 dispuso expresamente que todas las referencias al Salario Mínimo Nacional utilizadas como base de prestaciones sociales, topes de ingresos o unidad de cuenta quedaban sustituidas por la BPC». Adjuntaron la ley y precisaron que «BPS no convierte simplemente en 0,16 BPC y 0,08 BPC», sino que lo tiene parametrizado así: ingresos hasta 7,4012 BPC, prestación de 0,1963 BPC por beneficiario; más de 7,4012 y hasta 12,3380 BPC, 0,0982 BPC; por encima de 12,3380 BPC no se cobra. Remitieron al compendio «Prestaciones» del BPS.
+>
+> — Incorporado: hay un material nuevo sobre la BPC (qué es, que sustituyó al salario mínimo nacional, cómo se ajusta y su valor vigente) y la escala del régimen contributivo pasó a expresarse en BPC. El asistente ya no presenta los porcentajes del artículo 26 como fórmula de cálculo, y aclara que la BPC no es el salario mínimo nacional: a agosto de 2026 valen $ 6.864 y $ 25.383 respectivamente.
+
 ## 2. Importes vigentes: ¿los decimos o remitimos al BPS?
 
 El material que enviaron trae cifras con fecha de vigencia: los importes de asignaciones familiares rigen desde enero de 2026 y se ajustan por el Índice de Precios al Consumo junto con las remuneraciones de la Administración Central; los salarios mínimos del Grupo 21 rigen del 1.º de julio al 31 de diciembre de 2026, y el acta ya fija los del semestre siguiente.
@@ -25,6 +29,8 @@ El material que enviaron trae cifras con fecha de vigencia: los importes de asig
 Hoy el asistente da la cifra concreta aclarando desde cuándo rige. El riesgo es conocido: cuando el BPS o el Consejo de Salarios actualicen los valores, el asistente seguirá diciendo el importe viejo hasta que ustedes nos pasen el nuevo.
 
 **Pregunta: ¿prefieren que el asistente siga dando el importe concreto con su fecha de vigencia, o que explique la estructura (franjas, categorías, topes) y remita al BPS o al Ministerio de Trabajo para el número exacto?** Si eligen lo primero, ¿nos avisan en cada actualización de valores? Los momentos previsibles son enero (asignaciones familiares) y enero y julio (Grupo 21).
+
+> **Respuesta del equipo legal (2026-08-08):** «Sigue dando el importe, lo actualizaremos cuando corresponda por modificaciones». — Confirmado el criterio vigente: el asistente da la cifra concreta con su fecha de vigencia. Los momentos previsibles de actualización son enero (BPC y asignaciones familiares) y enero y julio (Grupo 21).
 
 ## 3. Fallecimiento de un hijo en un embarazo o nacimiento múltiple de dos
 
@@ -34,6 +40,8 @@ Hoy el asistente no afirma nada sobre qué pasa si uno de los hijos fallece: el 
 
 **Pregunta: si de un nacimiento de mellizos uno de los hijos fallece, ¿el sobreviviente sigue generando la asignación triplicada por ser producto de un nacimiento múltiple, o pasa a la asignación del régimen general?**
 
+> **Respuesta del equipo legal (2026-08-08):** «La pérdida de uno de los hijos en gestación o de uno de los hijos vivos a cargo determinará el cese de los beneficios consagrados por la Ley N° 17.474 [...] excepto que sobrevivan por lo menos dos hijos en cualquiera de las dos situaciones». — Incorporado: si de un nacimiento de mellizos fallece uno, cesa el régimen especial y el sobreviviente pasa a la asignación del régimen general; si de un nacimiento de tres fallece uno, sobreviven dos y el beneficio se mantiene.
+
 ## 4. Trabajo doméstico: licencia por antigüedad
 
 El convenio del Grupo 21 fija la licencia anual del sector en **20 días continuos** por año trabajado (o 1,67 días por mes cada 25 días trabajados). El régimen general de los trabajadores privados suma, además de la licencia base, **un día adicional cada cinco años de antigüedad** en la empresa.
@@ -41,3 +49,5 @@ El convenio del Grupo 21 fija la licencia anual del sector en **20 días continu
 El material del sector no menciona ese incremento, y la Ley 18.065 dispone que a las trabajadoras y trabajadores domésticos les son aplicables todas las normas del derecho del trabajo «con las especialidades» de su régimen propio. No sabemos si los 20 días del convenio reemplazan a la licencia general o si se le suma el incremento por antigüedad.
 
 **Pregunta: una trabajadora doméstica con diez años en la misma casa, ¿tiene 20 días de licencia o 22?** Es una consulta muy frecuente del sector y hoy el asistente solo puede dar los 20 días del convenio sin pronunciarse sobre la antigüedad.
+
+> **Sin respuesta (2026-08-08).** La pregunta quedó sin contestar en el documento devuelto. El asistente sigue dando los 20 días del convenio sin pronunciarse sobre el incremento por antigüedad. Se reformula en `docs/preguntas-legales/2026-08-08-topes-bps-y-licencia-domestica.md`.
