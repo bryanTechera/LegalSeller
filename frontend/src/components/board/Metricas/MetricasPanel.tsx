@@ -137,7 +137,7 @@ export function MetricasPanel() {
                       <th scope="col">Email</th>
                       <th scope="col">Último mensaje</th>
                       <th scope="col">Caso</th>
-                      <th scope="col">Conversación</th>
+                      <th scope="col">Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
