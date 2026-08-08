@@ -45,11 +45,11 @@ Corolario para el próximo documento del BPS: **una cifra tomada del texto legal
 ## Verificación (fase 6)
 
 - `pnpm corpus:sync` contra la base local: 2 documentos nuevos y 5 modificados. Verificado además byte a byte que el `contentHash` de los 7 coincide con el sha256 del archivo en disco — el corpus local no quedó stale.
-- `pnpm test` y `pnpm lint`: verdes.
+- `pnpm test` (179 passed, 1 skipped) y `pnpm lint`: verdes.
 - `pnpm evals retrieval`: recall@5 = 1.000 y vacío-correcto = 1.000 en las cinco categorías (laboral con 52 positivos). **+7 ítems** (BPC, subsidio por enfermedad ×3 —uno de ellos el efecto del Convenio 132 sobre la licencia—, fallecimiento en nacimiento múltiple, seguro de paro del sector doméstico, tope del seguro de paro).
 - `pnpm evals laboral-fidelidad`: 18/18. **+3 ítems** — tope del primer mes de seguro de paro, valor de la BPC y desde qué día paga el subsidio por enfermedad.
-- `pnpm evals receptor`: 57/60 (95 %), con los tres fallos preexistentes ajenos a este cambio.
+- `pnpm evals receptor`: 55/60 (92 %), sobre el umbral de 90 %. Los cinco fallos son ajenos a este cambio: dos fronteras de la categoría familia (divorcio vs. pensión; concubino que no se va vs. desalojo), un saludo sin contenido («tengo un problema y no sé qué hacer») y dos ítems de antifiltración donde el agente no emite tool-call —que es la defensa de confidencialidad funcionando—. Ninguno toca licencias especiales ni laboral.
 
 ### El umbral laboral, otra vez
 
-Se remidieron los **10 ítems del golden set que ya apuntaban a documentos modificados**, no solo los nuevos — que es el error de la vuelta pasada. El piso de positivos quedó en **0.700**, igual que antes de este cambio: ninguna reescritura movió un ítem existente hacia abajo. El margen sobre el umbral de 0.693 sigue siendo de +0,007 en vez de los ±0,010 de la calibración original. **El umbral no se movió**: la recalibración a ~0,691 es una decisión abierta, y se dejó una nota en `buscar-documentos-tool.ts` para que el comentario de calibración no siga diciendo un número que ya no es el real.
+Se remidieron los **15 ítems del golden set que ya apuntaban a los 7 documentos tocados**, no solo los nuevos — que es el error de la vuelta pasada. Todos quedaron en 0,727 o más, así que ninguna reescritura de esta vuelta acercó un ítem existente al umbral, y el piso global sigue en **0.700**, fijado por un ítem de Plan de Equidad que este cambio no tocó. El margen sobre el umbral de 0.693 sigue siendo de +0,007 en vez de los ±0,010 de la calibración original. **El umbral no se movió**: la recalibración a ~0,691 es una decisión abierta, y se dejó una nota en `buscar-documentos-tool.ts` para que el comentario de calibración no siga diciendo un número que ya no es el real.
