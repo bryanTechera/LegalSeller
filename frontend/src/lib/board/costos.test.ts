@@ -34,4 +34,11 @@ describe("estimarCostoUsd", () => {
   it("cero tokens con modelo conocido cuesta cero", () => {
     expect(estimarCostoUsd("openai/gpt-5.6-luna", 0, 0)).toBe(0);
   });
+
+  // El costo de la síntesis del caso NO pasa por acá y no hay test que lo
+  // cubra: `generarSintesis` llama al SDK `ai` directo, fuera de todo agente de
+  // Mastra, así que no deja fila en `mastra.mastra_ai_spans` y el KPI de costo
+  // nunca ve sus tokens. Que `MODELO_SINTESIS` tenga precio en la tabla es
+  // casualidad —es el mismo modelo del receptor— y no cambia nada: sin span no
+  // hay a qué aplicárselo.
 });

@@ -6,6 +6,7 @@ import { createSseLineSplitter, parseSseData } from "@/utils/sse";
 import { logger } from "@/utils/logger";
 
 import { appendThreadMessages, fetchAssistantTexts, streamAgentMessage } from "./agent-service";
+import { asegurarSintesis } from "./casos/sintesis";
 import {
   type AsignacionArgs,
   asignacionArgsSchema,
@@ -36,6 +37,8 @@ interface ReceptorOutcome {
   kind: "clasificada" | "escape" | "pregunta";
   args?: AsignacionArgs;
   text: string;
+  /** Caso que este turno del receptor dejó captado, si alguno — null en cualquier otro caso. */
+  casoCaptado: string | null;
 }
 
 /**
@@ -64,6 +67,20 @@ function sseHeaders(): HeadersInit {
 
 function encodeSseText(text: string): Uint8Array {
   return new TextEncoder().encode(`data: ${JSON.stringify({ type: "text-delta", payload: { text } })}\n\n`);
+}
+
+/**
+ * Fire-and-forget con el stream ya drenado: el equipo legal encuentra el
+ * resumen hecho al abrir el caso. Es una optimización de latencia percibida y
+ * no la fuente de verdad — la vista regenera si falta — así que un fallo acá
+ * solo se loguea.
+ */
+function dispararSintesis(casoId: string): void {
+  void asegurarSintesis(casoId).catch((error: unknown) => {
+    logger.error("síntesis del caso captado falló", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  });
 }
 
 function encodeSseError(): Uint8Array {
@@ -182,6 +199,7 @@ async function runReceptor(params: {
 
   let asignacion: AsignacionArgs | null = null;
   let text = "";
+  let casoCaptado: string | null = null;
   await consumeUpstream(upstream, {
     onText: (delta) => {
       text += delta;
@@ -213,7 +231,8 @@ async function runReceptor(params: {
           return;
         }
         try {
-          await registrarDatosCaso({ sessionId: params.sessionId, ...parsed.data });
+          const registrado = await registrarDatosCaso({ sessionId: params.sessionId, ...parsed.data });
+          if (registrado?.captado === true) casoCaptado = registrado.casoId;
         } catch (_error) {
           // Persistence must never break the user-facing stream.
           logger.error("tool-call persistence failed", { toolName });
@@ -228,9 +247,9 @@ async function runReceptor(params: {
 
   if (asignacion) {
     const kind = ESCAPES.has((asignacion as AsignacionArgs).categoria) ? "escape" : "clasificada";
-    return { kind, args: asignacion, text };
+    return { kind, args: asignacion, text, casoCaptado };
   }
-  return { kind: "pregunta", text };
+  return { kind: "pregunta", text, casoCaptado };
 }
 
 /**
@@ -288,6 +307,14 @@ function pipeCategoryTurn(params: {
   categoriaActiva: string;
   upstream: Response;
   eventosCompletos: boolean;
+  /**
+   * Semilla del closure: un caso que el receptor ya dejó captado en el MISMO
+   * turno, antes de encadenar acá (spec: un solo disparo de síntesis por
+   * turno, siempre después de que los mensajes quedaron persistidos). Si el
+   * agente de categoría también captura contacto, pisa esta semilla — el
+   * único punto de disparo de abajo ve el valor final, nunca los dos.
+   */
+  casoCaptadoInicial: string | null;
 }): Response {
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
@@ -301,6 +328,7 @@ function pipeCategoryTurn(params: {
       }
 
       let temaDerivado: string | null = null;
+      let casoCaptado: string | null = params.casoCaptadoInicial;
       void consumeUpstream(params.upstream, {
         // Allowlist, no denylist: el chat público recibe SOLO el texto y un
         // error genérico. Reenviar el stream crudo publicaba en la pestaña
@@ -333,7 +361,8 @@ function pipeCategoryTurn(params: {
                 avisarArgsInvalidos(toolName, parsed.error);
                 return;
               }
-              await registrarDatosCaso({ sessionId: params.sessionId, ...parsed.data });
+              const registrado = await registrarDatosCaso({ sessionId: params.sessionId, ...parsed.data });
+              if (registrado?.captado === true) casoCaptado = registrado.casoId;
             } else if (toolName === "corregir-clasificacion") {
               const parsed = correccionArgsSchema.safeParse(args);
               if (!parsed.success) {
@@ -362,18 +391,28 @@ function pipeCategoryTurn(params: {
         },
       })
         .then(async () => {
+          // El equipo legal encuentra el resumen ya hecho al abrir el caso: se
+          // dispara solo en el turno que captó el contacto, no en todos los
+          // que tienen caso (sería una llamada de modelo por turno). Va ANTES
+          // de derivarTema y es independiente de ese resultado — si
+          // derivarTema tira, el catch de abajo se lleva el turno entero, y
+          // el disparo (fire-and-forget, ya no bloquea nada) no puede quedar
+          // atado a esa suerte.
+          if (casoCaptado !== null) dispararSintesis(casoCaptado);
+
           // Va ANTES de cerrar el controller a propósito: el texto del agente ya
           // salió completo hacia el cliente, y mantener el stream abierto hasta
           // que el puntero se movió es lo único que evita la carrera con el
           // turno siguiente — tanto el chat como el runner de escenarios mandan
           // el próximo mensaje recién cuando este stream cierra.
-          if (temaDerivado === null) return;
-          await derivarTema({
-            sessionId: params.sessionId,
-            message: params.message,
-            categoriaActiva: params.categoriaActiva,
-            tema: temaDerivado,
-          });
+          if (temaDerivado !== null) {
+            await derivarTema({
+              sessionId: params.sessionId,
+              message: params.message,
+              categoriaActiva: params.categoriaActiva,
+              tema: temaDerivado,
+            });
+          }
         })
         .catch((error: unknown) => {
           logger.error("derivación de tema falló", {
@@ -400,6 +439,8 @@ async function callCategoryAgent(params: {
   eventosCompletos: boolean;
   /** Hecho de la base, no heurística: el Caso activo ya está CAPTADO (spec §5). */
   contactoRegistrado: boolean;
+  /** Ver `pipeCategoryTurn` — semilla del disparo único de síntesis del turno. */
+  casoCaptadoInicial?: string | null;
 }): Promise<Response> {
   const threadId = threadIdForSession(params.sessionId);
   // Dos hechos distintos, dos señales. "Ya lo tenemos" sale de la base
@@ -442,6 +483,7 @@ async function callCategoryAgent(params: {
     categoriaActiva: params.categoria,
     upstream,
     eventosCompletos: params.eventosCompletos,
+    casoCaptadoInicial: params.casoCaptadoInicial ?? null,
   });
 }
 
@@ -521,6 +563,13 @@ export async function orchestrateChatTurn(params: {
           casoBrief: outcome.args.brief,
           eventosCompletos,
           contactoRegistrado: asignada.casoEstado === "CAPTADO",
+          // El receptor pudo captar el contacto en el MISMO turno que
+          // clasifica: la síntesis para ese caso no puede disparar todavía
+          // acá — el turno sigue, faltan asignarClasificacion (ya corrió,
+          // arriba) y el propio turno del agente de categoría, y los dos
+          // entran en la huella. Se pasa como semilla del único disparo que
+          // corre del otro lado, con el stream de categoría ya drenado.
+          casoCaptadoInicial: outcome.casoCaptado,
         });
       }
     }
@@ -547,6 +596,13 @@ export async function orchestrateChatTurn(params: {
       });
     });
   }
+
+  // Todo camino que llega hasta acá NO encadenó al agente de categoría (ese
+  // caso ya disparó del otro lado, en pipeCategoryTurn): va después de
+  // appendThreadMessages a propósito — el receptor corre readOnly, así que
+  // el mensaje del usuario y la respuesta de este turno recién quedan en
+  // mastra_messages arriba, y asegurarSintesis lee el transcript de ahí.
+  if (outcome.casoCaptado !== null) dispararSintesis(outcome.casoCaptado);
 
   return textOnlyResponse(outcome.text);
 }

@@ -136,19 +136,25 @@ export function MetricasPanel() {
                       <th scope="col">Teléfono</th>
                       <th scope="col">Email</th>
                       <th scope="col">Último mensaje</th>
-                      <th scope="col">Conversación</th>
+                      <th scope="col">Caso</th>
+                      <th scope="col">Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
                     {data.captados.map((caso) => (
-                      <tr key={caso.conversationId}>
+                      <tr key={caso.id}>
                         <td>{caso.contactoNombre ?? "—"}</td>
                         <td>{caso.contactoTelefono ?? "—"}</td>
                         <td>{caso.contactoEmail ?? "—"}</td>
                         <td>{caso.ultimoMensaje?.slice(0, 10) ?? "—"}</td>
+                        {/* El clamp va en un div interno: `display: -webkit-box`
+                            sobre el propio td lo saca del layout de la tabla. */}
+                        <td className={styles.celdaResumen}>
+                          <div className={styles.resumenRecortado}>{caso.situacion ?? "—"}</div>
+                        </td>
                         <td>
-                          <Link href={`/board/chats/${caso.conversationId}`} className={styles.link}>
-                            Ver chat
+                          <Link href={`/board/casos/${caso.id}`} className={styles.link}>
+                            Ver caso
                           </Link>
                         </td>
                       </tr>
@@ -236,9 +242,12 @@ export function MetricasPanel() {
             </p>
             <ul className={styles.lista}>
               {data.demanda.fueraDeCobertura.map((pedido) => (
-                <li key={pedido.conversationId} className={styles.item}>
+                <li key={pedido.casoId} className={styles.item}>
                   <span className={styles.fecha}>{pedido.fecha.slice(0, 10)}</span>
                   <span>{pedido.resumen ?? "Sin resumen registrado"}</span>
+                  <Link href={`/board/casos/${pedido.casoId}`} className={styles.link}>
+                    Ver caso
+                  </Link>
                 </li>
               ))}
             </ul>

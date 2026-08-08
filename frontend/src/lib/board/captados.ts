@@ -8,11 +8,26 @@ import { prisma } from "@/lib/prisma";
 import { casosReales } from "./scope";
 
 export interface CasoCaptado {
+  id: string;
   conversationId: string;
   ultimoMensaje: string | null;
   contactoNombre: string | null;
   contactoTelefono: string | null;
   contactoEmail: string | null;
+  /** Primer párrafo de la síntesis; null si el caso todavía no tiene. */
+  situacion: string | null;
+}
+
+/**
+ * La `situacion` de la síntesis guardada. El Json de Postgres no está tipado y
+ * acá no se valida el objeto entero a propósito: el listado solo muestra este
+ * campo, y una síntesis vieja a la que le falte otro no tiene por qué
+ * desaparecer de la tabla. La validación completa vive en `asegurarSintesis`.
+ */
+function situacionDe(contenido: unknown): string | null {
+  if (contenido === null || typeof contenido !== "object") return null;
+  const situacion = (contenido as { situacion?: unknown }).situacion;
+  return typeof situacion === "string" && situacion.trim() !== "" ? situacion : null;
 }
 
 /**
@@ -39,11 +54,13 @@ export async function listarCaptados(desde: Date | null): Promise<CasoCaptado[]>
   const casos = await prisma.caso.findMany({
     where: { ...casosReales(desde), estado: "CAPTADO" },
     select: {
+      id: true,
       conversationId: true,
       contactoNombre: true,
       contactoTelefono: true,
       contactoEmail: true,
       conversation: { select: { threadId: true } },
+      sintesis: { select: { contenido: true } },
     },
     orderBy: { updatedAt: "desc" },
     take: LIMITE,
@@ -62,11 +79,13 @@ export async function listarCaptados(desde: Date | null): Promise<CasoCaptado[]>
 
   return casos
     .map((caso) => ({
+      id: caso.id,
       conversationId: caso.conversationId,
       ultimoMensaje: porThread.get(caso.conversation.threadId)?.toISOString() ?? null,
       contactoNombre: caso.contactoNombre,
       contactoTelefono: caso.contactoTelefono,
       contactoEmail: caso.contactoEmail,
+      situacion: situacionDe(caso.sintesis?.contenido),
     }))
     .sort((a, b) => {
       // Descendente, con comparación cruda en vez de localeCompare: sobre ISO
