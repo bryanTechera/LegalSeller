@@ -1,6 +1,6 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import useSWR from "swr";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DetalleCaso as Caso } from "@/lib/casos/caso-detalle";
 import type { Sintesis } from "@/lib/casos/sintesis-schema";
@@ -50,6 +50,10 @@ function mockCaso(datos: Caso | undefined, error?: Error) {
 
 describe("DetalleCaso", () => {
   beforeEach(() => vi.resetAllMocks());
+  // Los tests de acciones (agregar nota, regenerar) stubean fetch global
+  // aparte del mock de swr: sin desestubearlo se filtra a los tests que
+  // corren después dentro del mismo archivo.
+  afterEach(() => vi.unstubAllGlobals());
 
   it("muestra el resumen, el contacto y el enlace al chat", () => {
     mockCaso(casoBase);
@@ -98,5 +102,41 @@ describe("DetalleCaso", () => {
     render(<DetalleCaso id="caso-x" />);
 
     await waitFor(() => expect(screen.getByRole("alert")).toBeInTheDocument());
+  });
+
+  // Mismo bug que ya costó producción en DetalleChat.tsx: sin el finally que
+  // rehabilita el botón, una excepción de red deja el composer muerto y se
+  // pierde lo tipeado.
+  it("si el POST de nota rechaza, el botón de agregar nota se rehabilita y el texto se conserva", async () => {
+    mockCaso(casoBase);
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("network down")));
+    render(<DetalleCaso id="caso-1" />);
+
+    fireEvent.change(screen.getByLabelText("Nueva nota"), { target: { value: "Habló con el testigo" } });
+    fireEvent.click(screen.getByRole("button", { name: "Agregar nota" }));
+
+    await waitFor(() => expect(screen.getByRole("button", { name: "Agregar nota" })).not.toBeDisabled());
+    expect(screen.getByLabelText("Nueva nota")).toHaveValue("Habló con el testigo");
+  });
+
+  it("si el POST de nota responde no-ok, se muestra el aviso de fallo", async () => {
+    mockCaso(casoBase);
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("", { status: 500 })));
+    render(<DetalleCaso id="caso-1" />);
+
+    fireEvent.change(screen.getByLabelText("Nueva nota"), { target: { value: "Habló con el testigo" } });
+    fireEvent.click(screen.getByRole("button", { name: "Agregar nota" }));
+
+    expect(await screen.findByText(/no pudimos guardar la nota/i)).toBeInTheDocument();
+  });
+
+  it("si el POST de regenerar rechaza, el botón de regenerar se rehabilita", async () => {
+    mockCaso(casoBase);
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("network down")));
+    render(<DetalleCaso id="caso-1" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Regenerar" }));
+
+    await waitFor(() => expect(screen.getByRole("button", { name: "Regenerar" })).not.toBeDisabled());
   });
 });

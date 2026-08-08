@@ -29,6 +29,10 @@ export function DetalleCaso({ id }: { id: string }) {
   const [texto, setTexto] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [regenerando, setRegenerando] = useState(false);
+  // Una nota que se pierde en silencio es peor que un error visible: sin
+  // esto el abogado no tiene forma de saber si lo que tipeó quedó guardado.
+  const [errorNota, setErrorNota] = useState(false);
+  const [errorRegenerar, setErrorRegenerar] = useState(false);
 
   const agregarNota = async () => {
     if (texto.trim() === "") return;
@@ -41,11 +45,15 @@ export function DetalleCaso({ id }: { id: string }) {
       });
       if (response.ok) {
         setTexto("");
+        setErrorNota(false);
         await mutate();
+      } else {
+        setErrorNota(true);
       }
     } catch {
       // El botón se rehabilita en el finally: sin él queda muerto y se pierde
       // lo tipeado.
+      setErrorNota(true);
     } finally {
       setGuardando(false);
     }
@@ -54,10 +62,15 @@ export function DetalleCaso({ id }: { id: string }) {
   const regenerar = async () => {
     setRegenerando(true);
     try {
-      await fetch(`/api/board/casos/${id}/sintesis`, { method: "POST" });
-      await mutate();
+      const response = await fetch(`/api/board/casos/${id}/sintesis`, { method: "POST" });
+      if (response.ok) {
+        setErrorRegenerar(false);
+        await mutate();
+      } else {
+        setErrorRegenerar(true);
+      }
     } catch {
-      /* el estado del resumen ya lo cuenta la vista */
+      setErrorRegenerar(true);
     } finally {
       setRegenerando(false);
     }
@@ -67,7 +80,7 @@ export function DetalleCaso({ id }: { id: string }) {
   if (isLoading || !data) return <p className={styles.cargando}>Cargando…</p>;
 
   const sintesis = data.sintesis.estado === "sin-sintesis" ? null : data.sintesis.sintesis;
-  const desactualizada = data.sintesis.estado === "error" || (data.sintesis.estado === "ok" && !data.sintesis.vigente);
+  const desactualizada = data.sintesis.estado === "ok" && !data.sintesis.vigente;
 
   return (
     <section className={styles.caso}>
@@ -89,6 +102,10 @@ export function DetalleCaso({ id }: { id: string }) {
             {regenerando ? "Regenerando…" : "Regenerar"}
           </button>
         </div>
+
+        {errorRegenerar ? (
+          <p role="status" className={styles.aviso}>No pudimos regenerar el resumen.</p>
+        ) : null}
 
         {data.sintesis.estado === "error" ? (
           <p role="status" className={styles.aviso}>
@@ -190,6 +207,9 @@ export function DetalleCaso({ id }: { id: string }) {
           <button type="button" className={styles.boton} onClick={agregarNota} disabled={guardando || texto.trim() === ""}>
             {guardando ? "Guardando…" : "Agregar nota"}
           </button>
+          {errorNota ? (
+            <p role="status" className={styles.aviso}>No pudimos guardar la nota. Probá de nuevo.</p>
+          ) : null}
         </div>
         {data.notas.length === 0 ? (
           <p className={styles.etiqueta}>Todavía no hay notas sobre este caso.</p>
