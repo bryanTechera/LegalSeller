@@ -95,7 +95,7 @@ En `Caso` se agregan solo las dos relaciones inversas (`sintesis SintesisCaso?`,
 
 ### 4.1 Contrato
 
-Schema Zod único, en el backend, exportado para que el BFF valide lo que recibe:
+Schema Zod, en el backend, para pedirle la forma al modelo y validar lo que devuelve:
 
 ```typescript
 export const sintesisSchema = z.object({
@@ -109,7 +109,9 @@ export const sintesisSchema = z.object({
 
 `datosClave` es una lista de pares y no campos fijos precisamente porque los datos que dimensionan un caso cambian por categoría: en despido son antigüedad, salario y forma; en desalojo son el régimen del contrato y la fecha de la intimación. La etiqueta la elige el modelo a partir de lo que el consultante contó.
 
-`cuando` es `nullable` y no opcional: el modelo debe poder decir "no dijo cuándo" sin inventar una fecha. La familia GPT manda `null` explícito y la familia Gemini omite la clave — el schema acepta ambas (mismo gotcha que costó 25 `registrar-caso` en producción, ver CLAUDE.md).
+`cuando` acepta ausencia: el modelo debe poder decir "no dijo cuándo" sin inventar una fecha. La familia GPT manda `null` explícito y la familia Gemini omite la clave — el schema acepta ambas (mismo gotcha que costó 25 `registrar-caso` en producción, ver CLAUDE.md).
+
+**El schema vive dos veces, a propósito.** `backend/` y `frontend/` son paquetes pnpm separados, sin workspace que los una: el frontend no puede importar del backend. El BFF lleva su propio schema espejo para validar la respuesta HTTP, exactamente como `chat-orchestrator-schemas.ts` ya valida los args de tools que se definen en el backend. La regla que evita que se desincronicen es la misma que ahí: el espejo es **tolerante en los opcionales y estricto en la forma**, y un cambio de campo toca los dos archivos en el mismo commit.
 
 ### 4.2 Modelo y prompt
 
@@ -133,7 +135,7 @@ Un detalle que el prompt tiene que decir explícito: **una conversación puede c
 
 Recibe `{ caso: { categoria, subcategorias, estado, resumen }, mensajes: [{ rol, texto }] }`, valida con Zod, corre `generateObject` contra `MODELO_SINTESIS` y devuelve `{ status: "ok", sintesis } | { status: "error", mensaje }`. Nunca 500 con stack: el error viaja como valor, igual que en las tools de agente.
 
-Del lado del BFF, `frontend/src/lib/agent-service.ts` gana `generarSintesis(payload)` — sigue siendo el único módulo que conoce `MASTRA_BASE_URL`.
+Del lado del BFF, `frontend/src/lib/agent-service.ts` gana `pedirSintesis(material)` — sigue siendo el único módulo que conoce `MASTRA_BASE_URL`. Se llama distinto que la función del backend (`generarSintesis`) a propósito: una pide, la otra genera, y el nombre dice de qué lado del cable está cada una.
 
 ---
 
