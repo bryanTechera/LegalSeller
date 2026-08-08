@@ -72,4 +72,17 @@ describe("obtenerCaso", () => {
     expect(await obtenerCaso("caso-x")).toBeNull();
     expect(asegurarSintesis).not.toHaveBeenCalled();
   });
+
+  // El invariante del board, medido sobre el `where` y no sobre un findFirst
+  // mockeado a null: un mock que devuelve null pasa igual sin el filtro, y el
+  // detalle pasaría a servir casos de /revision y del runner de escenarios.
+  it("pide el caso filtrando por conversaciones reales", async () => {
+    vi.mocked(prisma.caso.findFirst).mockResolvedValue(fila as never);
+    vi.mocked(asegurarSintesis).mockResolvedValue({ estado: "sin-sintesis" });
+
+    await obtenerCaso("caso-1");
+
+    const where = vi.mocked(prisma.caso.findFirst).mock.calls[0]?.[0]?.where;
+    expect(where).toMatchObject({ id: "caso-1", conversation: { esRevision: false } });
+  });
 });

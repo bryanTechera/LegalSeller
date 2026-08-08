@@ -50,14 +50,17 @@ describe("calcularHuella", () => {
     expect(calcularHuella(conHechos)).not.toBe(calcularHuella(base));
   });
 
-  // El caso de regresión del spec §5.1: guardar la síntesis no puede mover la
-  // huella, o cada apertura regeneraría para siempre. El diseño lo previene por
-  // construcción — `EntradaHuella` no tiene por dónde recibir un timestamp de
-  // escritura — y este test lo deja fijado: si alguien agrega `updatedAt` al
-  // tipo, deja de compilar acá.
-  it("no admite timestamps de escritura en la entrada", () => {
-    const claves = Object.keys(base.caso);
-    expect(claves).not.toContain("updatedAt");
-    expect(claves).not.toContain("actualizadoEn");
+  // El resumen viene de un Json de Postgres: el driver puede devolver las
+  // mismas claves en otro orden, y JSON.stringify preserva el orden de
+  // inserción. Sin `ordenarClaves`, el mismo contenido regeneraría la síntesis
+  // en cada apertura. (La otra mitad de ese invariante —que un timestamp de
+  // escritura nunca entre a la huella— la sostiene el tipo `EntradaHuella`,
+  // que no tiene por dónde recibirlo; ver el comentario de `calcularHuella`.)
+  it("no depende del orden de las claves del resumen", () => {
+    const invertido = {
+      ...base,
+      caso: { ...base.caso, resumen: { hechos: "6 años de antigüedad", brief: "Despido sin causa" } },
+    };
+    expect(calcularHuella(invertido)).toBe(calcularHuella(base));
   });
 });

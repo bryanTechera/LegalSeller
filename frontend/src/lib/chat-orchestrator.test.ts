@@ -732,7 +732,12 @@ describe("orchestrateChatTurn", () => {
       const respuesta = await orchestrateChatTurn({ sessionId: "s1", message: "mi tel es 099111222" });
       const texto = await new Response(respuesta.body).text();
 
-      expect(texto).toContain("data:");
+      // "contiene data:" no medía nada: el frame de error también empieza así,
+      // y un turno roto se leía igual que uno sano. Lo que tiene que pasar es
+      // que llegue el texto del agente y NO el frame de error.
+      expect(texto).toContain("listo");
+      expect(texto).not.toContain("stream-error");
+      expect(asegurarSintesis).toHaveBeenCalledWith("caso-1");
     });
 
     // registrar-caso también corre desde el turno del receptor (captación
