@@ -6,7 +6,7 @@ Toda mujer a la cual se le constate fehacientemente un embarazo múltiple tiene 
 
 Esa condición confiere el derecho a percibir una asignación equivalente al **triple** de la establecida en el régimen general **por cada hijo en gestación**.
 
-A estos efectos se considera embarazo múltiple el estado de gravidez en el que se desarrolla la gestación de **dos o más hijos** (artículo 1 de la ley n.º 17.474, en la redacción de la ley n.º 20.365). Las referencias al "régimen general" aluden al régimen del decreto-ley n.º 15.084 (interpretación auténtica del artículo 14 de la ley n.º 18.227).
+A estos efectos se considera embarazo múltiple el estado de gravidez en el que se desarrolla la gestación de **dos o más hijos** (artículo 1 de la ley n.º 17.474, en la redacción de la ley n.º 20.365). Basta entonces con un embarazo de mellizos: la exigencia de tres o más hijos que traía el decreto reglamentario 437/002 del año 2002 quedó desplazada por esta ley posterior. Las referencias al "régimen general" aluden al régimen del decreto-ley n.º 15.084 (interpretación auténtica del artículo 14 de la ley n.º 18.227).
 
 Para el pago debe presentarse, con la solicitud, el carné obstétrico que acredite la fecha de constatación del embarazo múltiple; los pagos sucesivos quedan condicionados al control periódico del embarazo. La prestación no puede servirse con una retroactividad mayor a tres meses si la solicitud se presenta fuera de los noventa días de la constatación (artículo 2 del decreto 437/002).
 

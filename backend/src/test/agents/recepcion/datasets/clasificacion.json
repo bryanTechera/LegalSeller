@@ -375,5 +375,17 @@
     "esperado": {
       "categoria": "laboral"
     }
+  },
+  {
+    "mensaje": "tengo 58 años y quiero saber cuantos años de aportes me faltan para jubilarme",
+    "esperado": {
+      "categoria": "categoria-no-habilitada"
+    }
+  },
+  {
+    "mensaje": "soy monotributista y quiero saber cuanto tengo que aportar por mes",
+    "esperado": {
+      "categoria": "categoria-no-habilitada"
+    }
   }
 ]

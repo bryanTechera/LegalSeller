@@ -53,7 +53,7 @@ export const laboralClasificacion = {
       id: "trabajo-domestico",
       nombre: "Trabajo doméstico",
       descripcion:
-        "Régimen especial del trabajo doméstico (empleadas y empleados de casas de familia, con retiro o sin retiro): jornada de 8 horas y 44 semanales, descansos intermedio, semanal y nocturno, alimentación y vivienda con sus deducciones, salario por Consejo de Salarios, seguro de paro y subsidio por enfermedad con requisitos propios. Aplica solo a quien trabaja en tareas del hogar sin generar ganancia económica directa al empleador.",
+        "Régimen especial del trabajo doméstico (empleadas y empleados de casas de familia, con retiro o sin retiro): jornada de 8 horas y 44 semanales, descansos intermedio, semanal y nocturno, alimentación y vivienda con sus deducciones, categorías y salarios mínimos del Consejo de Salarios del sector (general, cocina y cuidados) con sus licencias y beneficios de convenio, seguro de paro y subsidio por enfermedad con requisitos propios. Aplica solo a quien trabaja en tareas del hogar sin generar ganancia económica directa al empleador.",
       habilitada: true,
     },
     {
@@ -74,7 +74,7 @@ export const laboralClasificacion = {
       id: "asignaciones-familiares",
       nombre: "Asignaciones familiares",
       descripcion:
-        "Asignaciones familiares del BPS: régimen contributivo de los trabajadores y Plan de Equidad para hogares en situación de vulnerabilidad, asignación prenatal, montos y hasta qué edad se cobran, suspensión por incumplimiento de controles de educación o salud, y embarazo o nacimiento múltiple (mellizos, trillizos).",
+        "Asignaciones familiares del BPS: régimen contributivo de los trabajadores y Plan de Equidad para hogares en situación de vulnerabilidad, asignación prenatal, montos y topes de ingresos del hogar, hasta qué edad se cobran, asignación doble por discapacidad, suspensión por incumplimiento de controles de educación o salud, y embarazo o nacimiento múltiple (mellizos, trillizos).",
       habilitada: true,
     },
     {
