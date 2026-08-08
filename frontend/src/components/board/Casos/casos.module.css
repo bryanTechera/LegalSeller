@@ -1,0 +1,179 @@
+.caso {
+  display: grid;
+  gap: var(--space-6);
+  max-width: 42rem;
+}
+
+.encabezado {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.titulo {
+  font-family: var(--font-family-display);
+  font-size: var(--text-2xl);
+  color: var(--ink-900);
+}
+
+.subtitulo {
+  font-family: var(--font-family-display);
+  font-size: var(--text-base);
+  color: var(--ink-900);
+}
+
+.tituloBloque {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--ink-700);
+  margin-top: var(--space-4);
+}
+
+.etiqueta {
+  color: var(--ink-500);
+  font-size: var(--text-sm);
+}
+
+.ayuda {
+  color: var(--ink-500);
+  font-size: var(--text-sm);
+  margin-top: calc(var(--space-2) * -1);
+}
+
+.link {
+  color: var(--accent-strong);
+}
+
+.boton {
+  font: inherit;
+  font-size: var(--text-sm);
+  padding: var(--space-2) var(--space-4);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--on-navy);
+  cursor: pointer;
+}
+
+.boton:disabled {
+  background: var(--ink-300);
+  cursor: not-allowed;
+}
+
+.bloque {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--ink-100);
+  border-radius: var(--radius-md);
+}
+
+/* Bloque protagónico: fondo propio, más aire que .bloque y la situación en un
+   cuerpo tipográfico mayor — es lo primero que un abogado tiene que leer. */
+.resumen {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  background: var(--accent-soft);
+  border: 1px solid var(--ink-100);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+}
+
+.situacion {
+  font-family: var(--font-family-display);
+  font-size: var(--text-lg);
+  line-height: var(--line-height-base);
+  color: var(--ink-900);
+}
+
+.filaTitulo {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.aviso {
+  padding: var(--space-3);
+  border: 1px solid var(--state-warning);
+  border-radius: var(--radius-sm);
+  color: var(--state-warning);
+  font-size: var(--text-sm);
+}
+
+.hechos,
+.faltantes {
+  display: grid;
+  gap: var(--space-2);
+  padding-left: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--ink-900);
+}
+
+.hechos li {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+}
+
+.fecha {
+  color: var(--ink-500);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+
+.datos {
+  display: grid;
+  grid-template-columns: 8rem 1fr;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.datos dt {
+  color: var(--ink-500);
+}
+
+.composer {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.textarea {
+  font: inherit;
+  font-size: var(--text-sm);
+  padding: var(--space-2);
+  border: 1px solid var(--ink-300);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink-900);
+  resize: vertical;
+}
+
+.notas {
+  list-style: none;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.nota {
+  padding: var(--space-3);
+  border: 1px solid var(--ink-100);
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+  font-size: var(--text-sm);
+}
+
+.verificacion {
+  color: var(--ink-500);
+  font-size: var(--text-sm);
+}
+
+.error {
+  color: var(--state-error);
+}
+
+.cargando {
+  color: var(--ink-500);
+}
