@@ -147,7 +147,11 @@ export function MetricasPanel() {
                         <td>{caso.contactoTelefono ?? "—"}</td>
                         <td>{caso.contactoEmail ?? "—"}</td>
                         <td>{caso.ultimoMensaje?.slice(0, 10) ?? "—"}</td>
-                        <td className={styles.celdaResumen}>{caso.situacion ?? "—"}</td>
+                        {/* El clamp va en un div interno: `display: -webkit-box`
+                            sobre el propio td lo saca del layout de la tabla. */}
+                        <td className={styles.celdaResumen}>
+                          <div className={styles.resumenRecortado}>{caso.situacion ?? "—"}</div>
+                        </td>
                         <td>
                           <Link href={`/board/casos/${caso.id}`} className={styles.link}>
                             Ver caso

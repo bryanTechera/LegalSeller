@@ -108,6 +108,12 @@
 
 .celdaResumen {
   max-width: 20rem;
+}
+
+/* El recorte a dos líneas vive en un div dentro de la celda: `display:
+   -webkit-box` aplicado al td lo saca del layout de tabla y descuelga la
+   columna del resto de la fila. */
+.resumenRecortado {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;

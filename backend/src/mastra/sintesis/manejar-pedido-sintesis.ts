@@ -34,8 +34,11 @@ export async function manejarPedidoDeSintesis(
   try {
     body = await leerBody();
   } catch (error) {
+    // Solo el nombre del error: V8 embebe hasta ~30 caracteres del body en el
+    // message de un JSON.parse fallido, y ese body es el transcript de una
+    // persona. El nombre alcanza para distinguir un SyntaxError de otra cosa.
     logger.warn("sintesis-caso: body no es JSON válido", {
-      error: error instanceof Error ? error.message : String(error),
+      error: error instanceof Error ? error.name : "error desconocido",
     });
     return { resultado: { status: "error", mensaje: "Material inválido" }, status: 400 };
   }

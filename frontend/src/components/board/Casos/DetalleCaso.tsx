@@ -141,8 +141,9 @@ export function DetalleCaso({ id }: { id: string }) {
               <>
                 <h3 className={styles.tituloBloque}>Datos del caso</h3>
                 <dl className={styles.datos}>
-                  {sintesis.datosClave.map((dato) => (
-                    <div key={dato.etiqueta}>
+                  {/* La key lleva el índice: la etiqueta la escribe el modelo y puede repetirse. */}
+                  {sintesis.datosClave.map((dato, indice) => (
+                    <div key={`${dato.etiqueta}-${String(indice)}`}>
                       <dt>{dato.etiqueta}</dt>
                       <dd>{dato.valor}</dd>
                     </div>
@@ -158,8 +159,8 @@ export function DetalleCaso({ id }: { id: string }) {
               <>
                 <h3 className={styles.tituloBloque}>Falta averiguar</h3>
                 <ul className={styles.faltantes}>
-                  {sintesis.faltantes.map((faltante) => (
-                    <li key={faltante}>{faltante}</li>
+                  {sintesis.faltantes.map((faltante, indice) => (
+                    <li key={`${faltante}-${String(indice)}`}>{faltante}</li>
                   ))}
                 </ul>
               </>
