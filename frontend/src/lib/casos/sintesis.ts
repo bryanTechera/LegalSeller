@@ -16,7 +16,7 @@ import { sintesisSchema, type Sintesis } from "./sintesis-schema";
  * justamente lo que la hace barata. Cambiarlos allá sin cambiarlos acá deja
  * vigentes síntesis generadas con el prompt o el modelo viejo.
  */
-const PROMPT_VERSION = "3";
+const PROMPT_VERSION = "4";
 const MODELO = "google/gemini-3.5-flash-lite";
 
 export type EstadoSintesis =
@@ -47,6 +47,7 @@ export async function asegurarSintesis(
       contactoTelefono: true,
       contactoEmail: true,
       estado: true,
+      createdAt: true,
       conversation: { select: { threadId: true } },
       sintesis: { select: { contenido: true, huella: true, modelo: true, generadaEn: true } },
     },
@@ -88,14 +89,18 @@ export async function asegurarSintesis(
     return { estado: "ok", sintesis: guardada.contenido, generadaEn: guardada.generadaEn, vigente: true };
   }
 
+  // Las fechas van en el material a propósito: son el anclaje temporal del
+  // modelo y el referente de la regla del prompt sobre las fechas entre
+  // corchetes. Sacarlas hace volver el año inventado (medido, ver el schema).
   const resultado = await pedirSintesis({
     caso: {
       categoria: caso.categoria,
       subcategorias: caso.subcategorias,
       estado: caso.estado,
       resumen: textoDelResumen(caso.resumen),
+      abiertoEn: caso.createdAt.toISOString(),
     },
-    mensajes: mensajes.map((mensaje) => ({ rol: mensaje.rol, texto: mensaje.texto })),
+    mensajes: mensajes.map((mensaje) => ({ rol: mensaje.rol, texto: mensaje.texto, fecha: mensaje.fecha })),
   });
 
   if (resultado.status === "error") {

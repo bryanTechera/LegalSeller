@@ -113,8 +113,14 @@ describe("pedirSintesis", () => {
   afterEach(() => vi.unstubAllGlobals());
 
   const material = {
-    caso: { categoria: "laboral", subcategorias: ["despido"], estado: "CAPTADO", resumen: null },
-    mensajes: [{ rol: "user" as const, texto: "Me despidieron" }],
+    caso: {
+      categoria: "laboral",
+      subcategorias: ["despido"],
+      estado: "CAPTADO",
+      resumen: null,
+      abiertoEn: "2026-08-08T09:00:00.000Z",
+    },
+    mensajes: [{ rol: "user" as const, texto: "Me despidieron", fecha: "2026-08-08T10:00:00.000Z" }],
   };
 
   it("postea el material al endpoint del backend y devuelve la síntesis", async () => {
@@ -134,6 +140,12 @@ describe("pedirSintesis", () => {
 
     expect(fetchMock.mock.calls[0]?.[0]).toContain("/sintesis-caso");
     expect(resultado.status).toBe("ok");
+
+    // El body es lo único que el modelo llega a ver: sin esto, una mutación
+    // que mandara `{}` pasaba el test igual.
+    const init = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(String(init.body))).toEqual(material);
   });
 
   // El BFF nunca confía en la forma que cruza la red: un backend viejo o un

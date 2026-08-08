@@ -28,14 +28,38 @@ export const sintesisSchema = z.object({
 
 export type Sintesis = z.infer<typeof sintesisSchema>;
 
+/**
+ * Espejo de `materialSchema` del backend, incluido el `.default([])` de
+ * `subcategorias` (estaba solo del lado del backend: una divergencia chica
+ * pero real entre dos schemas que tienen que decir lo mismo).
+ *
+ * Las fechas son el anclaje temporal del modelo — el referente de la regla de
+ * `PROMPT_SINTESIS` sobre las fechas entre corchetes. Ver el comentario del
+ * schema del backend para la medición que las justifica.
+ */
 export const materialSchema = z.object({
   caso: z.object({
     categoria: z.string().nullable(),
-    subcategorias: z.array(z.string()),
+    subcategorias: z.array(z.string()).default([]),
     estado: z.string(),
     resumen: z.string().nullable(),
+    abiertoEn: z
+      .string()
+      .nullish()
+      .transform((valor) => valor ?? null),
   }),
-  mensajes: z.array(z.object({ rol: z.enum(["user", "assistant"]), texto: z.string() })).min(1),
+  mensajes: z
+    .array(
+      z.object({
+        rol: z.enum(["user", "assistant"]),
+        texto: z.string(),
+        fecha: z
+          .string()
+          .nullish()
+          .transform((valor) => valor ?? null),
+      }),
+    )
+    .min(1),
 });
 
 export type MaterialSintesis = z.infer<typeof materialSchema>;

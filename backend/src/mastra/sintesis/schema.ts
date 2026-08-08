@@ -29,7 +29,20 @@ export const sintesisSchema = z.object({
 
 export type Sintesis = z.infer<typeof sintesisSchema>;
 
-/** Lo que el BFF manda para resumir: el caso y su conversación completa. */
+/**
+ * Lo que el BFF manda para resumir: el caso y su conversación completa.
+ *
+ * Las fechas (`abiertoEn` y la `fecha` de cada mensaje) son el anclaje temporal
+ * del modelo, y son lo que le da referente a la regla de `PROMPT_SINTESIS`
+ * sobre las fechas entre corchetes. Medido sobre un caso real: con el anclaje
+ * y esa regla, 20 de 20 generaciones dejaron la fecha como la dijo la persona
+ * ("15 de julio"); sacando la regla —y con ella el sentido del anclaje— 2 de 6
+ * volvieron a escribir "15 de julio de 2026". Van juntos: el campo sin la regla
+ * no sirve, y la regla sin el campo habla de algo que no está.
+ *
+ * Viajan como ISO y se toleran ausentes: un transcript viejo puede no
+ * traerlas, y una síntesis sin fechas es mejor que un 400.
+ */
 export const materialSchema = z.object({
   caso: z.object({
     categoria: z.string().nullable(),
@@ -37,9 +50,24 @@ export const materialSchema = z.object({
     estado: z.string(),
     /** Lo que los agentes fueron dejando en `Caso.resumen` (brief + hechos). */
     resumen: z.string().nullable(),
+    /** Cuándo se abrió el caso, en ISO. */
+    abiertoEn: z
+      .string()
+      .nullish()
+      .transform((valor) => valor ?? null),
   }),
   mensajes: z
-    .array(z.object({ rol: z.enum(["user", "assistant"]), texto: z.string() }))
+    .array(
+      z.object({
+        rol: z.enum(["user", "assistant"]),
+        texto: z.string(),
+        /** Cuándo se escribió el mensaje, en ISO. */
+        fecha: z
+          .string()
+          .nullish()
+          .transform((valor) => valor ?? null),
+      }),
+    )
     .min(1),
 });
 

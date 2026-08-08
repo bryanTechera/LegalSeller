@@ -45,6 +45,31 @@ describe("PROMPT_SINTESIS", () => {
     expect(PROMPT_SINTESIS).toContain("faltantes");
     expect(PROMPT_SINTESIS).toMatch(/solo lo que/i);
   });
+
+  // El residual medido del prompt "3": sobre una fecha real que la persona sí
+  // dio ("15 de julio"), el modelo le agregaba el año por su cuenta. El par
+  // contrastivo es lo que cerró el caso análogo de "todavía", así que este
+  // constraint también lleva el suyo.
+  it("trae un par contrastivo propio sobre completar el año", () => {
+    expect(PROMPT_SINTESIS).toMatch(/sin agregarle el año si no lo nombró/);
+    expect(PROMPT_SINTESIS).toContain(`"cuando": "15 de julio de 2026"`);
+    expect(PROMPT_SINTESIS).toContain(`"cuando": "15 de julio"`);
+  });
+
+  // La regla de `cuando` era una sola oración de ~90 palabras con cinco
+  // restricciones adentro, y la prohibición del año quedaba enterrada al medio.
+  // Una restricción por línea es la forma en que el resto del proyecto escribe
+  // reglas de prompt.
+  it("declara las restricciones de `cuando` una por línea", () => {
+    const lineasDeCuando = PROMPT_SINTESIS.split("\n").filter((linea) => linea.includes("cuando"));
+    expect(lineasDeCuando.length).toBeGreaterThanOrEqual(4);
+  });
+
+  // Esta regla y el anclaje de `formatearMaterial` son un par: sacarla hizo
+  // volver el año inventado en 2 de 6 corridas contra un caso real.
+  it("explica que las fechas entre corchetes son del mensaje, no del hecho", () => {
+    expect(PROMPT_SINTESIS).toMatch(/entre corchetes/);
+  });
 });
 
 describe("formatearMaterial", () => {
@@ -70,5 +95,60 @@ describe("formatearMaterial", () => {
       mensajes: [{ rol: "user", texto: "Tengo un problema de propiedad horizontal" }],
     });
     expect(formatearMaterial(sinCategoria)).toContain("sin categoría asignada");
+  });
+
+  // Sin esto el modelo no tiene de dónde sacar una fecha, y la regla del
+  // prompt sobre "las fechas entre corchetes" habla de algo que no está: al
+  // sacar el par (anclaje + regla), 2 de 6 corridas volvieron a escribir "15
+  // de julio de 2026" sobre una fecha que la persona dio sin año.
+  it("ancla cada turno en su fecha y declara cuándo se abrió el caso", () => {
+    const conFechas = materialSchema.parse({
+      caso: {
+        categoria: "laboral",
+        subcategorias: ["despido"],
+        estado: "CAPTADO",
+        resumen: null,
+        abiertoEn: "2026-08-08T13:00:00.000Z",
+      },
+      mensajes: [
+        { rol: "user", texto: "Me echaron el 15 de julio", fecha: "2026-08-08T13:00:00.000Z" },
+        { rol: "assistant", texto: "Contame más", fecha: "2026-08-08T13:01:00.000Z" },
+      ],
+    });
+
+    const texto = formatearMaterial(conFechas);
+
+    expect(texto).toContain("Caso abierto el: 2026-08-08");
+    expect(texto).toContain("[2026-08-08] Consultante: Me echaron el 15 de julio");
+    expect(texto).toContain("[2026-08-08] Asistente: Contame más");
+  });
+
+  // La fecha se muestra en la zona del consultante: un mensaje de la madrugada
+  // UTC es del día anterior en Montevideo, y el legajo se lee acá.
+  it("usa la zona de Montevideo, no UTC", () => {
+    const madrugada = materialSchema.parse({
+      caso: { categoria: "laboral", subcategorias: [], estado: "CAPTADO", resumen: null },
+      mensajes: [{ rol: "user", texto: "Hola", fecha: "2026-08-08T01:30:00.000Z" }],
+    });
+    expect(formatearMaterial(madrugada)).toContain("[2026-08-07] Consultante: Hola");
+  });
+
+  // El anclaje es una ayuda, no un requisito: un transcript viejo sin fechas, o
+  // una fecha que no parsea, tienen que producir material igual de válido.
+  it("omite el anclaje cuando la fecha falta o no parsea, sin romper el turno", () => {
+    const sinFechas = materialSchema.parse({
+      caso: { categoria: "laboral", subcategorias: [], estado: "CAPTADO", resumen: null, abiertoEn: "no es fecha" },
+      mensajes: [
+        { rol: "user", texto: "Me echaron" },
+        { rol: "assistant", texto: "Contame más", fecha: "tampoco" },
+      ],
+    });
+
+    const texto = formatearMaterial(sinFechas);
+
+    expect(texto).not.toContain("Caso abierto el:");
+    expect(texto).not.toContain("Invalid Date");
+    expect(texto).toContain("Consultante: Me echaron");
+    expect(texto).toContain("Asistente: Contame más");
   });
 });

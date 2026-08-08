@@ -4,8 +4,16 @@ import { manejarPedidoDeSintesis } from "./manejar-pedido-sintesis.js";
 import type { MaterialSintesis } from "./schema.js";
 
 const material: MaterialSintesis = {
-  caso: { categoria: "laboral", subcategorias: ["despido"], estado: "CAPTADO", resumen: null },
-  mensajes: [{ rol: "user", texto: "Me despidieron sin causa después de seis años" }],
+  caso: {
+    categoria: "laboral",
+    subcategorias: ["despido"],
+    estado: "CAPTADO",
+    resumen: null,
+    abiertoEn: "2026-08-08T13:00:00.000Z",
+  },
+  mensajes: [
+    { rol: "user", texto: "Me despidieron sin causa después de seis años", fecha: "2026-08-08T13:00:00.000Z" },
+  ],
 };
 
 const sintesisOk = {
