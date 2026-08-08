@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { appendThreadMessages, extractAssistantTexts, streamAgentMessage } from "./agent-service";
+import { appendThreadMessages, extractAssistantTexts, pedirSintesis, streamAgentMessage } from "./agent-service";
 
 describe("agent-service", () => {
   afterEach(() => vi.unstubAllGlobals());
@@ -106,5 +106,46 @@ describe("extractAssistantTexts", () => {
     expect(extractAssistantTexts(null)).toEqual([]);
     expect(extractAssistantTexts({})).toEqual([]);
     expect(extractAssistantTexts({ messages: "no-array" })).toEqual([]);
+  });
+});
+
+describe("pedirSintesis", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  const material = {
+    caso: { categoria: "laboral", subcategorias: ["despido"], estado: "CAPTADO", resumen: null },
+    mensajes: [{ rol: "user" as const, texto: "Me despidieron" }],
+  };
+
+  it("postea el material al endpoint del backend y devuelve la síntesis", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          status: "ok",
+          modelo: "google/gemini-3.5-flash-lite",
+          sintesis: { situacion: "Despido sin causa.", pedido: "Saber qué cobra.", hechos: [], datosClave: [], faltantes: [] },
+        }),
+        { status: 200 },
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const resultado = await pedirSintesis(material);
+
+    expect(fetchMock.mock.calls[0]?.[0]).toContain("/sintesis-caso");
+    expect(resultado.status).toBe("ok");
+  });
+
+  // El BFF nunca confía en la forma que cruza la red: un backend viejo o un
+  // modelo nuevo pueden devolver algo distinto, y eso no puede escribirse en
+  // la base ni romper la vista.
+  it("degrada a error si el backend responde con una forma inesperada", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 })));
+    expect((await pedirSintesis(material)).status).toBe("error");
+  });
+
+  it("degrada a error si el backend no responde", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("ECONNREFUSED")));
+    expect((await pedirSintesis(material)).status).toBe("error");
   });
 });

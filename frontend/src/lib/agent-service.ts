@@ -1,5 +1,11 @@
 import "server-only";
 
+import type { z } from "zod";
+
+import type { MaterialSintesis } from "@/lib/casos/sintesis-schema";
+import { respuestaSintesisSchema } from "@/lib/casos/sintesis-schema";
+import { logger } from "@/utils/logger";
+
 /**
  * Single point of access to the Mastra agents backend. Nothing else reads
  * MASTRA_BASE_URL.
@@ -146,5 +152,39 @@ export async function appendThreadMessages(params: {
   });
   if (!response.ok) {
     throw new Error(`appendThreadMessages responded ${response.status}`);
+  }
+}
+
+/**
+ * Pide la síntesis de un caso al backend Mastra. Sigue siendo este módulo el
+ * único que conoce MASTRA_BASE_URL. Nunca tira: la vista del caso tiene que
+ * poder renderizar sin síntesis.
+ */
+export async function pedirSintesis(
+  material: MaterialSintesis,
+): Promise<z.infer<typeof respuestaSintesisSchema>> {
+  try {
+    const response = await fetch(`${getMastraBaseUrl()}/sintesis-caso`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(material),
+    });
+    if (!response.ok) {
+      logger.warn("sintesis-caso respondió con error", { status: response.status });
+      return { status: "error", mensaje: "No se pudo generar la síntesis" };
+    }
+    const validado = respuestaSintesisSchema.safeParse(await response.json());
+    if (!validado.success) {
+      logger.warn("respuesta de sintesis-caso con forma inesperada", {
+        campos: validado.error.issues.map((issue) => issue.path.join(".")),
+      });
+      return { status: "error", mensaje: "No se pudo generar la síntesis" };
+    }
+    return validado.data;
+  } catch (error) {
+    logger.error("sintesis-caso no respondió", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return { status: "error", mensaje: "No se pudo generar la síntesis" };
   }
 }
