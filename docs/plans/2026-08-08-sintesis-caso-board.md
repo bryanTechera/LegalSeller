@@ -1,7 +1,7 @@
 # Síntesis del caso como pieza central del board — diseño
 
 **Fecha**: 2026-08-08
-**Estado**: aprobado, pendiente de plan de implementación
+**Estado**: implementado
 **Alcance**: un resumen generado con IA por cada `Caso`, una vista "ver caso" en el board que lo pone al centro, y notas del equipo legal ancladas al caso. Fuera: cambiar cómo el agente conversa o capta (§10).
 
 ---
