@@ -30,3 +30,14 @@ export const MODELO_RECEPCION = "google/gemini-3.5-flash-lite";
  * (`buscar-documentos` -> `registrar-caso` -> `corregir-clasificacion`).
  */
 export const MODELO_ESPECIALISTA = "openai/gpt-5.6-luna";
+
+/**
+ * Síntesis del caso para el board. El criterio del rol es fidelidad sobre
+ * texto ya dado, no razonamiento: el material entero viaja en el prompt y la
+ * tarea es reorganizarlo. Corre fuera del camino del chat, así que su latencia
+ * no la percibe ningún consultante.
+ *
+ * Igual que los otros dos, tiene que entrar en `frontend/src/lib/board/costos.ts`
+ * o el board reporta su costo como "sin dato".
+ */
+export const MODELO_SINTESIS = "google/gemini-3.5-flash-lite";
