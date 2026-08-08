@@ -11,11 +11,13 @@ const DESDE = new Date("2026-07-25T00:00:00.000Z");
 
 function filaCaso(overrides: Record<string, unknown> = {}) {
   return {
+    id: "caso-1",
     conversationId: "c1",
     contactoNombre: "Ana Pérez",
     contactoTelefono: "099123456",
     contactoEmail: "ana@ejemplo.com",
     conversation: { threadId: "chat-c1" },
+    sintesis: { contenido: { situacion: "La despidieron sin causa tras seis años." } },
     ...overrides,
   };
 }
@@ -32,13 +34,46 @@ describe("listarCaptados", () => {
   it("arma la fila con el contacto y la fecha del último mensaje", async () => {
     expect(await listarCaptados(DESDE)).toEqual([
       {
+        id: "caso-1",
         conversationId: "c1",
         ultimoMensaje: "2026-07-30T14:00:00.000Z",
         contactoNombre: "Ana Pérez",
         contactoTelefono: "099123456",
         contactoEmail: "ana@ejemplo.com",
+        situacion: "La despidieron sin causa tras seis años.",
       },
     ]);
+  });
+
+  // El listado sirve lo que hay: generar hasta cien síntesis dentro de la carga
+  // de métricas convertiría el board en un cuello de botella.
+  it("expone el id del caso y las primeras líneas del resumen", async () => {
+    prismaMock.prisma.caso.findMany.mockResolvedValue([
+      filaCaso({ id: "caso-1", conversationId: "c1", conversation: { threadId: "chat-c1" } }),
+      filaCaso({ id: "caso-2", conversationId: "c2", conversation: { threadId: "chat-c2" }, sintesis: null }),
+    ]);
+    prismaMock.prisma.$queryRaw.mockResolvedValue([
+      { threadId: "chat-c1", ultimoMensaje: new Date("2026-07-30T14:00:00.000Z") },
+      { threadId: "chat-c2", ultimoMensaje: new Date("2026-07-29T14:00:00.000Z") },
+    ]);
+
+    const captados = await listarCaptados(null);
+    expect(captados[0]?.id).toBe("caso-1");
+    expect(captados[0]?.situacion).toBe("La despidieron sin causa tras seis años.");
+  });
+
+  it("deja la situación en null cuando el caso todavía no tiene síntesis", async () => {
+    prismaMock.prisma.caso.findMany.mockResolvedValue([
+      filaCaso({ id: "caso-1", conversationId: "c1", conversation: { threadId: "chat-c1" } }),
+      filaCaso({ id: "caso-2", conversationId: "c2", conversation: { threadId: "chat-c2" }, sintesis: null }),
+    ]);
+    prismaMock.prisma.$queryRaw.mockResolvedValue([
+      { threadId: "chat-c1", ultimoMensaje: new Date("2026-07-30T14:00:00.000Z") },
+      { threadId: "chat-c2", ultimoMensaje: new Date("2026-07-29T14:00:00.000Z") },
+    ]);
+
+    const captados = await listarCaptados(null);
+    expect(captados[1]?.situacion).toBeNull();
   });
 
   it("solo trae casos en estado CAPTADO", async () => {

@@ -24,6 +24,7 @@ export interface DemandaSubcategoria {
 }
 
 export interface PedidoFueraDeCobertura {
+  casoId: string;
   conversationId: string;
   fecha: string;
   resumen: string | null;
@@ -91,7 +92,7 @@ export async function calcularDemanda(desde: Date | null): Promise<Demanda> {
       ORDER BY casos DESC`,
     prisma.caso.findMany({
       where: { ...casosReales(desde), estado: "FUERA_DE_COBERTURA" },
-      select: { conversationId: true, createdAt: true, resumen: true },
+      select: { id: true, conversationId: true, createdAt: true, resumen: true },
       orderBy: { createdAt: "desc" },
       take: LIMITE_FUERA_DE_COBERTURA,
     }),
@@ -104,6 +105,7 @@ export async function calcularDemanda(desde: Date | null): Promise<Demanda> {
       .sort((a, b) => b.conversaciones - a.conversaciones),
     subcategorias: filaSubcategoriaSchema.array().parse(porSubcategoria),
     fueraDeCobertura: pedidos.map((pedido) => ({
+      casoId: pedido.id,
       conversationId: pedido.conversationId,
       fecha: pedido.createdAt.toISOString(),
       resumen: extraerResumen(pedido.resumen),

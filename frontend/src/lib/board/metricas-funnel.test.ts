@@ -77,6 +77,7 @@ describe("calcularDemanda", () => {
     prismaMock.prisma.$queryRaw.mockResolvedValue([{ subcategoria: "despido", casos: 30 }]);
     prismaMock.prisma.caso.findMany.mockResolvedValue([
       {
+        id: "caso-1",
         conversationId: "c1",
         createdAt: new Date("2026-07-30T10:00:00.000Z"),
         resumen: { brief: "Consulta sobre sucesiones" },
@@ -97,11 +98,23 @@ describe("calcularDemanda", () => {
     const demanda = await calcularDemanda(DESDE);
     expect(demanda.fueraDeCobertura).toEqual([
       {
+        casoId: "caso-1",
         conversationId: "c1",
         fecha: "2026-07-30T10:00:00.000Z",
         resumen: "Consulta sobre sucesiones",
       },
     ]);
+  });
+
+  // Dos pedidos de la MISMA conversación: por diseño cada tema no cubierto es
+  // una fila propia, así que conversationId no identifica la fila.
+  it("expone el id del caso de cada pedido fuera de cobertura", async () => {
+    prismaMock.prisma.caso.findMany.mockResolvedValue([
+      { id: "caso-1", conversationId: "c1", createdAt: new Date("2026-07-30T10:00:00.000Z"), resumen: null },
+      { id: "caso-2", conversationId: "c1", createdAt: new Date("2026-07-29T10:00:00.000Z"), resumen: null },
+    ]);
+    const demanda = await calcularDemanda(null);
+    expect(demanda.fueraDeCobertura.map((pedido) => pedido.casoId)).toEqual(["caso-1", "caso-2"]);
   });
 
   // Mismo guard que el del funnel: la demanda también es métrica de negocio.
