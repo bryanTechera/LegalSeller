@@ -52,6 +52,20 @@ describe("obtenerCaso", () => {
     expect(detalle?.sintesis.estado).toBe("error");
   });
 
+  // asegurarSintesis absorbe el fallo del backend de IA (estado: "error"),
+  // pero tiene rutas internas no blindadas (construirTimeline con
+  // filaMensajeSchema.parse, upserts de Prisma) que pueden tirar en vez de
+  // resolver. El contacto tiene que llegar igual.
+  it("devuelve el caso aunque asegurarSintesis rechace la promesa", async () => {
+    vi.mocked(prisma.caso.findFirst).mockResolvedValue(fila as never);
+    vi.mocked(asegurarSintesis).mockRejectedValue(new Error("timeline rota"));
+
+    const detalle = await obtenerCaso("caso-1");
+
+    expect(detalle?.contactoTelefono).toBe("099111222");
+    expect(detalle?.sintesis).toEqual({ estado: "error", sintesis: null, generadaEn: null });
+  });
+
   it("devuelve null para un caso inexistente o de sesión de revisión", async () => {
     vi.mocked(prisma.caso.findFirst).mockResolvedValue(null as never);
 

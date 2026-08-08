@@ -2,6 +2,7 @@ import "server-only";
 
 import { casosReales } from "@/lib/board/scope";
 import { prisma } from "@/lib/prisma";
+import { logger } from "@/utils/logger";
 
 import type { NotaCasoVista } from "./notas-caso";
 import { asegurarSintesis, type EstadoSintesis } from "./sintesis";
@@ -48,9 +49,12 @@ export async function obtenerCaso(casoId: string): Promise<DetalleCaso | null> {
   });
   if (!caso) return null;
 
-  // Va después de tener el caso y con su error ya absorbido por
-  // `asegurarSintesis`: la vista tiene que renderizar aunque el resumen falle.
-  const sintesis = await asegurarSintesis(caso.id);
+  // Va después de tener el caso. `asegurarSintesis` absorbe el fallo del
+  // backend de IA (estado: "error"), pero no todas sus rutas internas están
+  // blindadas (p. ej. construirTimeline puede tirar sobre una fila con forma
+  // inesperada) — el try/catch cubre esas excepciones sin atenuar. La vista
+  // tiene que renderizar con el contacto aunque el resumen falle del todo.
+  const sintesis = await obtenerSintesisSinTirar(caso.id);
 
   return {
     id: caso.id,
@@ -66,4 +70,22 @@ export async function obtenerCaso(casoId: string): Promise<DetalleCaso | null> {
     sintesis,
     notas: caso.notas.map((nota) => ({ ...nota, createdAt: nota.createdAt.toISOString() })),
   };
+}
+
+/**
+ * Envoltorio de `asegurarSintesis` para esta capa: no toca `sintesis.ts`
+ * (es de otra task), pero el detalle del caso no puede fallar entero por una
+ * excepción no atenuada dentro de esa función (timeline con forma
+ * inesperada, blip transitorio de Postgres). Solo logueamos el mensaje del
+ * error, nunca contenido del caso.
+ */
+async function obtenerSintesisSinTirar(casoId: string): Promise<EstadoSintesis> {
+  try {
+    return await asegurarSintesis(casoId);
+  } catch (error) {
+    logger.error("asegurarSintesis tiró una excepción, se sirve el caso sin síntesis", {
+      mensaje: error instanceof Error ? error.message : "error desconocido",
+    });
+    return { estado: "error", sintesis: null, generadaEn: null };
+  }
 }
