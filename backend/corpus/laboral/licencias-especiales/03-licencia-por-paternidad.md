@@ -20,6 +20,10 @@ Además de la licencia anterior, la ley n.º 19.161 otorga el derecho a ausentar
 
 El descanso se inicia el día del parto, salvo para quienes tienen la licencia paga por el empleador, en cuyo caso comienza inmediatamente después de concluida esta.
 
+**Cuántos días son en total.** Los dos amparos se suman y se cuentan corridos desde el nacimiento. Para el trabajador dependiente de la actividad privada son **20 días corridos**: los 3 primeros a cargo del empleador (ley n.º 18.345) y los 17 restantes cubiertos por el subsidio del BPS. Quien no tiene derecho a la licencia paga por el empleador —el trabajador no dependiente, por ejemplo— también llega a 20 días, todos a cargo del BPS. Es la cuenta que conviene darle a quien pregunta cuántos días le corresponden por el nacimiento de un hijo.
+
+**Nacimiento sin vida.** Los progenitores de nacidos sin vida con más de veinte semanas de gestación o con un peso superior a quinientos gramos tienen derecho a la licencia paternal (ley n.º 20.377).
+
 **Preaviso**: el trabajador dependiente que se proponga hacer uso del derecho debe comunicar en forma fehaciente a su empleador la fecha probable de parto con una antelación mínima de dos semanas.
 
 **Monto del subsidio**: por cada día de ausencia, el promedio diario de las asignaciones computables de los últimos 6 meses (dependientes) —más la cuota parte de aguinaldo, licencia y salario vacacional del período— o de los últimos 12 meses (no dependientes). Nunca inferior al mínimo legal proporcional (2 BPC mensuales proporcionadas a los días de ausencia). Se toman períodos de trabajo efectivo si es más favorable.

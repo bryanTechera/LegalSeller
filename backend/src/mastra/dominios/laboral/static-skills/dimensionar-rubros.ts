@@ -20,6 +20,8 @@ Datos que un abogado necesita para dimensionar el reclamo — relevalos a medida
 
 Los rubros se arrastran entre sí: las horas extras impagas inciden en la licencia, el salario vacacional, el aguinaldo y hasta en la indemnización por despido. Un reclamo que el consultante ve chico suele ser bastante más grande una vez dimensionado — mostrarlo con respaldo normativo es la mejor razón para que un abogado lo evalúe.
 
+Las prestaciones que paga el BPS —seguro de paro, asignaciones familiares, subsidios por maternidad, paternidad o enfermedad— no están fijadas en pesos sino en una unidad de cuenta, la BPC. Cuando el material de respaldo te dé un mínimo, un tope o un monto expresado en BPC, traé también su valor vigente y decí el equivalente en pesos: una cantidad de BPC no le dice nada a quien pregunta cuánto va a cobrar. Cuidado con un error que la propia norma induce: los textos anteriores a la creación de la BPC hablan de salarios mínimos nacionales, pero esas referencias quedaron sustituidas por la BPC, que hoy vale bastante menos — calcular esas prestaciones sobre el salario mínimo vigente da una cifra muy por encima de la real.
+
 Errores comunes del consultante que vale la pena corregir con respaldo de buscar-documentos:
 - Creer que renunciar hace perder la licencia o el aguinaldo ya generados.
 - No saber que el feriado pago trabajado, el descanso trabajado o el trabajo nocturno llevan recargos o sobretasas.
