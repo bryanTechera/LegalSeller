@@ -473,6 +473,34 @@ describe("registrarDatosCaso", () => {
       expect.objectContaining({ where: { id: "k9" }, data: expect.objectContaining({ contactoNombre: "Ana" }) }),
     );
   });
+
+  // El llamador (chat-orchestrator) usa este retorno para disparar la
+  // síntesis del caso exactamente en el turno que capta el contacto.
+  it("devuelve el caso tocado y si quedó captado", async () => {
+    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: "laboral", casoActivoId: "caso-1" });
+    tx.caso.findUnique.mockResolvedValue({ id: "caso-1", subcategorias: [], resumen: null });
+
+    const resultado = await registrarDatosCaso({ sessionId: "sesion-1", contactoTelefono: "099111222" });
+
+    expect(resultado).toEqual({ casoId: "caso-1", captado: true });
+  });
+
+  it("marca captado:false cuando el turno solo trajo hechos", async () => {
+    tx.conversation.findUnique.mockResolvedValue({ id: "c1", categoria: "laboral", casoActivoId: "caso-1" });
+    tx.caso.findUnique.mockResolvedValue({ id: "caso-1", subcategorias: [], resumen: null });
+
+    const resultado = await registrarDatosCaso({ sessionId: "sesion-1", hechos: "Trabajó 6 años" });
+
+    expect(resultado?.captado).toBe(false);
+  });
+
+  it("sin conversación devuelve null", async () => {
+    tx.conversation.findUnique.mockResolvedValue(null);
+
+    const resultado = await registrarDatosCaso({ sessionId: "sesion-fantasma", contactoTelefono: "099" });
+
+    expect(resultado).toBeNull();
+  });
 });
 
 describe("getOrCreateConversation", () => {

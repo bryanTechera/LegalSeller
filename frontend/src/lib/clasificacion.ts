@@ -325,13 +325,13 @@ export async function registrarDatosCaso(params: {
   contactoNombre?: string;
   contactoTelefono?: string;
   contactoEmail?: string;
-}): Promise<void> {
-  await prisma.$transaction(async (tx) => {
+}): Promise<{ casoId: string; captado: boolean } | null> {
+  return prisma.$transaction(async (tx) => {
     const conversation = await tx.conversation.findUnique({
       where: { sessionId: params.sessionId },
       select: { id: true, categoria: true, casoActivoId: true },
     });
-    if (!conversation) return;
+    if (!conversation) return null;
 
     const casoActivo = conversation.casoActivoId
       ? await tx.caso.findUnique({
@@ -401,6 +401,10 @@ export async function registrarDatosCaso(params: {
         payload: JSON.parse(JSON.stringify(params)) as object,
       },
     });
+
+    // El llamador usa esto para disparar la síntesis exactamente en el turno
+    // que captó el contacto, y no en todos.
+    return { casoId: caso.id, captado: tieneContacto };
   });
 }
 

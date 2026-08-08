@@ -6,6 +6,7 @@ import { createSseLineSplitter, parseSseData } from "@/utils/sse";
 import { logger } from "@/utils/logger";
 
 import { appendThreadMessages, fetchAssistantTexts, streamAgentMessage } from "./agent-service";
+import { asegurarSintesis } from "./casos/sintesis";
 import {
   type AsignacionArgs,
   asignacionArgsSchema,
@@ -36,6 +37,8 @@ interface ReceptorOutcome {
   kind: "clasificada" | "escape" | "pregunta";
   args?: AsignacionArgs;
   text: string;
+  /** Caso que este turno del receptor dejó captado, si alguno — null en cualquier otro caso. */
+  casoCaptado: string | null;
 }
 
 /**
@@ -64,6 +67,20 @@ function sseHeaders(): HeadersInit {
 
 function encodeSseText(text: string): Uint8Array {
   return new TextEncoder().encode(`data: ${JSON.stringify({ type: "text-delta", payload: { text } })}\n\n`);
+}
+
+/**
+ * Fire-and-forget con el stream ya drenado: el equipo legal encuentra el
+ * resumen hecho al abrir el caso. Es una optimización de latencia percibida y
+ * no la fuente de verdad — la vista regenera si falta — así que un fallo acá
+ * solo se loguea.
+ */
+function dispararSintesis(casoId: string): void {
+  void asegurarSintesis(casoId).catch((error: unknown) => {
+    logger.error("síntesis del caso captado falló", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  });
 }
 
 function encodeSseError(): Uint8Array {
@@ -182,6 +199,7 @@ async function runReceptor(params: {
 
   let asignacion: AsignacionArgs | null = null;
   let text = "";
+  let casoCaptado: string | null = null;
   await consumeUpstream(upstream, {
     onText: (delta) => {
       text += delta;
@@ -213,7 +231,8 @@ async function runReceptor(params: {
           return;
         }
         try {
-          await registrarDatosCaso({ sessionId: params.sessionId, ...parsed.data });
+          const registrado = await registrarDatosCaso({ sessionId: params.sessionId, ...parsed.data });
+          if (registrado?.captado === true) casoCaptado = registrado.casoId;
         } catch (_error) {
           // Persistence must never break the user-facing stream.
           logger.error("tool-call persistence failed", { toolName });
@@ -228,9 +247,9 @@ async function runReceptor(params: {
 
   if (asignacion) {
     const kind = ESCAPES.has((asignacion as AsignacionArgs).categoria) ? "escape" : "clasificada";
-    return { kind, args: asignacion, text };
+    return { kind, args: asignacion, text, casoCaptado };
   }
-  return { kind: "pregunta", text };
+  return { kind: "pregunta", text, casoCaptado };
 }
 
 /**
@@ -301,6 +320,7 @@ function pipeCategoryTurn(params: {
       }
 
       let temaDerivado: string | null = null;
+      let casoCaptado: string | null = null;
       void consumeUpstream(params.upstream, {
         // Allowlist, no denylist: el chat público recibe SOLO el texto y un
         // error genérico. Reenviar el stream crudo publicaba en la pestaña
@@ -333,7 +353,8 @@ function pipeCategoryTurn(params: {
                 avisarArgsInvalidos(toolName, parsed.error);
                 return;
               }
-              await registrarDatosCaso({ sessionId: params.sessionId, ...parsed.data });
+              const registrado = await registrarDatosCaso({ sessionId: params.sessionId, ...parsed.data });
+              if (registrado?.captado === true) casoCaptado = registrado.casoId;
             } else if (toolName === "corregir-clasificacion") {
               const parsed = correccionArgsSchema.safeParse(args);
               if (!parsed.success) {
@@ -367,13 +388,18 @@ function pipeCategoryTurn(params: {
           // que el puntero se movió es lo único que evita la carrera con el
           // turno siguiente — tanto el chat como el runner de escenarios mandan
           // el próximo mensaje recién cuando este stream cierra.
-          if (temaDerivado === null) return;
-          await derivarTema({
-            sessionId: params.sessionId,
-            message: params.message,
-            categoriaActiva: params.categoriaActiva,
-            tema: temaDerivado,
-          });
+          if (temaDerivado !== null) {
+            await derivarTema({
+              sessionId: params.sessionId,
+              message: params.message,
+              categoriaActiva: params.categoriaActiva,
+              tema: temaDerivado,
+            });
+          }
+          // El equipo legal encuentra el resumen ya hecho al abrir el caso:
+          // se dispara solo en el turno que captó el contacto, no en todos
+          // los que tienen caso (sería una llamada de modelo por turno).
+          if (casoCaptado !== null) dispararSintesis(casoCaptado);
         })
         .catch((error: unknown) => {
           logger.error("derivación de tema falló", {
@@ -486,6 +512,11 @@ export async function orchestrateChatTurn(params: {
   }
 
   const outcome = await runReceptor(params);
+
+  // El equipo legal encuentra el resumen ya hecho al abrir el caso: se
+  // dispara solo en el turno que captó el contacto, no en todos los que
+  // tienen caso (sería una llamada de modelo por turno).
+  if (outcome.casoCaptado !== null) dispararSintesis(outcome.casoCaptado);
 
   if (outcome.kind === "clasificada" && outcome.args) {
     if (!(await esCategoriaHabilitada(outcome.args.categoria))) {

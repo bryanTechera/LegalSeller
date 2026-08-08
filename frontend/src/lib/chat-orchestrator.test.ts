@@ -10,7 +10,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // `const`s, which would still be in the TDZ at that point) — vi.hoisted is
 // the mechanism vitest provides to make these mock objects available to the
 // factories below without hitting a "Cannot access before initialization".
-const { clasificacion, dominios, agentService } = vi.hoisted(() => ({
+const { clasificacion, dominios, agentService, casosSintesis } = vi.hoisted(() => ({
   clasificacion: {
     getOrCreateConversation: vi.fn(),
     asignarClasificacion: vi.fn(),
@@ -23,14 +23,17 @@ const { clasificacion, dominios, agentService } = vi.hoisted(() => ({
   },
   dominios: { subcategoriaUnica: vi.fn(), esCategoriaHabilitada: vi.fn() },
   agentService: { streamAgentMessage: vi.fn(), appendThreadMessages: vi.fn(), fetchAssistantTexts: vi.fn() },
+  casosSintesis: { asegurarSintesis: vi.fn() },
 }));
 
 vi.mock("./clasificacion", () => clasificacion);
 vi.mock("./dominios", () => dominios);
 vi.mock("./agent-service", () => agentService);
+vi.mock("./casos/sintesis", () => casosSintesis);
 
 import { logger } from "@/utils/logger";
 
+import { asegurarSintesis } from "./casos/sintesis";
 import { orchestrateChatTurn } from "./chat-orchestrator";
 
 function sseResponse(events: object[]): Response {
@@ -61,6 +64,7 @@ describe("orchestrateChatTurn", () => {
     agentService.fetchAssistantTexts.mockResolvedValue([]);
     dominios.subcategoriaUnica.mockResolvedValue("despido");
     dominios.esCategoriaHabilitada.mockResolvedValue(true);
+    casosSintesis.asegurarSintesis.mockResolvedValue({ estado: "ok" });
   });
 
   it("con categoría asignada rutea directo al agente de categoría", async () => {
@@ -651,6 +655,116 @@ describe("orchestrateChatTurn", () => {
       const emitido = await drain(await orchestrateChatTurn({ sessionId: "s1", message: "hola" }));
       expect(emitido).not.toContain("registrar-caso");
       expect(clasificacion.registrarDatosCaso).toHaveBeenCalled();
+    });
+  });
+
+  describe("síntesis del caso al captar", () => {
+    it("genera la síntesis del caso cuando el turno dejó el contacto", async () => {
+      clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral", casoActivoId: "k1" });
+      clasificacion.resolverCasoActivo.mockResolvedValue({
+        id: "k1",
+        categoria: "laboral",
+        estado: "EN_CONVERSACION",
+        origen: "DOMINIO",
+        correccionAplicada: false,
+      });
+      clasificacion.registrarDatosCaso.mockResolvedValue({ casoId: "caso-1", captado: true });
+      agentService.streamAgentMessage.mockResolvedValue(
+        sseResponse([
+          { type: "tool-call", payload: { toolName: "registrar-caso", args: { contactoTelefono: "099111222" } } },
+          { type: "text-delta", payload: { text: "listo" } },
+        ]),
+      );
+
+      const respuesta = await orchestrateChatTurn({ sessionId: "s1", message: "mi tel es 099111222" });
+      await new Response(respuesta.body).text(); // drena el stream
+
+      expect(asegurarSintesis).toHaveBeenCalledWith("caso-1");
+    });
+
+    // El disparo es "al captar", una sola vez: si corriera en cada turno con caso,
+    // sería una llamada de modelo por turno — lo que el spec descartó por costo.
+    it("no genera la síntesis en un turno que no captó contacto", async () => {
+      clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral", casoActivoId: "k1" });
+      clasificacion.resolverCasoActivo.mockResolvedValue({
+        id: "k1",
+        categoria: "laboral",
+        estado: "EN_CONVERSACION",
+        origen: "DOMINIO",
+        correccionAplicada: false,
+      });
+      clasificacion.registrarDatosCaso.mockResolvedValue({ casoId: "caso-1", captado: false });
+      agentService.streamAgentMessage.mockResolvedValue(
+        sseResponse([
+          { type: "tool-call", payload: { toolName: "registrar-caso", args: { hechos: "Trabajó 6 años" } } },
+          { type: "text-delta", payload: { text: "listo" } },
+        ]),
+      );
+
+      const respuesta = await orchestrateChatTurn({ sessionId: "s1", message: "trabajé 6 años ahí" });
+      await new Response(respuesta.body).text();
+
+      expect(asegurarSintesis).not.toHaveBeenCalled();
+    });
+
+    // La síntesis es una comodidad: su falla no puede romper el turno del chat.
+    it("un fallo de la síntesis no rompe el stream", async () => {
+      clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: "laboral", casoActivoId: "k1" });
+      clasificacion.resolverCasoActivo.mockResolvedValue({
+        id: "k1",
+        categoria: "laboral",
+        estado: "EN_CONVERSACION",
+        origen: "DOMINIO",
+        correccionAplicada: false,
+      });
+      clasificacion.registrarDatosCaso.mockResolvedValue({ casoId: "caso-1", captado: true });
+      vi.mocked(asegurarSintesis).mockRejectedValue(new Error("backend caído"));
+      agentService.streamAgentMessage.mockResolvedValue(
+        sseResponse([
+          { type: "tool-call", payload: { toolName: "registrar-caso", args: { contactoTelefono: "099111222" } } },
+          { type: "text-delta", payload: { text: "listo" } },
+        ]),
+      );
+
+      const respuesta = await orchestrateChatTurn({ sessionId: "s1", message: "mi tel es 099111222" });
+      const texto = await new Response(respuesta.body).text();
+
+      expect(texto).toContain("data:");
+    });
+
+    // registrar-caso también corre desde el turno del receptor (captación
+    // fuera de cobertura antes de que exista clasificación) — ese camino
+    // dispara la síntesis igual que el del agente de categoría.
+    it("dispara la síntesis cuando el receptor mismo captó el contacto", async () => {
+      clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: null });
+      clasificacion.asignarClasificacion.mockResolvedValue({ categoria: null, aplicada: false });
+      clasificacion.registrarDatosCaso.mockResolvedValue({ casoId: "caso-9", captado: true });
+      agentService.streamAgentMessage.mockResolvedValueOnce(
+        sseResponse([
+          { type: "text-delta", payload: { text: "No atendemos ese tema, pero puedo derivarte." } },
+          {
+            type: "tool-call",
+            payload: { toolName: "registrar-caso", args: { contactoNombre: "Bea", contactoTelefono: "098" } },
+          },
+          {
+            type: "tool-call",
+            payload: {
+              toolName: "asignar-clasificacion",
+              args: {
+                categoria: "fuera-de-universo",
+                temaDetectado: "impositivo",
+                confianza: "alta",
+                casoSensible: false,
+                brief: "b",
+              },
+            },
+          },
+        ]),
+      );
+
+      await drain(await orchestrateChatTurn({ sessionId: "s1", message: "tengo un tema impositivo" }));
+
+      expect(asegurarSintesis).toHaveBeenCalledWith("caso-9");
     });
   });
 });
