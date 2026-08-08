@@ -2,7 +2,13 @@
 
 ## Salario y categorías
 
-Las trabajadoras y trabajadores del servicio doméstico están incorporados al sistema de fijación de salarios y categorías de los Consejos de Salarios (ley n.º 10.449), conforme al artículo 6 de la ley n.º 18.065. El salario mínimo y las categorías del sector los fija el Consejo de Salarios correspondiente; qué establece el laudo vigente para cada categoría lo verifica un abogado con el laudo a la vista.
+Las trabajadoras y trabajadores del servicio doméstico están incorporados al sistema de fijación de salarios y categorías de los Consejos de Salarios (ley n.º 10.449), conforme al artículo 6 de la ley n.º 18.065. El sector corresponde al Grupo 21 "Servicio Doméstico", que desde el 1.º de julio de 2026 tiene tres categorías —General, Cocina y Cuidados—, cada una con su salario mínimo: el detalle de las categorías, de los mínimos vigentes y de los ajustes está desarrollado en el material sobre categorías y salarios del sector.
+
+## Cuándo debe pagarse el sueldo
+
+- **Trabajadores mensuales**: dentro de los primeros 5 días hábiles del mes.
+- **Trabajadores jornaleros con pago quincenal**: dentro de los 5 días hábiles al vencimiento de la quincena.
+- **Trabajadores jornaleros con pago semanal**: al finalizar la respectiva semana.
 
 ## Alimentación y habitación en la modalidad "sin retiro"
 
@@ -12,9 +18,13 @@ Todo empleador que contrate personal doméstico bajo la modalidad "sin retiro" d
 
 Cualquiera sea la modalidad de contratación, si el trabajador recibe alimentación y habitación, el empleador puede deducir por dichos conceptos un **20 % del salario mínimo fijado**. Si solo recibe alimentación, la deducción no puede superar el **10 %**. El Consejo de Salarios puede modificar esos porcentajes (artículo 11 del decreto 224/007).
 
+## Ropa de trabajo y útiles
+
+La parte empleadora debe proveer vestimenta adecuada y las herramientas de trabajo **sin costo** para el trabajador.
+
 ## Recibo de sueldo obligatorio
 
-Los empleadores del servicio doméstico deben extender recibo de sueldo en las condiciones dispuestas por el régimen general de documentación del pago de haberes (artículo 12 de la ley n.º 18.065). El recibo es la prueba de lo efectivamente pagado; su omisión se sanciona según el régimen general.
+Los empleadores del servicio doméstico deben extender recibo de sueldo en las condiciones dispuestas por el régimen general de documentación del pago de haberes (artículo 12 de la ley n.º 18.065). Toda persona trabajadora debe recibir **una copia de su recibo** como constancia laboral: el recibo es la prueba de lo efectivamente pagado, y su omisión se sanciona según el régimen general.
 
 ## Despido
 

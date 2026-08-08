@@ -26,3 +26,13 @@ Los beneficiarios gozan desde su afiliación de la totalidad de los derechos asi
 ## Asignaciones familiares
 
 Los empleados de servicio doméstico son atributarios de la asignación familiar del régimen contributivo (decreto-ley n.º 15.084), en las mismas condiciones que los demás empleados de la actividad privada.
+
+## Inscripción en el BPS
+
+El vínculo debe registrarse ante el Banco de Previsión Social en estos plazos:
+
+- **Alta de la persona trabajadora**: antes de su ingreso o el mismo día.
+- **Registro de la parte empleadora**: hasta la fecha de inicio de actividades.
+- **Baja**: hasta 5 días hábiles posteriores al egreso.
+
+Trabajar sin estar inscripto no le hace perder derechos al trabajador: la obligación de registrar y de verter los aportes es del empleador.

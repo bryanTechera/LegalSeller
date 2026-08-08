@@ -50,5 +50,13 @@
   {
     "mensaje": "tuve mellizos, cobro mas de asignacion familiar por eso?",
     "esperado": { "contiene": ["triple"] }
+  },
+  {
+    "mensaje": "cuanto se cobra por hijo de asignacion familiar del bps?",
+    "esperado": { "contieneAlguno": ["1.347", "1347", "674"] }
+  },
+  {
+    "mensaje": "trabajo cuidando a una señora mayor en su casa de familia, cuanto me tienen que pagar como minimo por hora?",
+    "esperado": { "contieneAlguno": ["184", "34.885", "34885"] }
   }
 ]

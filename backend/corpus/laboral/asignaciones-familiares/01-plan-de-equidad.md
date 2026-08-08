@@ -23,14 +23,25 @@ El monto mensual atiende al número de beneficiarios del hogar, al nivel educati
 - Beneficiarios con incapacidad: $ 1.000 (misma base de valores).
 - Beneficiarios en atención de tiempo completo en establecimientos del INAU o instituciones en convenio: $ 700 (misma base de valores), aplicados en provecho directo del beneficiario.
 
-El valor actualizado de la prestación lo publica el BPS en cada oportunidad de ajuste.
+El valor actualizado de la prestación lo publica el BPS en cada oportunidad de ajuste. **Valores mensuales básicos vigentes a enero de 2026**:
+
+- $ 2.686,51 por el primer beneficiario (en gestación, menor de 5 años y escolares).
+- $ 1.151,38 de complemento por el primer beneficiario que curse nivel intermedio.
+- $ 3.837,90 por beneficiario con discapacidad.
+- $ 2.686,51 por cada beneficiario internado en régimen de tiempo completo en establecimientos del INAU o en instituciones con convenio.
+
+El monto es fijo para los beneficiarios con incapacidad física o psíquica y para los internados en el INAU o en instituciones con convenio.
+
+## Desde cuándo se paga
+
+La prestación se paga **desde el momento en que se realiza la solicitud**, con retroactividad únicamente hasta la fecha de reserva de agenda ante el BPS. Demorar el trámite no se recupera hacia atrás más allá de esa fecha.
 
 ## Hasta cuándo se sirve
 
 - Desde la constatación fehaciente del estado de gravidez por parte del BPS y hasta los 14 años del beneficiario en todos los casos.
-- Hasta los 16 años cuando se compruebe que el beneficiario no pudo completar el ciclo de educación primaria a los 14 años por impedimento plenamente justificado.
+- Hasta los 16 años cuando se compruebe que el beneficiario no pudo completar el ciclo de educación primaria a los 14 años por impedimento plenamente justificado. El BPS considera tales la enfermedad y la residencia en zonas rurales a más de 5 kilómetros del centro educativo más cercano.
 - Hasta los 18 años cuando curse estudios de nivel superior a primaria en instituciones estatales o privadas autorizadas.
-- Si el beneficiario padece una incapacidad física o psíquica que impida su incorporación a todo tipo de tarea remunerada: hasta los 18 años, y a partir de esa edad continúa por períodos de tres años con revisión médica al final de cada período. En este caso la percepción es incompatible con la pensión por invalidez del artículo 43 de la ley n.º 16.713.
+- Si el beneficiario padece una incapacidad física o psíquica que impida su incorporación a todo tipo de tarea remunerada: hasta los 18 años, y a partir de esa edad continúa por períodos de tres años con revisión médica al final de cada período. En este caso la percepción es incompatible con la pensión por invalidez del artículo 43 de la ley n.º 16.713: quien cobra esa pensión percibe el Plan de Equidad hasta los 18 años; quien tiene discapacidad y no accede a la pensión puede percibirlo de por vida —o hasta que cobre otra prestación del BPS— siempre que lo solicite antes de cumplir los 18 años, con certificado del Centro Martínez Visca (ex Patronato).
 
 ## Requisitos para mantener la prestación
 

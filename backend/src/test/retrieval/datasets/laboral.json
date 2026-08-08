@@ -234,5 +234,53 @@
     "categoria": "laboral",
     "subcategorias": ["teletrabajo"],
     "esperado": ["Teletrabajo — Concepto, acuerdo escrito y reversibilidad"]
+  },
+  {
+    "consulta": "¿cuánto se cobra por hijo de asignación familiar?",
+    "categoria": "laboral",
+    "subcategorias": ["asignaciones-familiares"],
+    "esperado": ["Asignaciones familiares — Régimen contributivo de los trabajadores"]
+  },
+  {
+    "consulta": "gano mucho, ¿hasta qué sueldo se puede cobrar la asignación familiar?",
+    "categoria": "laboral",
+    "subcategorias": ["asignaciones-familiares"],
+    "esperado": ["Asignaciones familiares — Régimen contributivo de los trabajadores"]
+  },
+  {
+    "consulta": "mi hijo tiene una discapacidad, ¿cobro más de asignación familiar?",
+    "categoria": "laboral",
+    "subcategorias": ["asignaciones-familiares"],
+    "esperado": ["Asignaciones familiares — Régimen contributivo de los trabajadores", "Asignaciones familiares — Plan de Equidad (hogares en situación de vulnerabilidad)"]
+  },
+  {
+    "consulta": "cuido a una señora mayor en su casa, ¿cuánto me tienen que pagar por hora?",
+    "categoria": "laboral",
+    "subcategorias": ["trabajo-domestico"],
+    "esperado": ["Trabajo doméstico — Categorías laborales y salarios mínimos del sector"]
+  },
+  {
+    "consulta": "soy empleada doméstica y cocino todos los días, ¿en qué categoría estoy?",
+    "categoria": "laboral",
+    "subcategorias": ["trabajo-domestico"],
+    "esperado": ["Trabajo doméstico — Categorías laborales y salarios mínimos del sector"]
+  },
+  {
+    "consulta": "trabajo en casa de familia, ¿me corresponde algo extra con el aguinaldo si no falté nunca?",
+    "categoria": "laboral",
+    "subcategorias": ["trabajo-domestico"],
+    "esperado": ["Trabajo doméstico — Licencias y beneficios propios del sector"]
+  },
+  {
+    "consulta": "soy empleada doméstica, ¿cuántos días de licencia por año me dan?",
+    "categoria": "laboral",
+    "subcategorias": ["trabajo-domestico"],
+    "esperado": ["Trabajo doméstico — Licencias y beneficios propios del sector"]
+  },
+  {
+    "consulta": "¿cuándo me tienen que pagar el sueldo si trabajo en una casa de familia por mes?",
+    "categoria": "laboral",
+    "subcategorias": ["trabajo-domestico"],
+    "esperado": ["Trabajo doméstico — Salario, alimentación, vivienda y recibo"]
   }
 ]
