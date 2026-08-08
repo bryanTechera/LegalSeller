@@ -85,7 +85,19 @@ describe("asegurarSintesis", () => {
   });
 
   it("con `forzar` regenera aunque la huella coincida", async () => {
-    vi.mocked(prisma.caso.findFirst).mockResolvedValue(casoConSintesis("cualquiera") as never);
+    // Igual que el primer test: se genera una vez para conocer la huella
+    // vigente de este material, y recién ahí se monta un hit real — si no,
+    // "cualquiera" nunca coincide con calcularHuella y el test pasaría
+    // aunque se borrara el chequeo de `forzar` en el código.
+    vi.mocked(prisma.caso.findFirst).mockResolvedValue(casoConSintesis(null) as never);
+    vi.mocked(pedirSintesis).mockResolvedValue({ status: "ok", sintesis, modelo: "google/gemini-3.5-flash-lite" });
+    vi.mocked(prisma.sintesisCaso.upsert).mockResolvedValue({} as never);
+    await asegurarSintesis("caso-1");
+    const huellaVigente = vi.mocked(prisma.sintesisCaso.upsert).mock.calls[0]?.[0].create.huella as string;
+
+    vi.resetAllMocks();
+    vi.mocked(construirTimeline).mockResolvedValue(timeline);
+    vi.mocked(prisma.caso.findFirst).mockResolvedValue(casoConSintesis(huellaVigente) as never);
     vi.mocked(pedirSintesis).mockResolvedValue({ status: "ok", sintesis, modelo: "google/gemini-3.5-flash-lite" });
     vi.mocked(prisma.sintesisCaso.upsert).mockResolvedValue({} as never);
 
