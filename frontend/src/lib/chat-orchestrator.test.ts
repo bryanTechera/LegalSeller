@@ -57,7 +57,10 @@ describe("orchestrateChatTurn", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     clasificacion.asignarClasificacion.mockResolvedValue({ categoria: "laboral", aplicada: true });
-    clasificacion.registrarDatosCaso.mockResolvedValue(undefined);
+    // El contrato real es `{casoId, captado} | null`, nunca `void`: un default
+    // fuera de contrato convertía a todos los tests preexistentes en "no
+    // dispara síntesis" por accidente en vez de por diseño.
+    clasificacion.registrarDatosCaso.mockResolvedValue(null);
     clasificacion.registrarIntentoExtraccion.mockResolvedValue(undefined);
     clasificacion.resolverCasoActivo.mockResolvedValue(null);
     agentService.appendThreadMessages.mockResolvedValue(undefined);
@@ -765,6 +768,78 @@ describe("orchestrateChatTurn", () => {
       await drain(await orchestrateChatTurn({ sessionId: "s1", message: "tengo un tema impositivo" }));
 
       expect(asegurarSintesis).toHaveBeenCalledWith("caso-9");
+    });
+
+    // Hallazgo Important de la revisión: el receptor corre memoryReadOnly, así
+    // que el mensaje del turno recién se persiste en appendThreadMessages —
+    // generar antes (con el thread todavía sin este turno) devuelve
+    // "sin-sintesis" en el caso canónico (primer turno) o genera contra un
+    // transcript incompleto en cualquier otro.
+    it("el disparo del camino del receptor corre después de persistir los mensajes del turno", async () => {
+      clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: null });
+      clasificacion.asignarClasificacion.mockResolvedValue({ categoria: null, aplicada: false });
+      clasificacion.registrarDatosCaso.mockResolvedValue({ casoId: "caso-9", captado: true });
+      agentService.streamAgentMessage.mockResolvedValueOnce(
+        sseResponse([
+          { type: "text-delta", payload: { text: "No atendemos ese tema, pero puedo derivarte." } },
+          {
+            type: "tool-call",
+            payload: { toolName: "registrar-caso", args: { contactoNombre: "Bea", contactoTelefono: "098" } },
+          },
+          {
+            type: "tool-call",
+            payload: {
+              toolName: "asignar-clasificacion",
+              args: {
+                categoria: "fuera-de-universo",
+                temaDetectado: "impositivo",
+                confianza: "alta",
+                casoSensible: false,
+                brief: "b",
+              },
+            },
+          },
+        ]),
+      );
+
+      await drain(await orchestrateChatTurn({ sessionId: "s1", message: "tengo un tema impositivo" }));
+
+      expect(agentService.appendThreadMessages).toHaveBeenCalled();
+      expect(asegurarSintesis).toHaveBeenCalledWith("caso-9");
+      const ordenAppend = agentService.appendThreadMessages.mock.invocationCallOrder[0];
+      const ordenSintesis = vi.mocked(asegurarSintesis).mock.invocationCallOrder[0];
+      expect(ordenAppend).toBeDefined();
+      expect(ordenSintesis).toBeDefined();
+      expect(ordenSintesis as number).toBeGreaterThan(ordenAppend as number);
+    });
+
+    // Minor de la revisión: si el receptor captó contacto y el turno encadena
+    // al agente de categoría, que a su vez también captura contacto (o
+    // recaptura el mismo), tiene que haber UN solo disparo — dos huellas
+    // distintas del mismo turno serían dos llamadas reales al modelo.
+    it("un turno encadenado dispara la síntesis una sola vez", async () => {
+      clasificacion.getOrCreateConversation.mockResolvedValue({ id: "c1", categoria: null });
+      clasificacion.registrarDatosCaso
+        .mockResolvedValueOnce({ casoId: "caso-1", captado: true }) // registrar-caso del receptor
+        .mockResolvedValueOnce({ casoId: "caso-1", captado: true }); // registrar-caso del agente de categoría
+      agentService.streamAgentMessage
+        .mockResolvedValueOnce(
+          sseResponse([
+            { type: "tool-call", payload: { toolName: "registrar-caso", args: { contactoTelefono: "099" } } },
+            asignacionLaboral,
+          ]),
+        )
+        .mockResolvedValueOnce(
+          sseResponse([
+            { type: "tool-call", payload: { toolName: "registrar-caso", args: { contactoNombre: "Juan" } } },
+            { type: "text-delta", payload: { text: "Gracias, Juan." } },
+          ]),
+        );
+
+      await drain(await orchestrateChatTurn({ sessionId: "s1", message: "soy Juan, 099..." }));
+
+      expect(asegurarSintesis).toHaveBeenCalledTimes(1);
+      expect(asegurarSintesis).toHaveBeenCalledWith("caso-1");
     });
   });
 });
