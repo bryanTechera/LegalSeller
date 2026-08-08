@@ -11,8 +11,7 @@ import { laboralAgent } from "./dominios/laboral/index.js";
 import { recepcionAgent } from "./dominios/recepcion/index.js";
 import { relacionesConsumoAgent } from "./dominios/relaciones-consumo/index.js";
 import { transitoAgent } from "./dominios/transito/index.js";
-import { generarSintesis } from "./sintesis/generar-sintesis.js";
-import { materialSchema } from "./sintesis/schema.js";
+import { manejarPedidoDeSintesis } from "./sintesis/manejar-pedido-sintesis.js";
 
 export const mastra = new Mastra({
   agents: {
@@ -49,15 +48,13 @@ export const mastra = new Mastra({
       }),
       // Igual que /dominios: fuera del prefijo `/api`, que Mastra rechaza al
       // boot para rutas custom. Lo consume el BFF (`agent-service.ts`), nunca
-      // el browser.
+      // el browser. El dispatch vive en manejarPedidoDeSintesis — testeable
+      // sin server — para que este handler quede como cableado puro.
       registerApiRoute("/sintesis-caso", {
         method: "POST",
         handler: async (c) => {
-          const validado = materialSchema.safeParse(await c.req.json());
-          if (!validado.success) {
-            return c.json({ status: "error", mensaje: "Material inválido" }, 400);
-          }
-          return c.json(await generarSintesis(validado.data));
+          const { resultado, status } = await manejarPedidoDeSintesis(() => c.req.json());
+          return c.json(resultado, status);
         },
       }),
     ],
