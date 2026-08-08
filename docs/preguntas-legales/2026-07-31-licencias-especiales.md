@@ -49,6 +49,12 @@ desarrollarlas. Por ahora el asistente no afirma días ni condiciones de ninguna
 de ausencia por enfermedad (certificaciones y subsidio), o preferís que esos temas queden
 por ahora fuera del alcance del asistente?**
 
+> **Nota del 2026-08-08 (sin respuesta expresa a esta pregunta).** El compendio «Prestaciones»
+> del BPS que enviaron el 8 de agosto desarrolla el subsidio por enfermedad completo, así que
+> lo tomamos como el material que faltaba y lo incorporamos. La confirmación de alcance se
+> repregunta en `docs/preguntas-legales/2026-08-08-topes-bps-y-licencia-domestica.md`. La
+> maternidad y su subsidio ya estaban cubiertos desde el material de despido por gravidez.
+
 ## 3. Licencias mencionadas sin desarrollo: donación de sangre, Papanicolau/radiografía mamaria y antigüedad
 
 La guía menciona al pasar que además existen la licencia por antigüedad y las licencias

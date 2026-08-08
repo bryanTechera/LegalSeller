@@ -44,7 +44,15 @@ El texto del decreto que ustedes mismos nos habían enviado dice, en ese artícu
 
 **Pregunta: ¿esa redacción con «dos» proviene de una modificación posterior del decreto, o es la lectura armonizada del artículo 4 con la ley de 2024?** Lo preguntamos para poder citar la fuente correcta si alguien pregunta de dónde sale el criterio.
 
-## 4. Trabajo doméstico: licencia por antigüedad (quedó sin responder)
+## 4. Dimos por incorporado el subsidio por enfermedad. ¿Es lo que esperaban?
+
+El 31 de julio les preguntamos si nos enviaban material sobre la licencia por maternidad y sobre el régimen de ausencia por enfermedad, o si preferían que esos temas quedaran fuera del alcance del asistente. Esa pregunta quedó sin respuesta expresa.
+
+El compendio «Prestaciones» que nos enviaron ahora desarrolla el subsidio por enfermedad completo: requisitos, desde qué día se cobra, cuánto y por cuánto tiempo. Lo tomamos como el material que faltaba y lo incorporamos, entendiendo que una persona que se enferma y pregunta qué cobra es una consulta del trabajador, que es el alcance que ustedes definieron. El asistente ya orientaba sobre la protección del puesto del trabajador enfermo, así que el tema no le era ajeno.
+
+**Pregunta: ¿confirman que el subsidio por enfermedad entra en el alcance del asistente?** Si preferían que quedara afuera, lo retiramos sin costo.
+
+## 5. Trabajo doméstico: licencia por antigüedad (quedó sin responder)
 
 Esta pregunta ya la habíamos formulado y quedó sin contestar en el documento que nos devolvieron. La reiteramos porque es una consulta frecuente del sector.
 
