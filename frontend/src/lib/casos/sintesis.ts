@@ -16,7 +16,7 @@ import { sintesisSchema, type Sintesis } from "./sintesis-schema";
  * justamente lo que la hace barata. Cambiarlos allá sin cambiarlos acá deja
  * vigentes síntesis generadas con el prompt o el modelo viejo.
  */
-const PROMPT_VERSION = "1";
+const PROMPT_VERSION = "3";
 const MODELO = "google/gemini-3.5-flash-lite";
 
 export type EstadoSintesis =
