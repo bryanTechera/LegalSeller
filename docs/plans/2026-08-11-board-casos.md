@@ -158,7 +158,7 @@ Las rutas nuevas arrancan con `auth()` y devuelven 401 sin sesión, igual que la
 | `/api/board/casos` | GET | `filtrosCasosSchema` sobre los search params → `PaginaCasos` |
 | `/api/board/casos/[id]/gestion` | PATCH | `{ gestion, nota? }` → `GestionCasoVista` \| 404 |
 
-El autor del cambio sale de `getIdentidadBoard()` **server-side**; el body nunca lo transporta. Con identidad de tipo `runner` (la cookie del runner de escenarios) el PATCH responde 403: el runner no gestiona leads. Es el mismo criterio con el que `POST .../notas` resuelve su autor.
+El autor del cambio sale de la sesión Auth.js **server-side** (`sesion.user.name ?? sesion.user.email`); un `autor` en el body se ignora. Es exactamente lo que hace `POST .../notas`, su ruta hermana. No se usa `getIdentidadBoard()` a propósito: esa función acepta además la cookie del runner de escenarios, y el runner no gestiona leads — sin sesión humana, el PATCH es 401.
 
 ### 4.4 UI
 
@@ -179,7 +179,7 @@ Estilo: se extiende `casos.module.css`, que ya sirve a la ficha. Los badges de g
 | Situación | Comportamiento |
 |---|---|
 | Caso inexistente o de sesión de revisión | 404 en el PATCH (el guard está en la query, no en la UI) |
-| PATCH sin sesión humana | 401 sin identidad; 403 si la identidad es el runner |
+| PATCH sin sesión humana | 401 (el runner de escenarios no tiene sesión Auth.js, así que cae acá) |
 | `gestion` fuera del enum | 400 del `parseRequestBody` con Zod |
 | Caso sin contacto (`EN_CONVERSACION`) | Se lista y se gestiona igual; las celdas de contacto muestran "—" |
 | Caso sin síntesis guardada | `situacion` es null → la celda muestra "—"; el listado nunca genera síntesis |
@@ -192,7 +192,7 @@ Estilo: se extiende `casos.module.css`, que ya sirve a la ficha. Los badges de g
 
 - **Vitest sobre `casos.ts`**: excluye sesiones de revisión, aplica el filtro por defecto, pagina por cursor, ordena por última actividad, y sirve `situacion` null sin llamar a `asegurarSintesis`.
 - **Vitest sobre `gestion.ts`**: escribe el evento con el estado anterior; un id inexistente no deja evento huérfano y devuelve null.
-- **Vitest sobre las rutas nuevas** (patrón de `casos/[id]/notas/route.test.ts`): 401 sin sesión, 403 para el runner en el PATCH, 404, 200.
+- **Vitest sobre las rutas nuevas** (patrón de `casos/[id]/notas/route.test.ts`): 401 sin sesión, 400 con `gestion` inválida, 404, 200 — y que un `autor` mandado en el body se ignore.
 - **Test de componente** para `ListadoCasos` (patrón `ListadoChats.test.tsx`): filtros, estado vacío, "Cargar más"; y extensión de `DetalleCaso.test.tsx` para el bloque de gestión.
 - **E2E** (`tests/board.spec.ts`): navegar al tab, abrir una ficha, cambiar la gestión y ver el cambio reflejado en el listado.
 
