@@ -130,12 +130,16 @@ export async function construirTimeline(
   threadId: string,
   opciones?: { conSpans?: boolean },
 ): Promise<ItemTimeline[]> {
+  // El desempate no es cosmético: los dos mensajes de un turno pueden compartir
+  // createdAt al milisegundo (ver `rangoDeEmpate`), y con `ORDER BY "createdAt"`
+  // pelado Postgres los devuelve en orden de heap. `id` cierra cualquier empate
+  // restante para que dos lecturas de la misma sesión no difieran entre sí.
   const filasMensajes = filaMensajeSchema.array().parse(
     await prisma.$queryRaw`
       SELECT id, role, content, "createdAt"
       FROM mastra.mastra_messages
       WHERE thread_id = ${threadId}
-      ORDER BY "createdAt" ASC`,
+      ORDER BY "createdAt" ASC, CASE WHEN role = 'user' THEN 0 ELSE 1 END, id`,
   );
 
   const items: ItemTimeline[] = [];
@@ -205,5 +209,23 @@ export async function construirTimeline(
     }
   }
 
-  return items.sort((a, b) => a.fecha.localeCompare(b.fecha));
+  return items.sort((a, b) => a.fecha.localeCompare(b.fecha) || rangoDeEmpate(a) - rangoDeEmpate(b));
+}
+
+/**
+ * Desempate para items del mismo instante: la consulta del usuario abre el
+ * turno, así que va primero.
+ *
+ * Mastra persiste los dos mensajes de un turno con el MISMO `createdAt` cuando
+ * ninguno llega con timestamp propio: `PostgresStore.saveMessages` completa el
+ * faltante con `new Date()` dentro de un `.map()` sincrónico, y todo el batch
+ * cae en el mismo milisegundo. Al 2026-08-11 pasa en 38 de 762 turnos de
+ * producción, repartidos por toda la historia, y cada empate es exactamente un
+ * par {user, assistant} del mismo turno — por eso "usuario primero" es el orden
+ * real y no una convención. Sin esto el board mostraba la respuesta antes de la
+ * consulta que la provocó, según el orden de heap con que Postgres devolvía las
+ * filas empatadas.
+ */
+function rangoDeEmpate(item: ItemTimeline): number {
+  return item.tipo === "mensaje" && item.rol === "user" ? 0 : 1;
 }

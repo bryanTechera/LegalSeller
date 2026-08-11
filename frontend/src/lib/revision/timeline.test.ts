@@ -76,6 +76,23 @@ describe("construirTimeline", () => {
     expect(timeline).toHaveLength(2);
   });
 
+  // Mastra persiste los dos mensajes de un turno con el MISMO createdAt cuando
+  // ninguno llega con timestamp propio: `PostgresStore.saveMessages` completa el
+  // faltante con `new Date()` dentro de un `.map()` sincrónico, así que todo el
+  // batch cae en el mismo milisegundo (38 de 762 turnos en producción al
+  // 2026-08-11). Con el empate, el orden de filas de Postgres es el del heap y el
+  // `sort` de JS —estable— lo preserva: el board mostraba la respuesta ANTES de
+  // la consulta que la provocó (chat cmso9rzur000vl902ftdp0zuq).
+  it("ante createdAt idéntico, el mensaje del usuario precede al del asistente", async () => {
+    const mismoInstante = new Date("2026-07-20T10:00:00Z");
+    db.$queryRaw.mockResolvedValueOnce([
+      { id: "m2", role: "assistant", content: "Lamento tu situación.", createdAt: mismoInstante },
+      { id: "m1", role: "user", content: "me despidieron", createdAt: mismoInstante },
+    ]);
+    const timeline = await construirTimeline("chat-x");
+    expect(timeline.map((item) => (item.tipo === "mensaje" ? item.rol : item.tipo))).toEqual(["user", "assistant"]);
+  });
+
   it("atribuye la tool al agente por parentSpanId cuando parentEntityName viene null", async () => {
     const spansSinParentName = [
       { spanId: "t1", parentSpanId: "i1", spanType: "tool_call", name: "tool: 'buscar-documentos'", entityName: "buscar-documentos", parentEntityName: null, input: null, output: null, error: null, startedAt: new Date("2026-07-20T10:00:10Z"), endedAt: null, attributes: null },
