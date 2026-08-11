@@ -117,6 +117,17 @@ model Caso {
   /// Atomic guard for `corregirClasificacion`: flips false→true exactly once,
   /// enforced via a guarded `updateMany` (at most ONE correction POR CASO).
   correccionAplicada Boolean    @default(false)
+  /// Estado de gestión del equipo humano. Eje independiente de `estado`, que
+  /// lo escribe el agente: un caso CAPTADO puede estar DESCARTADO (llegó el
+  /// contacto y el caso no calificó). Nunca se escriben entre sí.
+  gestion            CasoGestion @default(NUEVO)
+  /// Nota interna del último cambio de gestión — el "por qué" del cambio de
+  /// estado. La información del caso va a `NotaCaso`, que es otra cosa.
+  gestionNota        String?
+  /// Nombre de quien hizo el último cambio, resuelto desde la sesión del
+  /// board. Nunca viene del body.
+  gestionPor         String?
+  gestionEn          DateTime?
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
 
@@ -127,6 +138,7 @@ model Caso {
 
   @@unique([conversationId, categoria])
   @@index([estado, updatedAt(sort: Desc)])
+  @@index([gestion, updatedAt(sort: Desc)])
 }
 
 /// Append-only audit trail for the human team that classifies and derives.
@@ -195,6 +207,17 @@ enum CasoEventoTipo {
   CORRECCION
   REGISTRO_DATO
   CONTACTO
+  GESTION
+}
+
+/// Estado de gestión del equipo humano sobre un lead. Sin guard de
+/// transición: cualquier estado va a cualquier otro, y el trail de
+/// `CasoEvento` deja la corrección a la vista.
+enum CasoGestion {
+  NUEVO
+  CONTACTADO
+  DERIVADO
+  DESCARTADO
 }
 
 /// Origen de una sesión de revisión: creada por un experto en /revision o
