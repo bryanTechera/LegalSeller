@@ -77,3 +77,41 @@ test("el detalle del chat muestra las fuentes del corpus", async ({ page }) => {
   await page.getByRole("button", { name: "Quitar selección" }).click();
   await expect(respuestaConMarca).not.toHaveAttribute("data-seleccionada", "true");
 });
+
+test("la bandeja de casos abre la ficha y guarda la gestión", async ({ page }) => {
+  test.setTimeout(120_000);
+  await iniciarSesionBoard(page);
+
+  await page.goto("/board/casos");
+  await expect(page.getByRole("heading", { name: "Casos" })).toBeVisible();
+
+  // La tabla la llena SWR después del fetch: contar antes de que resuelva da
+  // siempre 0 y hace que el test se saltee solo con un motivo falso.
+  const filas = page.locator("tbody tr");
+  const vacio = page.getByText("No hay casos con estos filtros.");
+  await expect(filas.first().or(vacio)).toBeVisible({ timeout: 30_000 });
+
+  if (await vacio.isVisible()) {
+    test.skip(true, "Sin casos captados en la base de prueba");
+  }
+
+  await filas.first().getByRole("link").click();
+  await expect(page).toHaveURL(/\/board\/casos\/.+/);
+
+  // La ficha genera la síntesis con IA al abrirse cuando no la tiene: el
+  // bloque de gestión se renderiza igual, no espera por eso.
+  await expect(page.getByRole("heading", { name: "Gestión" })).toBeVisible({ timeout: 30_000 });
+
+  const contactado = page.getByRole("button", { name: "Contactado" });
+  await contactado.click();
+  await expect(contactado).toHaveAttribute("aria-pressed", "true", { timeout: 15_000 });
+
+  // El cambio tiene que sobrevivir a la recarga: si solo vive en el estado
+  // del cliente, el PATCH no llegó a la base y nadie se entera.
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Contactado" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+    { timeout: 30_000 },
+  );
+});
