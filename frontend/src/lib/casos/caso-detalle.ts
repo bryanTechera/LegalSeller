@@ -4,8 +4,11 @@ import { casosReales } from "@/lib/board/scope";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/utils/logger";
 
+import { leerGestion, type GestionCaso } from "./gestion";
 import type { NotaCasoVista } from "./notas-caso";
 import { asegurarSintesis, type EstadoSintesis } from "./sintesis";
+
+const GESTION_VACIA: GestionCaso = { estado: "NUEVO", nota: null, por: null, en: null, historial: [] };
 
 export interface DetalleCaso {
   id: string;
@@ -18,6 +21,7 @@ export interface DetalleCaso {
   contactoEmail: string | null;
   creadoEn: string;
   actualizadoEn: string;
+  gestion: GestionCaso;
   sintesis: EstadoSintesis;
   notas: NotaCasoVista[];
 }
@@ -54,7 +58,14 @@ export async function obtenerCaso(casoId: string): Promise<DetalleCaso | null> {
   // blindadas (p. ej. construirTimeline puede tirar sobre una fila con forma
   // inesperada) — el try/catch cubre esas excepciones sin atenuar. La vista
   // tiene que renderizar con el contacto aunque el resumen falle del todo.
-  const sintesis = await obtenerSintesisSinTirar(caso.id);
+  // Síntesis y gestión no dependen entre sí, así que van en paralelo — la
+  // ficha ya es la página lenta del board y cada envoltorio sigue atrapando
+  // su propia excepción, así que un blip en una no le pisa el resultado a la
+  // otra.
+  const [sintesis, gestion] = await Promise.all([
+    obtenerSintesisSinTirar(caso.id),
+    obtenerGestionSinTirar(caso.id),
+  ]);
 
   return {
     id: caso.id,
@@ -67,6 +78,7 @@ export async function obtenerCaso(casoId: string): Promise<DetalleCaso | null> {
     contactoEmail: caso.contactoEmail,
     creadoEn: caso.createdAt.toISOString(),
     actualizadoEn: caso.updatedAt.toISOString(),
+    gestion,
     sintesis,
     notas: caso.notas.map((nota) => ({ ...nota, createdAt: nota.createdAt.toISOString() })),
   };
@@ -87,5 +99,25 @@ async function obtenerSintesisSinTirar(casoId: string): Promise<EstadoSintesis> 
       mensaje: error instanceof Error ? error.message : "error desconocido",
     });
     return { estado: "error", sintesis: null, generadaEn: null };
+  }
+}
+
+/**
+ * Envoltorio de `leerGestion` simétrico a `obtenerSintesisSinTirar`: por
+ * dentro hace dos llamadas reales a Prisma (`Promise.all` de `caso.findFirst`
+ * + `casoEvento.findMany`) que pueden rechazar por un timeout o un blip de
+ * conexión, no solo devolver `null`. La ficha tiene que renderizar con el
+ * contacto y la síntesis igual, así que una excepción cae a `GESTION_VACIA`
+ * en vez de tumbar el caso entero. Solo logueamos el mensaje del error, nunca
+ * contenido del caso.
+ */
+async function obtenerGestionSinTirar(casoId: string): Promise<GestionCaso> {
+  try {
+    return (await leerGestion(casoId)) ?? GESTION_VACIA;
+  } catch (error) {
+    logger.error("leerGestion tiró una excepción, se sirve el caso sin gestión", {
+      mensaje: error instanceof Error ? error.message : "error desconocido",
+    });
+    return GESTION_VACIA;
   }
 }

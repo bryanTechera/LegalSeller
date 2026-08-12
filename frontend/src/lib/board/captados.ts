@@ -3,6 +3,7 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
+import { situacionDe } from "@/lib/casos/situacion";
 import { prisma } from "@/lib/prisma";
 
 import { casosReales } from "./scope";
@@ -16,18 +17,6 @@ export interface CasoCaptado {
   contactoEmail: string | null;
   /** Primer párrafo de la síntesis; null si el caso todavía no tiene. */
   situacion: string | null;
-}
-
-/**
- * La `situacion` de la síntesis guardada. El Json de Postgres no está tipado y
- * acá no se valida el objeto entero a propósito: el listado solo muestra este
- * campo, y una síntesis vieja a la que le falte otro no tiene por qué
- * desaparecer de la tabla. La validación completa vive en `asegurarSintesis`.
- */
-function situacionDe(contenido: unknown): string | null {
-  if (contenido === null || typeof contenido !== "object") return null;
-  const situacion = (contenido as { situacion?: unknown }).situacion;
-  return typeof situacion === "string" && situacion.trim() !== "" ? situacion : null;
 }
 
 /**

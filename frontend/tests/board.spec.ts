@@ -77,3 +77,70 @@ test("el detalle del chat muestra las fuentes del corpus", async ({ page }) => {
   await page.getByRole("button", { name: "Quitar selección" }).click();
   await expect(respuestaConMarca).not.toHaveAttribute("data-seleccionada", "true");
 });
+
+test("la bandeja de casos abre la ficha y guarda la gestión", async ({ page }) => {
+  test.setTimeout(120_000);
+  await iniciarSesionBoard(page);
+
+  await page.goto("/board/casos");
+  await expect(page.getByRole("heading", { name: "Casos" })).toBeVisible();
+
+  // La tabla la llena SWR después del fetch: contar antes de que resuelva da
+  // siempre 0 y hace que el test se saltee solo con un motivo falso.
+  const filas = page.locator("tbody tr");
+  const vacio = page.getByText("No hay casos con estos filtros.");
+  await expect(filas.first().or(vacio)).toBeVisible({ timeout: 30_000 });
+
+  if (await vacio.isVisible()) {
+    test.skip(true, "Sin casos captados en la base de prueba");
+  }
+
+  await filas.first().getByRole("link").click();
+  await expect(page).toHaveURL(/\/board\/casos\/.+/);
+
+  // La ficha genera la síntesis con IA al abrirse cuando no la tiene: el
+  // bloque de gestión se renderiza igual, no espera por eso.
+  await expect(page.getByRole("heading", { name: "Gestión" })).toBeVisible({ timeout: 30_000 });
+
+  // Esta fila es la primera de la bandeja REAL (esRevision = false): un lead
+  // de un consultante de verdad, no un fixture. El PATCH que este test
+  // dispara queda escrito en la base de prueba, así que hay que devolver el
+  // caso a como estaba — de lo contrario el test marca a un consultante real
+  // como "contactado" y el equipo lo saltea creyendo que alguien ya lo llamó
+  // (el CasoEvento de auditoría queda igual, es append-only y está bien que
+  // así sea; lo que no puede quedar es la gestión vigente pisada).
+  const ETIQUETAS = ["Nuevo", "Contactado", "Derivado", "Descartado"] as const;
+  let vigente: (typeof ETIQUETAS)[number] | null = null;
+  for (const etiqueta of ETIQUETAS) {
+    if ((await page.getByRole("button", { name: etiqueta }).getAttribute("aria-pressed")) === "true") {
+      vigente = etiqueta;
+      break;
+    }
+  }
+  // Todo caso tiene gestión (el default es "Nuevo"), así que siempre hay un
+  // botón presionado — el fallback es solo para no colgar el test si un
+  // cambio de UI rompe aria-pressed en vez de fallar con un mensaje claro.
+  const original = vigente ?? "Nuevo";
+  const destino = ETIQUETAS.find((etiqueta) => etiqueta !== original)!;
+
+  try {
+    const botonDestino = page.getByRole("button", { name: destino });
+    await botonDestino.click();
+    await expect(botonDestino).toHaveAttribute("aria-pressed", "true", { timeout: 15_000 });
+
+    // El cambio tiene que sobrevivir a la recarga: si solo vive en el estado
+    // del cliente, el PATCH no llegó a la base y nadie se entera.
+    await page.reload();
+    await expect(page.getByRole("button", { name: destino })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+      { timeout: 30_000 },
+    );
+  } finally {
+    // Restaura el estado original SIEMPRE, incluso si una aserción de arriba
+    // falló — un lead real no puede quedar marcado por una corrida de test.
+    const botonOriginal = page.getByRole("button", { name: original });
+    await botonOriginal.click();
+    await expect(botonOriginal).toHaveAttribute("aria-pressed", "true", { timeout: 15_000 });
+  }
+});

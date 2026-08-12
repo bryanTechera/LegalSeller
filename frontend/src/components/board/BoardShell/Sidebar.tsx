@@ -10,6 +10,7 @@ import styles from "./board.module.css";
 
 const SECCIONES = [
   { href: "/board", etiqueta: "Métricas" },
+  { href: "/board/casos", etiqueta: "Casos" },
   { href: "/board/chats", etiqueta: "Chats" },
   { href: "/board/revision", etiqueta: "Revisión" },
 ] as const;

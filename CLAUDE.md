@@ -23,6 +23,7 @@ Detalle completo en `docs/guia-arquitectura.md`.
 | `docs/guia-codificacion-frontend.md` | Patrones Next.js: RSC, route handlers, SWR/Zustand, testing |
 | `docs/plans/` | Specs y planes de implementación fechados (registro de decisiones) |
 | `docs/plans/2026-08-01-board-administracion.md` | Board interno `/board`: chats reales, métricas de uso y revisión, detrás de auth por email autorizado |
+| `docs/plans/2026-08-11-board-casos.md` | Tab `Casos` del board: bandeja de leads con el eje de gestión humana (`Caso.gestion`), independiente del `estado` que escribe el agente |
 | `.claude/rules/` | Guías operativas: taxonomía rules/skills/RAG, prompting de agentes, prompt assembly, eval design |
 
 Ante conflicto entre reglas, seguir la más estricta.

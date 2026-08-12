@@ -14,14 +14,29 @@ async function traer(url: string): Promise<Caso> {
   return (await response.json()) as Caso;
 }
 
+const GESTIONES = [
+  { valor: "NUEVO", etiqueta: "Nuevo" },
+  { valor: "CONTACTADO", etiqueta: "Contactado" },
+  { valor: "DERIVADO", etiqueta: "Derivado" },
+  { valor: "DESCARTADO", etiqueta: "Descartado" },
+] as const;
+
+// El board se lee desde Uruguay; sin timeZone explícito, JS formatea con la
+// zona del proceso (UTC en Railway) y todo horario queda corrido.
 function fecha(iso: string): string {
   return new Date(iso).toLocaleString("es-UY", {
+    timeZone: "America/Montevideo",
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+/** Mismo criterio legible que los botones de gestión — nunca el enum crudo. */
+function etiquetaGestion(valor: string): string {
+  return GESTIONES.find((opcion) => opcion.valor === valor)?.etiqueta ?? valor;
 }
 
 export function DetalleCaso({ id }: { id: string }) {
@@ -33,6 +48,38 @@ export function DetalleCaso({ id }: { id: string }) {
   // esto el abogado no tiene forma de saber si lo que tipeó quedó guardado.
   const [errorNota, setErrorNota] = useState(false);
   const [errorRegenerar, setErrorRegenerar] = useState(false);
+  const [notaGestion, setNotaGestion] = useState("");
+  const [cambiandoGestion, setCambiandoGestion] = useState(false);
+  const [errorGestion, setErrorGestion] = useState(false);
+
+  const cambiarGestion = async (gestion: string) => {
+    setCambiandoGestion(true);
+    try {
+      const response = await fetch(`/api/board/casos/${id}/gestion`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gestion, nota: notaGestion }),
+      });
+      if (response.ok) {
+        const { gestion: gestionActualizada } = (await response.json()) as { gestion: Caso["gestion"] };
+        setErrorGestion(false);
+        setNotaGestion("");
+        // La respuesta del PATCH ya trae la gestión vigente: un mutate() sin
+        // argumentos revalida el caso entero (obtenerCaso -> asegurarSintesis
+        // -> construirTimeline sobre todo el thread) para actualizar un solo
+        // bloque de la ficha.
+        await mutate((previo) => (previo ? { ...previo, gestion: gestionActualizada } : previo), {
+          revalidate: false,
+        });
+      } else {
+        setErrorGestion(true);
+      }
+    } catch {
+      setErrorGestion(true);
+    } finally {
+      setCambiandoGestion(false);
+    }
+  };
 
   const agregarNota = async () => {
     if (texto.trim() === "") return;
@@ -85,7 +132,7 @@ export function DetalleCaso({ id }: { id: string }) {
   return (
     <section className={styles.caso}>
       <header className={styles.encabezado}>
-        <Link href="/board" className={styles.link}>← Métricas</Link>
+        <Link href="/board/casos" className={styles.link}>← Casos</Link>
         <h1 className={styles.titulo}>{data.categoria ?? "Pedido fuera de cobertura"}</h1>
         <p className={styles.etiqueta}>
           {data.subcategorias.join(" · ") || "sin subcategorías"} — {data.estado.replace(/_/g, " ").toLowerCase()}
@@ -170,6 +217,57 @@ export function DetalleCaso({ id }: { id: string }) {
               <p className={styles.etiqueta}>Generado el {fecha(data.sintesis.generadaEn)}</p>
             ) : null}
           </>
+        )}
+      </section>
+
+      <section className={styles.bloque} aria-labelledby="caso-gestion">
+        <h2 className={styles.subtitulo} id="caso-gestion">Gestión</h2>
+        <p className={styles.ayuda}>
+          En qué anda este lead. Es independiente del estado que dejó la conversación.
+        </p>
+        <div className={styles.gestiones}>
+          {GESTIONES.map((opcion) => (
+            <button
+              key={opcion.valor}
+              type="button"
+              className={
+                data.gestion.estado === opcion.valor
+                  ? `${styles.botonGestion} ${styles.botonGestionActivo}`
+                  : styles.botonGestion
+              }
+              aria-pressed={data.gestion.estado === opcion.valor}
+              disabled={cambiandoGestion}
+              onClick={() => void cambiarGestion(opcion.valor)}
+            >
+              {opcion.etiqueta}
+            </button>
+          ))}
+        </div>
+        <label className={styles.etiqueta} htmlFor="nota-gestion">Nota del cambio (opcional)</label>
+        <input
+          id="nota-gestion"
+          className={styles.input}
+          value={notaGestion}
+          onChange={(evento) => setNotaGestion(evento.target.value)}
+          placeholder="Por qué cambiás el estado"
+        />
+        {errorGestion ? (
+          <p role="status" className={styles.aviso}>No pudimos guardar el cambio. Probá de nuevo.</p>
+        ) : null}
+        {data.gestion.historial.length === 0 ? (
+          <p className={styles.etiqueta}>Todavía nadie gestionó este caso.</p>
+        ) : (
+          <ul className={styles.notas}>
+            {data.gestion.historial.map((cambio) => (
+              <li key={cambio.id}>
+                <p className={styles.etiqueta}>
+                  {cambio.de ? `${etiquetaGestion(cambio.de)} → ${etiquetaGestion(cambio.a)}` : etiquetaGestion(cambio.a)} ·{" "}
+                  {cambio.por} · {fecha(cambio.createdAt)}
+                </p>
+                {cambio.nota ? <p>{cambio.nota}</p> : null}
+              </li>
+            ))}
+          </ul>
         )}
       </section>
 
