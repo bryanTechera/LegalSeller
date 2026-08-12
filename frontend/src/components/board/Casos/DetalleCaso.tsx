@@ -21,14 +21,22 @@ const GESTIONES = [
   { valor: "DESCARTADO", etiqueta: "Descartado" },
 ] as const;
 
+// El board se lee desde Uruguay; sin timeZone explícito, JS formatea con la
+// zona del proceso (UTC en Railway) y todo horario queda corrido.
 function fecha(iso: string): string {
   return new Date(iso).toLocaleString("es-UY", {
+    timeZone: "America/Montevideo",
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+/** Mismo criterio legible que los botones de gestión — nunca el enum crudo. */
+function etiquetaGestion(valor: string): string {
+  return GESTIONES.find((opcion) => opcion.valor === valor)?.etiqueta ?? valor;
 }
 
 export function DetalleCaso({ id }: { id: string }) {
@@ -53,9 +61,16 @@ export function DetalleCaso({ id }: { id: string }) {
         body: JSON.stringify({ gestion, nota: notaGestion }),
       });
       if (response.ok) {
+        const { gestion: gestionActualizada } = (await response.json()) as { gestion: Caso["gestion"] };
         setErrorGestion(false);
         setNotaGestion("");
-        await mutate();
+        // La respuesta del PATCH ya trae la gestión vigente: un mutate() sin
+        // argumentos revalida el caso entero (obtenerCaso -> asegurarSintesis
+        // -> construirTimeline sobre todo el thread) para actualizar un solo
+        // bloque de la ficha.
+        await mutate((previo) => (previo ? { ...previo, gestion: gestionActualizada } : previo), {
+          revalidate: false,
+        });
       } else {
         setErrorGestion(true);
       }
@@ -246,7 +261,8 @@ export function DetalleCaso({ id }: { id: string }) {
             {data.gestion.historial.map((cambio) => (
               <li key={cambio.id}>
                 <p className={styles.etiqueta}>
-                  {cambio.de ? `${cambio.de} → ${cambio.a}` : cambio.a} · {cambio.por} · {fecha(cambio.createdAt)}
+                  {cambio.de ? `${etiquetaGestion(cambio.de)} → ${etiquetaGestion(cambio.a)}` : etiquetaGestion(cambio.a)} ·{" "}
+                  {cambio.por} · {fecha(cambio.createdAt)}
                 </p>
                 {cambio.nota ? <p>{cambio.nota}</p> : null}
               </li>

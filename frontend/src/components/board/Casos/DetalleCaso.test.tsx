@@ -149,7 +149,17 @@ describe("DetalleCaso", () => {
       isLoading: false,
       mutate,
     } as unknown as ReturnType<typeof useSWR>);
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    const gestionActualizada = {
+      estado: "CONTACTADO",
+      nota: null,
+      por: "ana@estudio.uy",
+      en: "2026-08-11T12:00:00.000Z",
+      historial: [],
+    };
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ gestion: gestionActualizada }),
+    });
     vi.stubGlobal("fetch", fetchMock);
 
     render(<DetalleCaso id="caso-1" />);
@@ -162,7 +172,19 @@ describe("DetalleCaso", () => {
     );
     const [, opciones] = fetchMock.mock.calls[0] as [string, { body: string }];
     expect(JSON.parse(opciones.body)).toEqual({ gestion: "CONTACTADO", nota: "" });
+
+    // Consume la respuesta del PATCH en vez de revalidar el caso entero: la
+    // llamada a mutate() lleva un updater de función y { revalidate: false },
+    // no un mutate() vacío que dispare obtenerCaso -> asegurarSintesis de
+    // nuevo (Minor 5).
     await waitFor(() => expect(mutate).toHaveBeenCalled());
+    const [actualizador, opcionesMutate] = mutate.mock.calls[0] as [
+      (previo: Caso | undefined) => Caso | undefined,
+      { revalidate: boolean },
+    ];
+    expect(opcionesMutate).toEqual({ revalidate: false });
+    expect(actualizador(casoBase)).toEqual({ ...casoBase, gestion: gestionActualizada });
+    expect(actualizador(undefined)).toBeUndefined();
   });
 
   // Un cambio que no se guardó y no avisa es peor que uno que falla ruidoso:
@@ -220,5 +242,35 @@ describe("DetalleCaso", () => {
     const seccionGestion = within(screen.getByRole("region", { name: "Gestión" }));
     expect(screen.getByText(/Va a Martínez\./)).toBeInTheDocument();
     expect(seccionGestion.getByText(/ana@estudio\.uy/)).toBeInTheDocument();
+  });
+
+  // El historial se lee en un board en español: el enum crudo (SCREAMING_SNAKE)
+  // no tiene lugar ahí, y el criterio es el mismo que usan los botones.
+  it("muestra el historial de gestión con etiquetas legibles, no el enum crudo", () => {
+    mockCaso({
+      ...casoBase,
+      gestion: {
+        estado: "DERIVADO",
+        nota: "Va a Martínez.",
+        por: "ana@estudio.uy",
+        en: "2026-08-11T12:00:00.000Z",
+        historial: [
+          {
+            id: "ev-1",
+            de: "CONTACTADO",
+            a: "DERIVADO",
+            nota: "Va a Martínez.",
+            por: "ana@estudio.uy",
+            createdAt: "2026-08-11T12:00:00.000Z",
+          },
+        ],
+      },
+    });
+
+    render(<DetalleCaso id="caso-1" />);
+
+    const seccionGestion = within(screen.getByRole("region", { name: "Gestión" }));
+    expect(seccionGestion.getByText(/Contactado → Derivado/)).toBeInTheDocument();
+    expect(seccionGestion.queryByText(/CONTACTADO → DERIVADO/)).not.toBeInTheDocument();
   });
 });
