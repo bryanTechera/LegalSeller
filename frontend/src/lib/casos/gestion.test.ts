@@ -53,6 +53,18 @@ describe("actualizarGestion", () => {
       },
       select: { id: true, payload: true, createdAt: true },
     });
+    // El guard de alcance tiene que viajar en el where de las tres queries
+    // sobre Caso — no alcanza con que findFirst/updateMany "se llamen".
+    expect(prismaMock.prisma.caso.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ conversation: { esRevision: false } }),
+      }),
+    );
+    expect(prismaMock.prisma.caso.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ conversation: { esRevision: false } }),
+      }),
+    );
     expect(gestion).toEqual({
       estado: "CONTACTADO",
       nota: "Le escribí por WhatsApp.",
@@ -117,6 +129,13 @@ describe("leerGestion", () => {
     const gestion = await leerGestion("caso-1");
     expect(gestion?.estado).toBe("CONTACTADO");
     expect(gestion?.historial).toHaveLength(1);
+    // Misma red que en actualizarGestion: el guard tiene que estar en el
+    // where, no solo confiado a que el mock devuelva lo que el test quiere.
+    expect(prismaMock.prisma.caso.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ conversation: { esRevision: false } }),
+      }),
+    );
   });
 
   // Un payload con forma inesperada (evento escrito por una versión vieja) no
