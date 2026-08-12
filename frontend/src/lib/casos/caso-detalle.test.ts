@@ -4,6 +4,8 @@ vi.mock("@/lib/prisma", () => ({
   prisma: { caso: { findFirst: vi.fn() } },
 }));
 vi.mock("./sintesis", () => ({ asegurarSintesis: vi.fn() }));
+const gestionMock = vi.hoisted(() => ({ leerGestion: vi.fn() }));
+vi.mock("./gestion", () => gestionMock);
 
 import { prisma } from "@/lib/prisma";
 
@@ -27,7 +29,16 @@ const fila = {
 };
 
 describe("obtenerCaso", () => {
-  beforeEach(() => vi.resetAllMocks());
+  beforeEach(() => {
+    vi.resetAllMocks();
+    gestionMock.leerGestion.mockResolvedValue({
+      estado: "NUEVO",
+      nota: null,
+      por: null,
+      en: null,
+      historial: [],
+    });
+  });
 
   it("devuelve el caso con contacto, fechas, notas y síntesis", async () => {
     vi.mocked(prisma.caso.findFirst).mockResolvedValue(fila as never);
@@ -84,5 +95,43 @@ describe("obtenerCaso", () => {
 
     const where = vi.mocked(prisma.caso.findFirst).mock.calls[0]?.[0]?.where;
     expect(where).toMatchObject({ id: "caso-1", conversation: { esRevision: false } });
+  });
+
+  it("incluye la gestión vigente con su historial", async () => {
+    vi.mocked(prisma.caso.findFirst).mockResolvedValue(fila as never);
+    vi.mocked(asegurarSintesis).mockResolvedValue({ estado: "sin-sintesis" });
+    gestionMock.leerGestion.mockResolvedValue({
+      estado: "CONTACTADO",
+      nota: "Le escribí por WhatsApp.",
+      por: "ana@estudio.uy",
+      en: "2026-08-11T12:00:00.000Z",
+      historial: [
+        {
+          id: "ev-1",
+          de: "NUEVO",
+          a: "CONTACTADO",
+          nota: "Le escribí por WhatsApp.",
+          por: "ana@estudio.uy",
+          createdAt: "2026-08-11T12:00:00.000Z",
+        },
+      ],
+    });
+
+    const caso = await obtenerCaso("caso-1");
+
+    expect(caso?.gestion.estado).toBe("CONTACTADO");
+    expect(caso?.gestion.historial).toHaveLength(1);
+  });
+
+  // La ficha tiene que renderizar aunque la gestión no se pueda leer: el
+  // contacto y la síntesis son lo que el abogado necesita para trabajar.
+  it("sin gestión legible sirve el caso con el estado por defecto", async () => {
+    vi.mocked(prisma.caso.findFirst).mockResolvedValue(fila as never);
+    vi.mocked(asegurarSintesis).mockResolvedValue({ estado: "sin-sintesis" });
+    gestionMock.leerGestion.mockResolvedValue(null);
+
+    const caso = await obtenerCaso("caso-1");
+
+    expect(caso?.gestion).toEqual({ estado: "NUEVO", nota: null, por: null, en: null, historial: [] });
   });
 });

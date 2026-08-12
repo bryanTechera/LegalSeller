@@ -4,8 +4,11 @@ import { casosReales } from "@/lib/board/scope";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/utils/logger";
 
+import { leerGestion, type GestionCaso } from "./gestion";
 import type { NotaCasoVista } from "./notas-caso";
 import { asegurarSintesis, type EstadoSintesis } from "./sintesis";
+
+const GESTION_VACIA: GestionCaso = { estado: "NUEVO", nota: null, por: null, en: null, historial: [] };
 
 export interface DetalleCaso {
   id: string;
@@ -18,6 +21,7 @@ export interface DetalleCaso {
   contactoEmail: string | null;
   creadoEn: string;
   actualizadoEn: string;
+  gestion: GestionCaso;
   sintesis: EstadoSintesis;
   notas: NotaCasoVista[];
 }
@@ -56,6 +60,11 @@ export async function obtenerCaso(casoId: string): Promise<DetalleCaso | null> {
   // tiene que renderizar con el contacto aunque el resumen falle del todo.
   const sintesis = await obtenerSintesisSinTirar(caso.id);
 
+  // `leerGestion` vuelve a filtrar por `casosReales`, así que acá no puede
+  // dar null (el caso ya pasó ese filtro); el fallback cubre la carrera de un
+  // caso borrado entre las dos queries sin romper la ficha.
+  const gestion = (await leerGestion(caso.id)) ?? GESTION_VACIA;
+
   return {
     id: caso.id,
     conversationId: caso.conversationId,
@@ -67,6 +76,7 @@ export async function obtenerCaso(casoId: string): Promise<DetalleCaso | null> {
     contactoEmail: caso.contactoEmail,
     creadoEn: caso.createdAt.toISOString(),
     actualizadoEn: caso.updatedAt.toISOString(),
+    gestion,
     sintesis,
     notas: caso.notas.map((nota) => ({ ...nota, createdAt: nota.createdAt.toISOString() })),
   };

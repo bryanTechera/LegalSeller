@@ -30,6 +30,7 @@ const casoBase: Caso = {
   contactoEmail: "ana@example.com",
   creadoEn: "2026-08-01T10:00:00.000Z",
   actualizadoEn: "2026-08-08T10:00:00.000Z",
+  gestion: { estado: "NUEVO", nota: null, por: null, en: null, historial: [] },
   sintesis: {
     estado: "ok",
     vigente: true,
