@@ -217,11 +217,17 @@
   margin-bottom: 12px;
 }
 
+/* El margen inferior va acá y no en `.encabezado` —como sí lo tiene el listado
+   de Chats— porque este módulo comparte `.encabezado` con la ficha del caso,
+   cuyo header es más compacto. `.filtros` existe solo en el listado, así que
+   separa la barra de filtros de lo que venga abajo (la tabla, el "Cargando…"
+   o el mensaje de vacío) sin tocar la ficha. */
 .filtros {
   display: flex;
   gap: var(--space-3);
   align-items: flex-end;
   flex-wrap: wrap;
+  margin-bottom: var(--space-6);
 }
 
 .campo {
