@@ -60,10 +60,7 @@ export async function obtenerCaso(casoId: string): Promise<DetalleCaso | null> {
   // tiene que renderizar con el contacto aunque el resumen falle del todo.
   const sintesis = await obtenerSintesisSinTirar(caso.id);
 
-  // `leerGestion` vuelve a filtrar por `casosReales`, así que acá no puede
-  // dar null (el caso ya pasó ese filtro); el fallback cubre la carrera de un
-  // caso borrado entre las dos queries sin romper la ficha.
-  const gestion = (await leerGestion(caso.id)) ?? GESTION_VACIA;
+  const gestion = await obtenerGestionSinTirar(caso.id);
 
   return {
     id: caso.id,
@@ -97,5 +94,25 @@ async function obtenerSintesisSinTirar(casoId: string): Promise<EstadoSintesis> 
       mensaje: error instanceof Error ? error.message : "error desconocido",
     });
     return { estado: "error", sintesis: null, generadaEn: null };
+  }
+}
+
+/**
+ * Envoltorio de `leerGestion` simétrico a `obtenerSintesisSinTirar`: por
+ * dentro hace dos llamadas reales a Prisma (`Promise.all` de `caso.findFirst`
+ * + `casoEvento.findMany`) que pueden rechazar por un timeout o un blip de
+ * conexión, no solo devolver `null`. La ficha tiene que renderizar con el
+ * contacto y la síntesis igual, así que una excepción cae a `GESTION_VACIA`
+ * en vez de tumbar el caso entero. Solo logueamos el mensaje del error, nunca
+ * contenido del caso.
+ */
+async function obtenerGestionSinTirar(casoId: string): Promise<GestionCaso> {
+  try {
+    return (await leerGestion(casoId)) ?? GESTION_VACIA;
+  } catch (error) {
+    logger.error("leerGestion tiró una excepción, se sirve el caso sin gestión", {
+      mensaje: error instanceof Error ? error.message : "error desconocido",
+    });
+    return GESTION_VACIA;
   }
 }

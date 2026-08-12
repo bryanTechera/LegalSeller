@@ -134,4 +134,19 @@ describe("obtenerCaso", () => {
 
     expect(caso?.gestion).toEqual({ estado: "NUEVO", nota: null, por: null, en: null, historial: [] });
   });
+
+  // leerGestion hace dos llamadas reales a Prisma (Promise.all de findFirst +
+  // casoEvento.findMany) que pueden rechazar (timeout, blip de conexión). El
+  // contacto y la síntesis tienen que llegar igual, como ya pasa con
+  // asegurarSintesis.
+  it("devuelve el caso aunque leerGestion rechace la promesa", async () => {
+    vi.mocked(prisma.caso.findFirst).mockResolvedValue(fila as never);
+    vi.mocked(asegurarSintesis).mockResolvedValue({ estado: "sin-sintesis" });
+    gestionMock.leerGestion.mockRejectedValue(new Error("timeout de conexión"));
+
+    const caso = await obtenerCaso("caso-1");
+
+    expect(caso?.contactoTelefono).toBe("099111222");
+    expect(caso?.gestion).toEqual({ estado: "NUEVO", nota: null, por: null, en: null, historial: [] });
+  });
 });
