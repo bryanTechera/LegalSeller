@@ -177,3 +177,42 @@
 .cargando {
   color: var(--ink-500);
 }
+
+.gestiones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.botonGestion {
+  padding: 6px 14px;
+  border: 1px solid var(--ink-100);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-900);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.botonGestion:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* El estado activo se marca con borde y peso además del color: el color solo
+   no distingue nada para quien no lo percibe. */
+.botonGestionActivo {
+  border-color: var(--accent-strong);
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+
+.input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--ink-100);
+  border-radius: 6px;
+  font: inherit;
+  margin-bottom: 12px;
+}
