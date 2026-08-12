@@ -16,3 +16,12 @@ export type FiltrosChats = z.infer<typeof filtrosChatsSchema>;
 export const crearNotaCasoSchema = z.object({
   texto: z.string().min(1).max(4000),
 });
+
+export const gestionSchema = z.enum(["NUEVO", "CONTACTADO", "DERIVADO", "DESCARTADO"]);
+
+export const actualizarGestionSchema = z.object({
+  gestion: gestionSchema,
+  nota: z.string().max(2000).optional(),
+});
+
+export type ActualizarGestion = z.infer<typeof actualizarGestionSchema>;
