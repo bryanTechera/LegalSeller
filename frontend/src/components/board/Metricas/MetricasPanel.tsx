@@ -125,6 +125,9 @@ export function MetricasPanel() {
             <p className={styles.ayuda}>
               Los consultantes que dejaron cómo contactarlos. Es lo único que un abogado puede accionar.
             </p>
+            <p className={styles.ayuda}>
+              <Link href="/board/casos" className={styles.link}>Ver todos los casos</Link>
+            </p>
             {data.captados.length === 0 ? (
               <p className={styles.ayuda}>Sin casos captados en este rango.</p>
             ) : (
