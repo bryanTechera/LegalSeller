@@ -177,6 +177,20 @@ describe("DetalleCaso", () => {
     expect(await screen.findByText("No pudimos guardar el cambio. Probá de nuevo.")).toBeInTheDocument();
   });
 
+  // Mismo patrón que los tests hermanos de nota y regenerar: sin el finally
+  // que rehabilita los botones, un fallo de red deja la gestión muerta y
+  // nadie puede reintentar marcar el caso.
+  it("si el PATCH de gestión rechaza, los botones de gestión se rehabilitan", async () => {
+    mockCaso(casoBase);
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("network down")));
+    render(<DetalleCaso id="caso-1" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Contactado" }));
+
+    await waitFor(() => expect(screen.getByRole("button", { name: "Contactado" })).not.toBeDisabled());
+    expect(screen.getByRole("button", { name: "Derivado" })).not.toBeDisabled();
+  });
+
   it("lista los cambios anteriores con autor y fecha", () => {
     mockCaso({
       ...casoBase,
