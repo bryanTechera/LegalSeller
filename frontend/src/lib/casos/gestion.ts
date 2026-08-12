@@ -83,6 +83,14 @@ export async function leerGestion(casoId: string): Promise<GestionCaso | null> {
 /**
  * Cambia el estado de gestión y deja el rastro en `CasoEvento`.
  *
+ * `previo` + `updateMany` + `create` van en una única `$transaction`: si el
+ * `create` del evento falla después de que el `updateMany` ya commiteó, la
+ * columna queda en un estado que ningún evento del historial explica (y un
+ * cambio posterior escribiría un `de` mentiroso). Mismo patrón que
+ * `registrarDatosCaso`/`asignarClasificacion` en `clasificacion.ts`. Leer
+ * `previo` DENTRO de la transacción también cierra el TOCTOU de dos PATCH
+ * concurrentes escribiendo dos eventos con el mismo `de`.
+ *
  * El `updateMany` va guardado por `casosReales(null)` —y no un `update` por
  * id— para que el alcance sea parte de la escritura: un caso de sesión de
  * revisión no se gestiona ni conociendo su id. Si afecta 0 filas no se
@@ -95,33 +103,37 @@ export async function actualizarGestion(params: {
   nota?: string;
   por: string;
 }): Promise<GestionCaso | null> {
-  const previo = await prisma.caso.findFirst({
-    where: { id: params.casoId, ...casosReales(null) },
-    select: { id: true, gestion: true },
-  });
-  if (!previo) return null;
-
   const nota = params.nota?.trim() ? params.nota.trim() : null;
 
-  const { count } = await prisma.caso.updateMany({
-    where: { id: params.casoId, ...casosReales(null) },
-    data: {
-      gestion: params.gestion,
-      gestionNota: nota,
-      gestionPor: params.por,
-      gestionEn: new Date(),
-    },
-  });
-  if (count === 0) return null;
+  const escrito = await prisma.$transaction(async (tx) => {
+    const previo = await tx.caso.findFirst({
+      where: { id: params.casoId, ...casosReales(null) },
+      select: { id: true, gestion: true },
+    });
+    if (!previo) return false;
 
-  await prisma.casoEvento.create({
-    data: {
-      casoId: params.casoId,
-      tipo: "GESTION",
-      payload: { de: previo.gestion, a: params.gestion, nota, por: params.por },
-    },
-    select: { id: true, payload: true, createdAt: true },
+    const { count } = await tx.caso.updateMany({
+      where: { id: params.casoId, ...casosReales(null) },
+      data: {
+        gestion: params.gestion,
+        gestionNota: nota,
+        gestionPor: params.por,
+        gestionEn: new Date(),
+      },
+    });
+    if (count === 0) return false;
+
+    await tx.casoEvento.create({
+      data: {
+        casoId: params.casoId,
+        tipo: "GESTION",
+        payload: { de: previo.gestion, a: params.gestion, nota, por: params.por },
+      },
+      select: { id: true, payload: true, createdAt: true },
+    });
+    return true;
   });
+  if (!escrito) return null;
 
   return armarGestion(params.casoId);
 }
