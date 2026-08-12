@@ -13,6 +13,23 @@ import { logger } from "@/utils/logger";
 
 const DEFAULT_BASE_URL = "http://localhost:4112";
 
+/**
+ * Todo mensaje que sale de acá viaja con su `createdAt`, y los de un mismo lote
+ * separados por al menos esta distancia.
+ *
+ * Sin `createdAt` propio, `PostgresStore.saveMessages` completa el faltante con
+ * `message.createdAt || new Date()` dentro de un `.map()` **sincrónico**: todo el
+ * lote cae en el mismo milisegundo. Y un empate de timestamp no es cosmético,
+ * porque el desempate de la memoria de Mastra es semánticamente ciego —
+ * `_sortMessages` cae en `a.id.localeCompare(b.id)`, o sea el UUID del mensaje —
+ * así que el historial le llega al modelo en un orden al azar. Medido en
+ * producción el 2026-08-11: 38 turnos empatados, 19 de ellos con la respuesta
+ * antes de la consulta, y 26 prompts de conversaciones reales efectivamente
+ * enviados así. La separación es de un milisegundo porque es la resolución de la
+ * columna `createdAt` (`timestamp` de Postgres vía Date de JS).
+ */
+const SEPARACION_MINIMA_MS = 1;
+
 export function getMastraBaseUrl(): string {
   return process.env.MASTRA_BASE_URL ?? DEFAULT_BASE_URL;
 }
@@ -43,7 +60,12 @@ export async function streamAgentMessage(params: StreamAgentParams): Promise<Res
     headers: { "Content-Type": "application/json" },
     signal: params.signal,
     body: JSON.stringify({
-      messages: [{ role: "user", content: params.message }],
+      // La hora de llegada viaja explícita: ver `SEPARACION_MINIMA_MS`. Acá va un
+      // solo mensaje, así que alcanza con estampar su recepción — el mensaje del
+      // asistente lo fecha Mastra al cerrar el turno, y `generateCreatedAt` lo
+      // empuja a `createdAt + 1ms` si el reloj del backend viniera atrasado
+      // respecto del BFF.
+      messages: [{ role: "user", content: params.message, createdAt: new Date().toISOString() }],
       threadId: params.threadId,
       resourceId: params.userId,
       // Gotcha en vivo (2026-07-19, Task 13, ver CLAUDE.md): el modern
@@ -138,15 +160,20 @@ export async function appendThreadMessages(params: {
   messages: Array<{ role: "user" | "assistant"; content: string }>;
 }): Promise<void> {
   const url = `${getMastraBaseUrl()}/api/memory/save-messages?agentId=${params.agentId}`;
+  // Base única + offset por posición: el orden del array ES el orden de la
+  // conversación, y así queda expresado en el dato en vez de depender de cuándo
+  // corrió cada `new Date()`.
+  const base = Date.now();
   const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      messages: params.messages.map((message) => ({
+      messages: params.messages.map((message, posicion) => ({
         threadId: params.threadId,
         resourceId: params.resourceId,
         role: message.role,
         content: message.content,
+        createdAt: new Date(base + posicion * SEPARACION_MINIMA_MS).toISOString(),
       })),
     }),
   });
