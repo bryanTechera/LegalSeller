@@ -51,7 +51,48 @@ describe("agent-service", () => {
     const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string) as {
       messages: Array<Record<string, unknown>>;
     };
-    expect(body.messages[0]).toEqual({ threadId: "chat-s1", resourceId: "s1", role: "user", content: "hola" });
+    expect(body.messages[0]).toMatchObject({ threadId: "chat-s1", resourceId: "s1", role: "user", content: "hola" });
+  });
+
+  // Sin createdAt propio, `PostgresStore.saveMessages` completa el faltante con
+  // `new Date()` dentro de un `.map()` sincrónico y TODO el batch cae en el mismo
+  // milisegundo. Acá el batch es el par usuario+respuesta del receptor, así que el
+  // empate era determinístico, no una carrera. Y un empate no es cosmético: la
+  // memoria de Mastra desempata por UUID del mensaje (`_sortMessages` cae en
+  // `a.id.localeCompare(b.id)`), o sea que el modelo recibía el historial en un
+  // orden al azar — 26 prompts de conversaciones reales llegaron con la respuesta
+  // antes de la consulta que la motivó. Ver CLAUDE.md.
+  it("appendThreadMessages estampa createdAt estrictamente creciente por mensaje", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ messages: [] })));
+    vi.stubGlobal("fetch", fetchMock);
+    await appendThreadMessages({
+      threadId: "chat-s1",
+      agentId: "recepcion",
+      resourceId: "s1",
+      messages: [
+        { role: "user", content: "hola" },
+        { role: "assistant", content: "¿en qué te ayudo?" },
+      ],
+    });
+    const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string) as {
+      messages: Array<{ createdAt: string }>;
+    };
+    const marcas = body.messages.map((mensaje) => new Date(mensaje.createdAt).getTime());
+    expect(marcas.every((marca) => Number.isFinite(marca))).toBe(true);
+    expect(marcas[1]).toBeGreaterThan(marcas[0]);
+  });
+
+  it("streamAgentMessage manda el mensaje del usuario con su hora de llegada", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null));
+    vi.stubGlobal("fetch", fetchMock);
+    const antes = Date.now();
+    await streamAgentMessage({ agentId: "laboral", threadId: "chat-s1", userId: "s1", message: "hola" });
+    const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string) as {
+      messages: Array<{ createdAt: string }>;
+    };
+    const marca = new Date(body.messages[0].createdAt).getTime();
+    expect(marca).toBeGreaterThanOrEqual(antes);
+    expect(marca).toBeLessThanOrEqual(Date.now());
   });
 
   it("streamAgentMessage propaga pedidoContactoHecho en el readOnly del requestContext", async () => {
