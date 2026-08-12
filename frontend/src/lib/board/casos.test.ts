@@ -109,6 +109,50 @@ describe("listarCasos", () => {
     expect(prismaMock.prisma.$queryRaw).not.toHaveBeenCalled();
   });
 
+  // La página se ordena por `ultimaActividad`, no por el orden en que Prisma
+  // devolvió las filas (que es por `createdAt`, la columna del cursor). Sin
+  // este reorden, gestionar un caso viejo lo dejaría con un `ultimaActividad`
+  // reciente pero en el medio de la tabla.
+  it("ordena la página por última actividad, no por creación", async () => {
+    prismaMock.prisma.caso.findMany.mockResolvedValue([
+      filaCaso({
+        id: "caso-viejo",
+        createdAt: new Date("2026-08-01T10:00:00.000Z"),
+        updatedAt: new Date("2026-08-01T10:00:00.000Z"),
+        conversation: { threadId: "chat-viejo" },
+      }),
+      filaCaso({
+        id: "caso-nuevo",
+        createdAt: new Date("2026-08-05T10:00:00.000Z"),
+        updatedAt: new Date("2026-08-05T10:00:00.000Z"),
+        conversation: { threadId: "chat-nuevo" },
+      }),
+    ]);
+    // El caso más viejo por creación tuvo actividad más reciente (se gestionó
+    // hoy) — la fila tiene que aparecer primero igual.
+    prismaMock.prisma.$queryRaw.mockResolvedValue([
+      { threadId: "chat-viejo", ultimoMensaje: new Date("2026-08-10T09:00:00.000Z") },
+      { threadId: "chat-nuevo", ultimoMensaje: new Date("2026-08-05T11:00:00.000Z") },
+    ]);
+
+    const pagina = await listarCasos(FILTROS);
+
+    expect(pagina.casos.map((caso) => caso.id)).toEqual(["caso-viejo", "caso-nuevo"]);
+  });
+
+  // El cursor de "Cargar más" tiene que apoyarse en la columna que ordena la
+  // query de Prisma (`createdAt`), no en `updatedAt`: paginar por una columna
+  // que gestionar mueve hace que la página siguiente repita una fila y omita
+  // otra para siempre.
+  it("pagina por createdAt, no por updatedAt", async () => {
+    await listarCasos(FILTROS);
+
+    const [{ orderBy }] = prismaMock.prisma.caso.findMany.mock.calls[0] as [
+      { orderBy: Record<string, unknown> },
+    ];
+    expect(orderBy).toEqual({ createdAt: "desc" });
+  });
+
   it("devuelve cursor solo cuando la página vino llena", async () => {
     const llena = Array.from({ length: 30 }, (_, indice) =>
       filaCaso({ id: `caso-${indice}`, conversation: { threadId: `chat-${indice}` } }),

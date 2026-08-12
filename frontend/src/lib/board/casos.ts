@@ -83,7 +83,15 @@ export async function listarCasos(filtros: FiltrosCasos): Promise<PaginaCasos> {
       conversation: { select: { threadId: true } },
       sintesis: { select: { contenido: true } },
     },
-    orderBy: { updatedAt: "desc" },
+    // El cursor pagina por `createdAt` (columna inmutable), no por
+    // `updatedAt`: gestionar un caso es el flujo normal de esta pantalla y
+    // mueve `updatedAt` por definición. Paginar por una columna que la propia
+    // acción de la pantalla desplaza hace que "Cargar más" repita una fila y
+    // omita otra para siempre (con más de POR_PAGINA casos, el caso que subió
+    // al tope reaparece en la página siguiente y el que estaba último en la
+    // página vieja se pierde). El orden visible sale de `ultimaActividad`
+    // (ver el `.sort()` de abajo), igual que `listarConversaciones`.
+    orderBy: { createdAt: "desc" },
     take: POR_PAGINA,
     ...(filtros.cursor ? { skip: 1, cursor: { id: filtros.cursor } } : {}),
   });
@@ -99,20 +107,29 @@ export async function listarCasos(filtros: FiltrosCasos): Promise<PaginaCasos> {
   );
   const porThread = new Map(ultimos.map((fila) => [fila.threadId, fila.ultimoMensaje]));
 
-  const casos = filas.map((fila) => ({
-    id: fila.id,
-    conversationId: fila.conversationId,
-    fecha: fila.createdAt.toISOString(),
-    ultimaActividad: (porThread.get(fila.conversation.threadId) ?? fila.updatedAt).toISOString(),
-    gestion: fila.gestion,
-    estado: fila.estado,
-    categoria: fila.categoria,
-    subcategorias: fila.subcategorias,
-    contactoNombre: fila.contactoNombre,
-    contactoTelefono: fila.contactoTelefono,
-    contactoEmail: fila.contactoEmail,
-    situacion: situacionDe(fila.sintesis?.contenido),
-  }));
+  const casos = filas
+    .map((fila) => ({
+      id: fila.id,
+      conversationId: fila.conversationId,
+      fecha: fila.createdAt.toISOString(),
+      ultimaActividad: (porThread.get(fila.conversation.threadId) ?? fila.updatedAt).toISOString(),
+      gestion: fila.gestion,
+      estado: fila.estado,
+      categoria: fila.categoria,
+      subcategorias: fila.subcategorias,
+      contactoNombre: fila.contactoNombre,
+      contactoTelefono: fila.contactoTelefono,
+      contactoEmail: fila.contactoEmail,
+      situacion: situacionDe(fila.sintesis?.contenido),
+    }))
+    // Orden real de la página: última actividad, no creación — la columna
+    // "Última actividad" tiene que reflejar lo que muestra, y gestionar un
+    // caso viejo hoy lo tiene que subir. LIMITACIÓN DELIBERADA: este es un
+    // reorden INTRA-página (mismo criterio que `listarConversaciones`); el
+    // cursor de paginación sigue siendo por `createdAt`, así que un caso
+    // viejo con actividad nueva sube dentro de la página en la que cayó por
+    // fecha de creación, pero no salta a una página anterior.
+    .sort((a, b) => new Date(b.ultimaActividad).getTime() - new Date(a.ultimaActividad).getTime());
 
   return {
     casos,
