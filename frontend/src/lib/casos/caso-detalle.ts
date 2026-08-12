@@ -58,9 +58,14 @@ export async function obtenerCaso(casoId: string): Promise<DetalleCaso | null> {
   // blindadas (p. ej. construirTimeline puede tirar sobre una fila con forma
   // inesperada) — el try/catch cubre esas excepciones sin atenuar. La vista
   // tiene que renderizar con el contacto aunque el resumen falle del todo.
-  const sintesis = await obtenerSintesisSinTirar(caso.id);
-
-  const gestion = await obtenerGestionSinTirar(caso.id);
+  // Síntesis y gestión no dependen entre sí, así que van en paralelo — la
+  // ficha ya es la página lenta del board y cada envoltorio sigue atrapando
+  // su propia excepción, así que un blip en una no le pisa el resultado a la
+  // otra.
+  const [sintesis, gestion] = await Promise.all([
+    obtenerSintesisSinTirar(caso.id),
+    obtenerGestionSinTirar(caso.id),
+  ]);
 
   return {
     id: caso.id,
