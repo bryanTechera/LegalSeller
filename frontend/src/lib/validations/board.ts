@@ -25,3 +25,17 @@ export const actualizarGestionSchema = z.object({
 });
 
 export type ActualizarGestion = z.infer<typeof actualizarGestionSchema>;
+
+export const filtrosCasosSchema = z.object({
+  rango: rangoSchema.default("30d"),
+  // El default del listado es CAPTADO —el lead accionable— pero se pide
+  // explícito desde el cliente: un default acá dejaría sin forma de pedir
+  // "todos los estados", que es un filtro válido de la pantalla.
+  estado: z.enum(["EN_CONVERSACION", "CAPTADO", "FUERA_DE_COBERTURA"]).optional(),
+  gestion: gestionSchema.optional(),
+  categoria: z.string().min(1).optional(),
+  contacto: z.string().min(2).max(200).optional(),
+  cursor: z.string().min(1).optional(),
+});
+
+export type FiltrosCasos = z.infer<typeof filtrosCasosSchema>;
