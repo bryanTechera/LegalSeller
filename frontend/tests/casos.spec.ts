@@ -42,6 +42,15 @@ test("el listado de captados muestra la columna Caso y abre el detalle con el re
   await expect(page.getByRole("heading", { name: "Contacto" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Gestionar" })).toBeVisible();
 
+  // La conversación scrollea por dentro: si estirara la página, una charla
+  // larga se llevaría el contacto y la gestión fuera de la vista.
+  await expect(page.locator("ol > li").first()).toBeVisible({ timeout: 15_000 });
+  const lista = await page.locator("ol").first().evaluate((el) => ({
+    overflow: getComputedStyle(el).overflowY,
+    entraEnPantalla: el.clientHeight <= window.innerHeight,
+  }));
+  expect(lista).toEqual({ overflow: "auto", entraEnPantalla: true });
+
   // Y el mismo control vuelve.
   await page.getByRole("link", { name: "Ver resumen del caso" }).click();
   await expect(page.getByRole("heading", { name: "Resumen del caso" })).toBeVisible({ timeout: 15_000 });

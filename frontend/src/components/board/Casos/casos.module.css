@@ -165,19 +165,35 @@
    neutra: con el fondo acento del resumen, la burbuja del consultante (que es
    de ese mismo color) se perdía contra la tarjeta. */
 .chat {
-  display: grid;
+  /* Columna flex y no grilla: los avisos de arriba son condicionales, así que
+     la cantidad de hijos varía y no hay un `grid-template-rows` que sirva para
+     todos los casos. En flex, el título y los avisos toman su alto natural y
+     la lista se queda con lo que sobra. */
+  display: flex;
+  flex-direction: column;
   gap: var(--space-3);
   padding: var(--space-6);
   background: var(--surface-muted);
   border: 1px solid var(--ink-100);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-soft);
+  /* Una conversación larga estiraba la página y empujaba el lateral fuera de
+     la vista. El tope deja la caja dentro del viewport (12rem cubre el
+     encabezado de la ficha más el padding del board) y el scroll pasa a ser
+     de la lista, no del documento. */
+  max-height: calc(100dvh - 12rem);
 }
 
 .conversacion {
   list-style: none;
   display: grid;
   gap: var(--space-3);
+  align-content: start;
+  flex: 1;
+  overflow-y: auto;
+  /* Un item flex no baja del alto de su contenido sin esto, así que la lista
+     ignoraría el tope del contenedor y volvería a estirar la página. */
+  min-height: 0;
 }
 
 .mensajeUsuario,
