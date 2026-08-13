@@ -1,12 +1,54 @@
 .caso {
   display: grid;
   gap: var(--space-6);
-  max-width: 42rem;
+  max-width: 76rem;
+}
+
+.columnas {
+  display: grid;
+  /* minmax(0, …) en la principal: sin él, un dato largo del resumen estira la
+     columna y desborda la grilla (mismo motivo que el min-width: 0 de
+     .contenido en board.module.css). */
+  grid-template-columns: minmax(0, 2fr) minmax(17rem, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.principal,
+.lateral {
+  display: grid;
+  gap: var(--space-6);
+  align-content: start;
+  min-width: 0;
+}
+
+@media (width <= 64rem) {
+  .columnas {
+    grid-template-columns: 1fr;
+  }
 }
 
 .encabezado {
   display: grid;
   gap: var(--space-2);
+}
+
+.filaEncabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.badgeGestion {
+  display: inline-block;
+  padding: 2px 10px;
+  border: 1px solid var(--accent-strong);
+  border-radius: 999px;
+  color: var(--accent-strong);
+  font-size: var(--text-xs);
+  font-weight: 600;
 }
 
 .titulo {
@@ -85,6 +127,9 @@
   font-size: var(--text-lg);
   line-height: var(--line-height-base);
   color: var(--ink-900);
+  /* Ensanchar la columna no puede arruinar la lectura: la prosa se topa en una
+     medida legible aunque la ficha ocupe todo el board. */
+  max-width: 62ch;
 }
 
 .filaTitulo {
@@ -133,6 +178,20 @@
 
 .datos dt {
   color: var(--ink-500);
+}
+
+/* Los datos de la síntesis son pares cortos: en una columna gastan una fila
+   entera por dos palabras y son lo que más alto suma en la ficha. */
+.datosSintesis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+}
+
+.datosSintesis dt {
+  color: var(--ink-500);
+  font-size: var(--text-xs);
 }
 
 .composer {

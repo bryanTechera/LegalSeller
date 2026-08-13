@@ -7,19 +7,14 @@ import useSWR from "swr";
 import type { DetalleCaso as Caso } from "@/lib/casos/caso-detalle";
 
 import styles from "./casos.module.css";
+import { etiquetaGestion } from "./gestiones";
+import { ModalGestion } from "./ModalGestion";
 
 async function traer(url: string): Promise<Caso> {
   const response = await fetch(url);
   if (!response.ok) throw new Error("No pudimos cargar el caso");
   return (await response.json()) as Caso;
 }
-
-const GESTIONES = [
-  { valor: "NUEVO", etiqueta: "Nuevo" },
-  { valor: "CONTACTADO", etiqueta: "Contactado" },
-  { valor: "DERIVADO", etiqueta: "Derivado" },
-  { valor: "DESCARTADO", etiqueta: "Descartado" },
-] as const;
 
 // El board se lee desde Uruguay; sin timeZone explícito, JS formatea con la
 // zona del proceso (UTC en Railway) y todo horario queda corrido.
@@ -34,11 +29,6 @@ function fecha(iso: string): string {
   });
 }
 
-/** Mismo criterio legible que los botones de gestión — nunca el enum crudo. */
-function etiquetaGestion(valor: string): string {
-  return GESTIONES.find((opcion) => opcion.valor === valor)?.etiqueta ?? valor;
-}
-
 export function DetalleCaso({ id }: { id: string }) {
   const { data, error, isLoading, mutate } = useSWR(`/api/board/casos/${id}`, traer);
   const [texto, setTexto] = useState("");
@@ -48,37 +38,13 @@ export function DetalleCaso({ id }: { id: string }) {
   // esto el abogado no tiene forma de saber si lo que tipeó quedó guardado.
   const [errorNota, setErrorNota] = useState(false);
   const [errorRegenerar, setErrorRegenerar] = useState(false);
-  const [notaGestion, setNotaGestion] = useState("");
-  const [cambiandoGestion, setCambiandoGestion] = useState(false);
-  const [errorGestion, setErrorGestion] = useState(false);
 
-  const cambiarGestion = async (gestion: string) => {
-    setCambiandoGestion(true);
-    try {
-      const response = await fetch(`/api/board/casos/${id}/gestion`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ gestion, nota: notaGestion }),
-      });
-      if (response.ok) {
-        const { gestion: gestionActualizada } = (await response.json()) as { gestion: Caso["gestion"] };
-        setErrorGestion(false);
-        setNotaGestion("");
-        // La respuesta del PATCH ya trae la gestión vigente: un mutate() sin
-        // argumentos revalida el caso entero (obtenerCaso -> asegurarSintesis
-        // -> construirTimeline sobre todo el thread) para actualizar un solo
-        // bloque de la ficha.
-        await mutate((previo) => (previo ? { ...previo, gestion: gestionActualizada } : previo), {
-          revalidate: false,
-        });
-      } else {
-        setErrorGestion(true);
-      }
-    } catch {
-      setErrorGestion(true);
-    } finally {
-      setCambiandoGestion(false);
-    }
+  // La respuesta del PATCH que trae el modal ya es la gestión vigente: un
+  // mutate() sin argumentos revalidaría el caso entero (obtenerCaso ->
+  // asegurarSintesis -> construirTimeline sobre todo el thread) para
+  // actualizar un badge del encabezado.
+  const alGuardarGestion = (gestion: Caso["gestion"]) => {
+    void mutate((previo) => (previo ? { ...previo, gestion } : previo), { revalidate: false });
   };
 
   const agregarNota = async () => {
@@ -133,203 +99,169 @@ export function DetalleCaso({ id }: { id: string }) {
     <section className={styles.caso}>
       <header className={styles.encabezado}>
         <Link href="/board/casos" className={styles.link}>← Casos</Link>
-        <h1 className={styles.titulo}>{data.categoria ?? "Pedido fuera de cobertura"}</h1>
+        <div className={styles.filaEncabezado}>
+          <h1 className={styles.titulo}>{data.categoria ?? "Pedido fuera de cobertura"}</h1>
+          {/* El badge dice "Gestión:" porque al lado convive el estado que dejó
+              el agente ("captado"): son dos ejes distintos y una píldora suelta
+              con "Contactado" se lee como si fueran el mismo. */}
+          <span className={styles.badgeGestion}>Gestión: {etiquetaGestion(data.gestion.estado)}</span>
+        </div>
         <p className={styles.etiqueta}>
           {data.subcategorias.join(" · ") || "sin subcategorías"} — {data.estado.replace(/_/g, " ").toLowerCase()}
         </p>
+        {data.gestion.por && data.gestion.en ? (
+          <p className={styles.etiqueta}>Marcado por {data.gestion.por} · {fecha(data.gestion.en)}</p>
+        ) : null}
         <p className={styles.etiqueta}>
           Abierto el {fecha(data.creadoEn)} · última actividad {fecha(data.actualizadoEn)}
         </p>
       </header>
 
-      <section className={styles.resumen} aria-labelledby="caso-resumen">
-        <div className={styles.filaTitulo}>
-          <h2 className={styles.subtitulo} id="caso-resumen">Resumen del caso</h2>
-          <button type="button" className={styles.boton} onClick={regenerar} disabled={regenerando}>
-            {regenerando ? "Regenerando…" : "Regenerar"}
-          </button>
-        </div>
+      <div className={styles.columnas}>
+        <div className={styles.principal}>
+          <section className={styles.resumen} aria-labelledby="caso-resumen">
+            <div className={styles.filaTitulo}>
+              <h2 className={styles.subtitulo} id="caso-resumen">Resumen del caso</h2>
+              <button type="button" className={styles.boton} onClick={regenerar} disabled={regenerando}>
+                {regenerando ? "Regenerando…" : "Regenerar"}
+              </button>
+            </div>
 
-        {errorRegenerar ? (
-          <p role="status" className={styles.aviso}>No pudimos regenerar el resumen.</p>
-        ) : null}
+            {errorRegenerar ? (
+              <p role="status" className={styles.aviso}>No pudimos regenerar el resumen.</p>
+            ) : null}
 
-        {data.sintesis.estado === "error" ? (
-          <p role="status" className={styles.aviso}>
-            No pudimos generar el resumen. {sintesis ? "Abajo está el último que se generó." : "Podés reintentar o leer el chat."}
+            {data.sintesis.estado === "error" ? (
+              <p role="status" className={styles.aviso}>
+                No pudimos generar el resumen. {sintesis ? "Abajo está el último que se generó." : "Podés reintentar o leer el chat."}
+              </p>
+            ) : desactualizada ? (
+              <p role="status" className={styles.aviso}>
+                El resumen quedó desactualizado respecto de la conversación.
+              </p>
+            ) : null}
+
+            {sintesis === null ? (
+              <p className={styles.etiqueta}>Todavía no hay resumen de este caso.</p>
+            ) : (
+              <>
+                <p className={styles.situacion}>{sintesis.situacion}</p>
+
+                {sintesis.hechos.length > 0 ? (
+                  <>
+                    <h3 className={styles.tituloBloque}>Qué pasó</h3>
+                    <ul className={styles.hechos}>
+                      {sintesis.hechos.map((hecho, indice) => (
+                        <li key={`${hecho.que}-${String(indice)}`}>
+                          {hecho.cuando ? <span className={styles.fecha}>{hecho.cuando}</span> : null}
+                          <span>{hecho.que}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : null}
+
+                {sintesis.datosClave.length > 0 ? (
+                  <>
+                    <h3 className={styles.tituloBloque}>Datos del caso</h3>
+                    <dl className={styles.datosSintesis}>
+                      {/* La key lleva el índice: la etiqueta la escribe el modelo y puede repetirse. */}
+                      {sintesis.datosClave.map((dato, indice) => (
+                        <div key={`${dato.etiqueta}-${String(indice)}`}>
+                          <dt>{dato.etiqueta}</dt>
+                          <dd>{dato.valor}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </>
+                ) : null}
+
+                <h3 className={styles.tituloBloque}>Qué pide</h3>
+                <p>{sintesis.pedido}</p>
+
+                {sintesis.faltantes.length > 0 ? (
+                  <>
+                    <h3 className={styles.tituloBloque}>Falta averiguar</h3>
+                    <ul className={styles.faltantes}>
+                      {sintesis.faltantes.map((faltante, indice) => (
+                        <li key={`${faltante}-${String(indice)}`}>{faltante}</li>
+                      ))}
+                    </ul>
+                  </>
+                ) : null}
+
+                {data.sintesis.estado !== "sin-sintesis" && data.sintesis.generadaEn ? (
+                  <p className={styles.etiqueta}>Generado el {fecha(data.sintesis.generadaEn)}</p>
+                ) : null}
+              </>
+            )}
+          </section>
+
+          <p className={styles.verificacion}>
+            <Link href={`/board/chats/${data.conversationId}`} className={styles.link}>
+              Ver chat completo
+            </Link>{" "}
+            — para verificar cualquier dato del resumen contra lo que dijo la persona.
           </p>
-        ) : desactualizada ? (
-          <p role="status" className={styles.aviso}>
-            El resumen quedó desactualizado respecto de la conversación.
-          </p>
-        ) : null}
-
-        {sintesis === null ? (
-          <p className={styles.etiqueta}>Todavía no hay resumen de este caso.</p>
-        ) : (
-          <>
-            <p className={styles.situacion}>{sintesis.situacion}</p>
-
-            {sintesis.hechos.length > 0 ? (
-              <>
-                <h3 className={styles.tituloBloque}>Qué pasó</h3>
-                <ul className={styles.hechos}>
-                  {sintesis.hechos.map((hecho, indice) => (
-                    <li key={`${hecho.que}-${String(indice)}`}>
-                      {hecho.cuando ? <span className={styles.fecha}>{hecho.cuando}</span> : null}
-                      <span>{hecho.que}</span>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            ) : null}
-
-            {sintesis.datosClave.length > 0 ? (
-              <>
-                <h3 className={styles.tituloBloque}>Datos del caso</h3>
-                <dl className={styles.datos}>
-                  {/* La key lleva el índice: la etiqueta la escribe el modelo y puede repetirse. */}
-                  {sintesis.datosClave.map((dato, indice) => (
-                    <div key={`${dato.etiqueta}-${String(indice)}`}>
-                      <dt>{dato.etiqueta}</dt>
-                      <dd>{dato.valor}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </>
-            ) : null}
-
-            <h3 className={styles.tituloBloque}>Qué pide</h3>
-            <p>{sintesis.pedido}</p>
-
-            {sintesis.faltantes.length > 0 ? (
-              <>
-                <h3 className={styles.tituloBloque}>Falta averiguar</h3>
-                <ul className={styles.faltantes}>
-                  {sintesis.faltantes.map((faltante, indice) => (
-                    <li key={`${faltante}-${String(indice)}`}>{faltante}</li>
-                  ))}
-                </ul>
-              </>
-            ) : null}
-
-            {data.sintesis.estado !== "sin-sintesis" && data.sintesis.generadaEn ? (
-              <p className={styles.etiqueta}>Generado el {fecha(data.sintesis.generadaEn)}</p>
-            ) : null}
-          </>
-        )}
-      </section>
-
-      <section className={styles.bloque} aria-labelledby="caso-gestion">
-        <h2 className={styles.subtitulo} id="caso-gestion">Gestión</h2>
-        <p className={styles.ayuda}>
-          En qué anda este lead. Es independiente del estado que dejó la conversación.
-        </p>
-        <div className={styles.gestiones}>
-          {GESTIONES.map((opcion) => (
-            <button
-              key={opcion.valor}
-              type="button"
-              className={
-                data.gestion.estado === opcion.valor
-                  ? `${styles.botonGestion} ${styles.botonGestionActivo}`
-                  : styles.botonGestion
-              }
-              aria-pressed={data.gestion.estado === opcion.valor}
-              disabled={cambiandoGestion}
-              onClick={() => void cambiarGestion(opcion.valor)}
-            >
-              {opcion.etiqueta}
-            </button>
-          ))}
         </div>
-        <label className={styles.etiqueta} htmlFor="nota-gestion">Nota del cambio (opcional)</label>
-        <input
-          id="nota-gestion"
-          className={styles.input}
-          value={notaGestion}
-          onChange={(evento) => setNotaGestion(evento.target.value)}
-          placeholder="Por qué cambiás el estado"
-        />
-        {errorGestion ? (
-          <p role="status" className={styles.aviso}>No pudimos guardar el cambio. Probá de nuevo.</p>
-        ) : null}
-        {data.gestion.historial.length === 0 ? (
-          <p className={styles.etiqueta}>Todavía nadie gestionó este caso.</p>
-        ) : (
-          <ul className={styles.notas}>
-            {data.gestion.historial.map((cambio) => (
-              <li key={cambio.id}>
-                <p className={styles.etiqueta}>
-                  {cambio.de ? `${etiquetaGestion(cambio.de)} → ${etiquetaGestion(cambio.a)}` : etiquetaGestion(cambio.a)} ·{" "}
-                  {cambio.por} · {fecha(cambio.createdAt)}
-                </p>
-                {cambio.nota ? <p>{cambio.nota}</p> : null}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
 
-      <section className={styles.bloque} aria-labelledby="caso-contacto">
-        <h2 className={styles.subtitulo} id="caso-contacto">Contacto</h2>
-        <dl className={styles.datos}>
-          <div>
-            <dt>Nombre</dt>
-            <dd>{data.contactoNombre ?? "—"}</dd>
-          </div>
-          <div>
-            <dt>Teléfono</dt>
-            <dd>{data.contactoTelefono ? <a href={`tel:${data.contactoTelefono}`}>{data.contactoTelefono}</a> : "—"}</dd>
-          </div>
-          <div>
-            <dt>Email</dt>
-            <dd>{data.contactoEmail ? <a href={`mailto:${data.contactoEmail}`}>{data.contactoEmail}</a> : "—"}</dd>
-          </div>
-        </dl>
-      </section>
+        <aside className={styles.lateral}>
+          <section className={styles.bloque} aria-labelledby="caso-contacto">
+            <h2 className={styles.subtitulo} id="caso-contacto">Contacto</h2>
+            <dl className={styles.datos}>
+              <div>
+                <dt>Nombre</dt>
+                <dd>{data.contactoNombre ?? "—"}</dd>
+              </div>
+              <div>
+                <dt>Teléfono</dt>
+                <dd>{data.contactoTelefono ? <a href={`tel:${data.contactoTelefono}`}>{data.contactoTelefono}</a> : "—"}</dd>
+              </div>
+              <div>
+                <dt>Email</dt>
+                <dd>{data.contactoEmail ? <a href={`mailto:${data.contactoEmail}`}>{data.contactoEmail}</a> : "—"}</dd>
+              </div>
+            </dl>
+          </section>
 
-      <section className={styles.bloque} aria-labelledby="caso-notas">
-        <h2 className={styles.subtitulo} id="caso-notas">Notas del equipo legal</h2>
-        <p className={styles.ayuda}>
-          Lo que averiguaron por fuera del chat — por ejemplo hablando con la persona.
-        </p>
-        <div className={styles.composer}>
-          <label className={styles.etiqueta} htmlFor="nota-caso">Nueva nota</label>
-          <textarea
-            id="nota-caso"
-            className={styles.textarea}
-            value={texto}
-            onChange={(evento) => setTexto(evento.target.value)}
-            rows={3}
-          />
-          <button type="button" className={styles.boton} onClick={agregarNota} disabled={guardando || texto.trim() === ""}>
-            {guardando ? "Guardando…" : "Agregar nota"}
-          </button>
-          {errorNota ? (
-            <p role="status" className={styles.aviso}>No pudimos guardar la nota. Probá de nuevo.</p>
-          ) : null}
-        </div>
-        {data.notas.length === 0 ? (
-          <p className={styles.etiqueta}>Todavía no hay notas sobre este caso.</p>
-        ) : (
-          <ul className={styles.notas}>
-            {data.notas.map((nota) => (
-              <li key={nota.id} className={styles.nota}>
-                <p className={styles.etiqueta}>{nota.autor} · {fecha(nota.createdAt)}</p>
-                <p>{nota.texto}</p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+          <section className={styles.bloque} aria-labelledby="caso-notas">
+            <h2 className={styles.subtitulo} id="caso-notas">Notas del equipo legal</h2>
+            <p className={styles.ayuda}>
+              Lo que averiguaron por fuera del chat — por ejemplo hablando con la persona.
+            </p>
+            <div className={styles.composer}>
+              <label className={styles.etiqueta} htmlFor="nota-caso">Nueva nota</label>
+              <textarea
+                id="nota-caso"
+                className={styles.textarea}
+                value={texto}
+                onChange={(evento) => setTexto(evento.target.value)}
+                rows={3}
+              />
+              <button type="button" className={styles.boton} onClick={agregarNota} disabled={guardando || texto.trim() === ""}>
+                {guardando ? "Guardando…" : "Agregar nota"}
+              </button>
+              {errorNota ? (
+                <p role="status" className={styles.aviso}>No pudimos guardar la nota. Probá de nuevo.</p>
+              ) : null}
+            </div>
+            {data.notas.length === 0 ? (
+              <p className={styles.etiqueta}>Todavía no hay notas sobre este caso.</p>
+            ) : (
+              <ul className={styles.notas}>
+                {data.notas.map((nota) => (
+                  <li key={nota.id} className={styles.nota}>
+                    <p className={styles.etiqueta}>{nota.autor} · {fecha(nota.createdAt)}</p>
+                    <p>{nota.texto}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </aside>
+      </div>
 
-      <p className={styles.verificacion}>
-        <Link href={`/board/chats/${data.conversationId}`} className={styles.link}>
-          Ver chat completo
-        </Link>{" "}
-        — para verificar cualquier dato del resumen contra lo que dijo la persona.
-      </p>
+      <ModalGestion casoId={id} gestion={data.gestion} onGuardado={alGuardarGestion} />
     </section>
   );
 }
