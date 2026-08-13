@@ -286,3 +286,89 @@
   border-radius: 999px;
   font-size: 12px;
 }
+
+/* El botón vive fijo al viewport y no en el flujo de la ficha: la acción tiene
+   que estar a un click desde cualquier punto del scroll. */
+.flotante {
+  position: fixed;
+  right: var(--space-6);
+  bottom: var(--space-6);
+  z-index: 20;
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  padding: var(--space-3) var(--space-6);
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-navy);
+  box-shadow: var(--shadow-raised);
+  cursor: pointer;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+}
+
+.fondo {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  /* Mismo triplete que las sombras del proyecto (--shadow-raised). */
+  background: rgb(19 42 59 / 45%);
+  cursor: pointer;
+}
+
+.modal {
+  position: relative;
+  display: grid;
+  gap: var(--space-3);
+  width: min(34rem, 100%);
+  max-height: 85dvh;
+  overflow-y: auto;
+  padding: var(--space-6);
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-raised);
+}
+
+.cabeceraModal {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.cerrar {
+  font: inherit;
+  font-size: var(--text-lg);
+  line-height: 1;
+  padding: 0 var(--space-1);
+  border: 0;
+  background: transparent;
+  color: var(--ink-500);
+  cursor: pointer;
+}
+
+.accionesModal {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.botonSecundario {
+  font: inherit;
+  font-size: var(--text-sm);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--ink-300);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-900);
+  cursor: pointer;
+}
