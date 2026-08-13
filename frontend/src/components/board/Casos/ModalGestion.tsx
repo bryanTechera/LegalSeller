@@ -30,6 +30,8 @@ export function ModalGestion({ casoId, gestion, onGuardado }: Props) {
   const [abierto, setAbierto] = useState(false);
   const [seleccion, setSeleccion] = useState<string>(gestion.estado);
   const [nota, setNota] = useState("");
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState(false);
   const disparador = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
 
@@ -38,10 +40,12 @@ export function ModalGestion({ casoId, gestion, onGuardado }: Props) {
     // la vez anterior no puede sobrevivir a un cierre.
     setSeleccion(gestion.estado);
     setNota("");
+    setError(false);
     setAbierto(true);
   };
 
   const cerrar = () => {
+    if (guardando) return;
     setAbierto(false);
     disparador.current?.focus();
   };
@@ -50,7 +54,7 @@ export function ModalGestion({ casoId, gestion, onGuardado }: Props) {
     if (!abierto) return;
     panel.current?.focus();
     const alTeclear = (evento: KeyboardEvent) => {
-      if (evento.key !== "Escape") return;
+      if (evento.key !== "Escape" || guardando) return;
       setAbierto(false);
       disparador.current?.focus();
     };
@@ -58,7 +62,34 @@ export function ModalGestion({ casoId, gestion, onGuardado }: Props) {
     return () => {
       document.removeEventListener("keydown", alTeclear);
     };
-  }, [abierto]);
+  }, [abierto, guardando]);
+
+  const guardar = async () => {
+    setGuardando(true);
+    try {
+      const response = await fetch(`/api/board/casos/${casoId}/gestion`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gestion: seleccion, nota }),
+      });
+      if (response.ok) {
+        const { gestion: actualizada } = (await response.json()) as { gestion: GestionCaso };
+        onGuardado(actualizada);
+        // Cierra sin pasar por `cerrar`, que se niega mientras `guardando`
+        // sigue en true (recién baja en el finally).
+        setAbierto(false);
+        disparador.current?.focus();
+      } else {
+        setError(true);
+      }
+    } catch {
+      // El botón se rehabilita en el finally: sin él queda muerto y nadie
+      // puede reintentar marcar el caso.
+      setError(true);
+    } finally {
+      setGuardando(false);
+    }
+  };
 
   return (
     <>
@@ -109,6 +140,7 @@ export function ModalGestion({ casoId, gestion, onGuardado }: Props) {
                       : styles.botonGestion
                   }
                   aria-pressed={seleccion === opcion.valor}
+                  disabled={guardando}
                   onClick={() => setSeleccion(opcion.valor)}
                 >
                   {opcion.etiqueta}
@@ -125,11 +157,31 @@ export function ModalGestion({ casoId, gestion, onGuardado }: Props) {
               value={nota}
               onChange={(evento) => setNota(evento.target.value)}
               placeholder="Por qué cambiás el estado"
+              disabled={guardando}
             />
 
+            {error ? (
+              <p role="status" className={styles.aviso}>
+                No pudimos guardar el cambio. Probá de nuevo.
+              </p>
+            ) : null}
+
             <div className={styles.accionesModal}>
-              <button type="button" className={styles.botonSecundario} onClick={cerrar}>
+              <button
+                type="button"
+                className={styles.botonSecundario}
+                onClick={cerrar}
+                disabled={guardando}
+              >
                 Cancelar
+              </button>
+              <button
+                type="button"
+                className={styles.boton}
+                onClick={() => void guardar()}
+                disabled={guardando || seleccion === gestion.estado}
+              >
+                {guardando ? "Guardando…" : "Guardar cambio"}
               </button>
             </div>
 
