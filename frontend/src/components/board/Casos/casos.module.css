@@ -41,6 +41,27 @@
   flex-wrap: wrap;
 }
 
+/* Los dos ejes del caso van juntos y con la misma forma; los distingue el
+   relleno: lleno el que escribe el equipo (gestión), contorneado el que dejó
+   el agente (estado). Mismo largo de píldora que el badge de la bandeja. */
+.estados {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.badgeEstado {
+  display: inline-block;
+  padding: 2px 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--surface-muted);
+  color: var(--ink-700);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
 .badgeGestion {
   display: inline-block;
   padding: 2px 10px;
@@ -49,6 +70,24 @@
   color: var(--accent-strong);
   font-size: var(--text-xs);
   font-weight: 600;
+}
+
+/* Las subcategorías son temas, no estados: van neutras y sin peso, para que
+   los dos badges de arriba sigan siendo lo que salta a la vista. */
+.chips {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  list-style: none;
+}
+
+.chip {
+  padding: 2px 10px;
+  border: 1px solid var(--ink-100);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink-700);
+  font-size: var(--text-xs);
 }
 
 .titulo {
@@ -169,15 +208,73 @@
   white-space: nowrap;
 }
 
+/* Etiqueta a la izquierda y valor a la derecha: `display: contents` en el
+   wrapper deja que dt y dd sean celdas de esta grilla en vez de apilarse
+   dentro de su div. En la columna angosta del lateral, el par en línea entra
+   sin cortar el teléfono ni el mail. */
 .datos {
   display: grid;
-  grid-template-columns: 8rem 1fr;
-  gap: var(--space-2);
+  /* 7rem fijo y no `auto`: la traza de abajo usa la misma medida, así los dos
+     bloques de la tarjeta alinean sus valores en la misma columna. Con `auto`
+     cada grilla se mide por su etiqueta más larga y quedan corridos entre sí. */
+  grid-template-columns: 7rem 1fr;
+  gap: var(--space-2) var(--space-3);
   font-size: var(--text-sm);
+}
+
+.datos > div {
+  display: contents;
 }
 
 .datos dt {
   color: var(--ink-500);
+}
+
+/* La traza del caso comparte la grilla del contacto —son un solo sistema— y
+   se separa por cuerpo y por una línea fina, no por otra tarjeta. */
+.metaCaso {
+  display: grid;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--ink-100);
+}
+
+.datosMeta {
+  display: grid;
+  grid-template-columns: 7rem 1fr;
+  gap: var(--space-1) var(--space-3);
+  font-size: var(--text-xs);
+}
+
+.datosMeta > div {
+  display: contents;
+}
+
+.datosMeta dt {
+  color: var(--ink-500);
+}
+
+.datosMeta dd {
+  color: var(--ink-700);
+}
+
+/* Acción de navegación, no de escritura: contorno en vez de relleno, para no
+   competir con "Agregar nota" ni con el flotante "Gestionar". */
+.botonEnlace {
+  display: block;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--ink-300);
+  border-radius: var(--radius-sm);
+  color: var(--accent-strong);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+}
+
+.botonEnlace:hover {
+  border-color: var(--accent-strong);
+  background: var(--accent-soft);
 }
 
 /* Los datos de la síntesis son pares cortos: en una columna gastan una fila
@@ -221,11 +318,6 @@
   border: 1px solid var(--ink-100);
   border-radius: var(--radius-sm);
   background: var(--surface-muted);
-  font-size: var(--text-sm);
-}
-
-.verificacion {
-  color: var(--ink-500);
   font-size: var(--text-sm);
 }
 

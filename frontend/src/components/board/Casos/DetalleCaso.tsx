@@ -16,6 +16,12 @@ async function traer(url: string): Promise<Caso> {
   return (await response.json()) as Caso;
 }
 
+/** "FUERA_DE_COBERTURA" -> "Fuera de cobertura": el enum crudo no sale a pantalla. */
+function etiquetaEstado(valor: string): string {
+  const texto = valor.replace(/_/g, " ").toLowerCase();
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
+}
+
 // El board se lee desde Uruguay; sin timeZone explícito, JS formatea con la
 // zona del proceso (UTC en Railway) y todo horario queda corrido.
 function fecha(iso: string): string {
@@ -101,20 +107,23 @@ export function DetalleCaso({ id }: { id: string }) {
         <Link href="/board/casos" className={styles.link}>← Casos</Link>
         <div className={styles.filaEncabezado}>
           <h1 className={styles.titulo}>{data.categoria ?? "Pedido fuera de cobertura"}</h1>
-          {/* El badge dice "Gestión:" porque al lado convive el estado que dejó
-              el agente ("captado"): son dos ejes distintos y una píldora suelta
-              con "Contactado" se lee como si fueran el mismo. */}
-          <span className={styles.badgeGestion}>Gestión: {etiquetaGestion(data.gestion.estado)}</span>
+          {/* Los dos badges van rotulados y pareados: el estado lo escribe el
+              agente y la gestión el equipo humano. Sueltos —"captado" y
+              "Contactado" uno al lado del otro— se leen como el mismo dato. */}
+          <div className={styles.estados}>
+            <span className={styles.badgeEstado}>Estado: {etiquetaEstado(data.estado)}</span>
+            <span className={styles.badgeGestion}>Gestión: {etiquetaGestion(data.gestion.estado)}</span>
+          </div>
         </div>
-        <p className={styles.etiqueta}>
-          {data.subcategorias.join(" · ") || "sin subcategorías"} — {data.estado.replace(/_/g, " ").toLowerCase()}
-        </p>
-        {data.gestion.por && data.gestion.en ? (
-          <p className={styles.etiqueta}>Marcado por {data.gestion.por} · {fecha(data.gestion.en)}</p>
-        ) : null}
-        <p className={styles.etiqueta}>
-          Abierto el {fecha(data.creadoEn)} · última actividad {fecha(data.actualizadoEn)}
-        </p>
+        {data.subcategorias.length === 0 ? (
+          <p className={styles.etiqueta}>sin subcategorías</p>
+        ) : (
+          <ul className={styles.chips}>
+            {data.subcategorias.map((subcategoria) => (
+              <li key={subcategoria} className={styles.chip}>{subcategoria}</li>
+            ))}
+          </ul>
+        )}
       </header>
 
       <div className={styles.columnas}>
@@ -196,13 +205,6 @@ export function DetalleCaso({ id }: { id: string }) {
               </>
             )}
           </section>
-
-          <p className={styles.verificacion}>
-            <Link href={`/board/chats/${data.conversationId}`} className={styles.link}>
-              Ver chat completo
-            </Link>{" "}
-            — para verificar cualquier dato del resumen contra lo que dijo la persona.
-          </p>
         </div>
 
         <aside className={styles.lateral}>
@@ -222,6 +224,35 @@ export function DetalleCaso({ id }: { id: string }) {
                 <dd>{data.contactoEmail ? <a href={`mailto:${data.contactoEmail}`}>{data.contactoEmail}</a> : "—"}</dd>
               </div>
             </dl>
+
+            {/* Procedencia del caso: misma grilla etiqueta/valor que el
+                contacto —para que se lean como un solo sistema— en cuerpo
+                menor, porque es dato de traza y no lo accionable de la ficha. */}
+            <div className={styles.metaCaso}>
+              <dl className={styles.datosMeta}>
+                <div>
+                  <dt>Abierto</dt>
+                  <dd>{fecha(data.creadoEn)}</dd>
+                </div>
+                <div>
+                  <dt>Última actividad</dt>
+                  <dd>{fecha(data.actualizadoEn)}</dd>
+                </div>
+                {data.gestion.por && data.gestion.en ? (
+                  <div>
+                    <dt>Marcado por</dt>
+                    <dd>{data.gestion.por} · {fecha(data.gestion.en)}</dd>
+                  </div>
+                ) : null}
+              </dl>
+
+              {/* Enlace y no <button>: navega. Así conserva abrir en pestaña
+                  nueva, que es exactamente lo que se quiere para verificar el
+                  resumen contra el chat sin perder la ficha. */}
+              <Link href={`/board/chats/${data.conversationId}`} className={styles.botonEnlace}>
+                Ver chat completo
+              </Link>
+            </div>
           </section>
 
           <section className={styles.bloque} aria-labelledby="caso-notas">

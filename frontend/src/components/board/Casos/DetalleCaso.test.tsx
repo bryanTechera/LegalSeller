@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import useSWR from "swr";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -144,7 +144,7 @@ describe("DetalleCaso", () => {
   // El detalle de la gestión —botones, nota e historial— vive en el modal y se
   // cubre en ModalGestion.test.tsx. Lo que la ficha sigue debiendo es el
   // resumen del encabezado y el cableado del resultado al SWR.
-  it("muestra el estado de gestión y quién lo dejó así en el encabezado", () => {
+  it("muestra los dos estados como badges en el encabezado", () => {
     mockCaso({
       ...casoBase,
       gestion: {
@@ -157,16 +157,60 @@ describe("DetalleCaso", () => {
     });
     render(<DetalleCaso id="caso-1" />);
 
+    // Los dos ejes van rotulados: "captado" lo escribe el agente y
+    // "Contactado" el equipo, y sueltos se leen como si fueran el mismo dato.
+    expect(screen.getByText("Estado: Captado")).toBeInTheDocument();
     expect(screen.getByText("Gestión: Contactado")).toBeInTheDocument();
-    expect(screen.getByText(/Marcado por ana@estudio\.uy/)).toBeInTheDocument();
   });
 
-  it("un caso sin gestionar muestra el badge pero no la línea de autor", () => {
+  // Cada subcategoría es su propio badge: unidas por " · " en un solo nodo, ni
+  // se pueden estilar ni se leen como la lista de temas que son.
+  it("muestra cada subcategoría como un badge propio", () => {
+    mockCaso({ ...casoBase, subcategorias: ["despido", "rubros-laborales"] });
+    render(<DetalleCaso id="caso-1" />);
+
+    expect(screen.getByText("despido")).toBeInTheDocument();
+    expect(screen.getByText("rubros-laborales")).toBeInTheDocument();
+  });
+
+  it("un caso sin subcategorías lo dice en vez de dejar la fila vacía", () => {
+    mockCaso({ ...casoBase, subcategorias: [] });
+    render(<DetalleCaso id="caso-1" />);
+
+    expect(screen.getByText("sin subcategorías")).toBeInTheDocument();
+  });
+
+  it("las fechas, el autor del cambio y el acceso al chat viven en la tarjeta de contacto", () => {
+    mockCaso({
+      ...casoBase,
+      gestion: {
+        estado: "CONTACTADO",
+        nota: "La llamé.",
+        por: "ana@estudio.uy",
+        en: "2026-08-11T12:00:00.000Z",
+        historial: [],
+      },
+    });
+    render(<DetalleCaso id="caso-1" />);
+
+    const contacto = within(screen.getByRole("region", { name: "Contacto" }));
+    expect(contacto.getByText("Abierto")).toBeInTheDocument();
+    expect(contacto.getByText("Última actividad")).toBeInTheDocument();
+    expect(contacto.getByText(/ana@estudio\.uy/)).toBeInTheDocument();
+    // Sigue siendo un enlace aunque se vea como botón: navega, y así conserva
+    // abrir en pestaña nueva (y el E2E de casos.spec.ts que lo busca por rol).
+    expect(contacto.getByRole("link", { name: "Ver chat completo" })).toHaveAttribute(
+      "href",
+      "/board/chats/conv-1",
+    );
+  });
+
+  it("un caso sin gestionar muestra el badge pero no la fila de autor", () => {
     mockCaso(casoBase);
     render(<DetalleCaso id="caso-1" />);
 
     expect(screen.getByText("Gestión: Nuevo")).toBeInTheDocument();
-    expect(screen.queryByText(/Marcado por/)).not.toBeInTheDocument();
+    expect(screen.queryByText("Marcado por")).not.toBeInTheDocument();
   });
 
   // La ficha es la dueña del SWR: consume la respuesta del PATCH que le pasa el
