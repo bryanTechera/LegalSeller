@@ -25,6 +25,18 @@ test("el board lista chats y abre el detalle", async ({ page }) => {
 
   await filas.first().getByRole("link").click();
   await expect(page).toHaveURL(/\/board\/chats\/.+/);
+
+  // El transcript scrollea por dentro: si estirara la página, el panel de
+  // fuentes y notas —que vive atado al viewport— quedaría hablando de una
+  // conversación que se fue sola para arriba. Se afirma sobre el contenedor y
+  // no sobre el largo del transcript, que depende de la base de prueba.
+  const transcript = page.locator("ol").first();
+  await expect(transcript).toBeAttached({ timeout: 30_000 });
+  const medidas = await transcript.evaluate((el) => ({
+    overflow: getComputedStyle(el).overflowY,
+    entraEnPantalla: el.clientHeight <= window.innerHeight,
+  }));
+  expect(medidas).toEqual({ overflow: "auto", entraEnPantalla: true });
 });
 
 test("el detalle del chat muestra las fuentes del corpus", async ({ page }) => {

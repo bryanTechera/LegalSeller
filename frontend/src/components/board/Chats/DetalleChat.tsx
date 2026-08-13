@@ -124,7 +124,7 @@ export function DetalleChat({ id }: { id: string }) {
 
   return (
     <section className={styles.detalle}>
-      <div>
+      <div className={styles.conversacion}>
         <header className={styles.encabezado}>
           <Link href="/board/chats" className={styles.link}>
             ← Chats

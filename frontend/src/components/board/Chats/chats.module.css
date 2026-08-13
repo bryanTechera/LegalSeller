@@ -99,10 +99,35 @@
   align-items: start;
 }
 
+/* Columna del transcript. Atada al viewport igual que `.panel`: antes crecía
+   con la conversación y era el documento el que scrolleaba, así que en una
+   charla larga el panel de fuentes y notas —que ya vive pegado a la pantalla—
+   quedaba conversando con un transcript que se iba solo. Con las dos columnas
+   del alto de la pantalla, cada una scrollea lo suyo. `--space-8` es el
+   padding del contenido del board (`board.module.css`), así que la columna
+   termina justo donde termina el área de contenido. */
+.conversacion {
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - var(--space-8) * 2);
+  min-height: 0;
+}
+
 .timeline {
   list-style: none;
   display: grid;
   gap: var(--space-3);
+  align-content: start;
+  /* Se queda con el alto que sobra en la columna y scrollea ahí adentro. Sin
+     el `min-height: 0`, un item flex nunca baja del alto de su contenido y la
+     lista vuelve a estirar la página. `overscroll-behavior` evita que al
+     llegar al final el scroll se contagie al documento. */
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* La barra de scroll come ancho del borde derecho de las burbujas. */
+  padding-right: var(--space-2);
 }
 
 .mensajeUsuario,
@@ -144,8 +169,9 @@
   /* Alto fijo, no `max-height`: la columna es un grid item con
      `align-items: start`, así que sin esto mide lo que mide su contenido y
      el panel de fuentes no puede crecer más allá de sus propios fragmentos,
-     dejando el resto del alto en blanco. */
-  height: calc(100dvh - var(--space-6) * 2);
+     dejando el resto del alto en blanco. Misma medida que `.conversacion`
+     para que las dos columnas terminen a la misma altura. */
+  height: calc(100dvh - var(--space-8) * 2);
   min-height: 0;
 }
 
@@ -342,6 +368,17 @@
   .panel {
     position: static;
     height: auto;
+  }
+
+  /* En una columna, atar el transcript al viewport dejaría dos scrolls
+     anidados en la misma dirección: acá vuelve a scrollear el documento. */
+  .conversacion {
+    height: auto;
+  }
+
+  .timeline {
+    overflow-y: visible;
+    padding-right: 0;
   }
 
   .bloqueLateral,
