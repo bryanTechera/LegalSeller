@@ -161,6 +161,50 @@
   box-shadow: var(--shadow-soft);
 }
 
+/* Misma caja que .resumen —posición, padding, radio y sombra— sobre base
+   neutra: con el fondo acento del resumen, la burbuja del consultante (que es
+   de ese mismo color) se perdía contra la tarjeta. */
+.chat {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  background: var(--surface-muted);
+  border: 1px solid var(--ink-100);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+}
+
+.conversacion {
+  list-style: none;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.mensajeUsuario,
+.mensajeAgente {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  border: 1px solid var(--ink-100);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+}
+
+/* Mismo par de colores que el transcript del tab Chats: el consultante en
+   acento suave y el asistente en blanco. */
+.mensajeUsuario {
+  background: var(--accent-soft);
+}
+
+.mensajeAgente {
+  background: var(--surface);
+}
+
+.autorMensaje {
+  color: var(--ink-500);
+  font-size: var(--text-xs);
+}
+
 .situacion {
   font-family: var(--font-family-display);
   font-size: var(--text-lg);

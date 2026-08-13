@@ -32,7 +32,19 @@ test("el listado de captados muestra la columna Caso y abre el detalle con el re
   await expect(page).toHaveURL(/\/board\/casos\/.+/);
   await expect(page.getByRole("heading", { name: "Resumen del caso" })).toBeVisible({ timeout: 15_000 });
   await expect(page.getByRole("heading", { name: "Contacto" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Ver chat completo" })).toBeVisible();
+
+  // El chat se abre DENTRO de la ficha: cambia la columna principal y nada
+  // más. Si en vez de eso navegara al tab Chats, el contacto desaparecería.
+  await page.getByRole("link", { name: "Ver chat completo" }).click();
+  await expect(page).toHaveURL(/\?vista=chat$/);
+  await expect(page.getByRole("heading", { name: "Conversación" })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("heading", { name: "Resumen del caso" })).toBeHidden();
+  await expect(page.getByRole("heading", { name: "Contacto" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Gestionar" })).toBeVisible();
+
+  // Y el mismo control vuelve.
+  await page.getByRole("link", { name: "Ver resumen del caso" }).click();
+  await expect(page.getByRole("heading", { name: "Resumen del caso" })).toBeVisible({ timeout: 15_000 });
 });
 
 // El test escribe, así que trabaja sobre un caso propio y lo borra al final.

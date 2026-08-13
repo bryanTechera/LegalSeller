@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import useSWR from "swr";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { DetalleConversacion } from "@/lib/board/conversaciones";
 import type { DetalleCaso as Caso } from "@/lib/casos/caso-detalle";
 import type { Sintesis } from "@/lib/casos/sintesis-schema";
 
@@ -49,6 +50,46 @@ function mockCaso(datos: Caso | undefined, error?: Error) {
   } as unknown as ReturnType<typeof useSWR>);
 }
 
+const conversacionBase: DetalleConversacion = {
+  id: "conv-1",
+  threadId: "thread-1",
+  categoria: "laboral",
+  fecha: "2026-08-08T10:00:00.000Z",
+  timeline: [
+    {
+      tipo: "mensaje",
+      id: "m1",
+      rol: "user",
+      texto: "me despidieron sin causa después de 6 años",
+      fecha: "2026-08-08T10:00:00.000Z",
+    },
+  ],
+  busquedas: [],
+  casos: [],
+  notas: [],
+  intentosExtraccion: 0,
+  reglasExtraccion: [],
+};
+
+/**
+ * En la vista de chat conviven dos useSWR: el del caso (esta ficha) y el de la
+ * conversación (ConversacionCaso). Un mock que devuelve lo mismo para toda key
+ * le daría el caso al hijo y explotaría — el mock discrimina por URL, que de
+ * paso verifica que el hijo pide la conversación correcta.
+ */
+function mockCasoYConversacion(datos: Caso) {
+  vi.mocked(useSWR).mockImplementation((key: unknown) => {
+    const url = typeof key === "string" ? key : "";
+    const data = url.includes("/conversaciones/") ? conversacionBase : datos;
+    return {
+      data,
+      error: undefined,
+      isLoading: false,
+      mutate: vi.fn(),
+    } as unknown as ReturnType<typeof useSWR>;
+  });
+}
+
 describe("DetalleCaso", () => {
   beforeEach(() => vi.resetAllMocks());
   // Los tests de acciones (agregar nota, regenerar) stubean fetch global
@@ -63,7 +104,11 @@ describe("DetalleCaso", () => {
     expect(screen.getByText(/La despidieron sin causa/)).toBeInTheDocument();
     expect(screen.getByText("6 años")).toBeInTheDocument();
     expect(screen.getByText("Ana Pérez")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /ver chat/i })).toHaveAttribute("href", "/board/chats/conv-1");
+    // El chat ya no manda al tab Chats: se abre dentro de la misma ficha.
+    expect(screen.getByRole("link", { name: /ver chat/i })).toHaveAttribute(
+      "href",
+      "/board/casos/caso-1?vista=chat",
+    );
   });
 
   it("muestra las notas del equipo legal con su autor", () => {
@@ -197,11 +242,49 @@ describe("DetalleCaso", () => {
     expect(contacto.getByText("Abierto")).toBeInTheDocument();
     expect(contacto.getByText("Última actividad")).toBeInTheDocument();
     expect(contacto.getByText(/ana@estudio\.uy/)).toBeInTheDocument();
-    // Sigue siendo un enlace aunque se vea como botón: navega, y así conserva
-    // abrir en pestaña nueva (y el E2E de casos.spec.ts que lo busca por rol).
+    // Sigue siendo un enlace aunque se vea como botón: el estado vive en la
+    // URL, y así conserva abrir en pestaña nueva (y el E2E de casos.spec.ts
+    // que lo busca por rol).
     expect(contacto.getByRole("link", { name: "Ver chat completo" })).toHaveAttribute(
       "href",
-      "/board/chats/conv-1",
+      "/board/casos/caso-1?vista=chat",
+    );
+  });
+
+  // El intercambio de vistas es el punto del cambio: la conversación ocupa el
+  // lugar del resumen y NADA más de la pantalla se mueve.
+  it("con vista=chat cambia el resumen por la conversación y deja el resto igual", () => {
+    mockCasoYConversacion(casoBase);
+    render(<DetalleCaso id="caso-1" vista="chat" />);
+
+    expect(screen.queryByRole("heading", { name: "Resumen del caso" })).not.toBeInTheDocument();
+    expect(screen.getByText(/me despidieron sin causa/)).toBeInTheDocument();
+
+    // Lo que tiene que seguir en su lugar.
+    expect(screen.getByRole("heading", { name: "Conversación" })).toBeInTheDocument();
+    expect(screen.getByText("Gestión: Nuevo")).toBeInTheDocument();
+    expect(screen.getByText("despido")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Contacto" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Notas del equipo legal" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Gestionar" })).toBeInTheDocument();
+  });
+
+  it("el mismo control alterna entre las dos vistas", () => {
+    mockCasoYConversacion(casoBase);
+    const { unmount } = render(<DetalleCaso id="caso-1" vista="resumen" />);
+
+    expect(screen.getByRole("link", { name: "Ver chat completo" })).toHaveAttribute(
+      "href",
+      "/board/casos/caso-1?vista=chat",
+    );
+
+    unmount();
+    mockCasoYConversacion(casoBase);
+    render(<DetalleCaso id="caso-1" vista="chat" />);
+
+    expect(screen.getByRole("link", { name: "Ver resumen del caso" })).toHaveAttribute(
+      "href",
+      "/board/casos/caso-1",
     );
   });
 

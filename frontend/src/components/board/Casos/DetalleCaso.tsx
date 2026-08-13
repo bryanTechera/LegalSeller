@@ -7,6 +7,7 @@ import useSWR from "swr";
 import type { DetalleCaso as Caso } from "@/lib/casos/caso-detalle";
 
 import styles from "./casos.module.css";
+import { ConversacionCaso } from "./ConversacionCaso";
 import { etiquetaGestion } from "./gestiones";
 import { ModalGestion } from "./ModalGestion";
 
@@ -35,7 +36,11 @@ function fecha(iso: string): string {
   });
 }
 
-export function DetalleCaso({ id }: { id: string }) {
+/** Qué ocupa la columna principal. Viaja en la URL (`?vista=chat`) para que
+ *  recargar, volver con Atrás y compartir el link hagan lo esperable. */
+export type VistaCaso = "resumen" | "chat";
+
+export function DetalleCaso({ id, vista = "resumen" }: { id: string; vista?: VistaCaso }) {
   const { data, error, isLoading, mutate } = useSWR(`/api/board/casos/${id}`, traer);
   const [texto, setTexto] = useState("");
   const [guardando, setGuardando] = useState(false);
@@ -128,6 +133,17 @@ export function DetalleCaso({ id }: { id: string }) {
 
       <div className={styles.columnas}>
         <div className={styles.principal}>
+          {/* La conversación ocupa la misma caja que el resumen: al alternar,
+              lo único que cambia en la pantalla es el contenido de esta
+              columna. El encabezado, el lateral y la gestión no se mueven. */}
+          {vista === "chat" ? (
+            <section className={styles.chat} aria-labelledby="caso-conversacion">
+              <div className={styles.filaTitulo}>
+                <h2 className={styles.subtitulo} id="caso-conversacion">Conversación</h2>
+              </div>
+              <ConversacionCaso conversationId={data.conversationId} />
+            </section>
+          ) : (
           <section className={styles.resumen} aria-labelledby="caso-resumen">
             <div className={styles.filaTitulo}>
               <h2 className={styles.subtitulo} id="caso-resumen">Resumen del caso</h2>
@@ -205,6 +221,7 @@ export function DetalleCaso({ id }: { id: string }) {
               </>
             )}
           </section>
+          )}
         </div>
 
         <aside className={styles.lateral}>
@@ -246,11 +263,15 @@ export function DetalleCaso({ id }: { id: string }) {
                 ) : null}
               </dl>
 
-              {/* Enlace y no <button>: navega. Así conserva abrir en pestaña
-                  nueva, que es exactamente lo que se quiere para verificar el
-                  resumen contra el chat sin perder la ficha. */}
-              <Link href={`/board/chats/${data.conversationId}`} className={styles.botonEnlace}>
-                Ver chat completo
+              {/* Un solo control para las dos vistas, siempre en el mismo
+                  lugar: cambia la etiqueta y el destino. Enlace y no <button>
+                  porque el estado vive en la URL — así recargar lo mantiene,
+                  Atrás vuelve, y se puede abrir en pestaña nueva. */}
+              <Link
+                href={vista === "chat" ? `/board/casos/${id}` : `/board/casos/${id}?vista=chat`}
+                className={styles.botonEnlace}
+              >
+                {vista === "chat" ? "Ver resumen del caso" : "Ver chat completo"}
               </Link>
             </div>
           </section>
