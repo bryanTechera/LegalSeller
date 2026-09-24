@@ -93,6 +93,12 @@ model Conversation {
   intentosExtraccion Int             @default(0)
   /// Ids de regla que saltaron (nunca el texto redactado).
   reglasExtraccion   String[]        @default([])
+  /// Inicio del último turno del consultante. La cookie de sesión dura un año,
+  /// así que una conversación creada hace meses puede recibir mensajes hoy: el
+  /// listado del board filtra y ordena por esta columna, no por `createdAt`.
+  /// No es `updatedAt` porque ese lo mueven también la clasificación, los
+  /// contadores de extracción y las ediciones de revisión.
+  ultimaActividad    DateTime        @default(now())
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
 
@@ -100,6 +106,7 @@ model Conversation {
   notas NotaRevision[]
 
   @@index([esRevision, createdAt(sort: Desc)])
+  @@index([esRevision, ultimaActividad(sort: Desc)])
 }
 
 /// The lead — THE deliverable of the system (vision §5). Built incrementally.
@@ -329,3 +336,4 @@ model VerificationToken {
 
   @@unique([identifier, token])
 }
+

@@ -14,6 +14,17 @@ export function conversacionesReales(desde: Date | null): Prisma.ConversationWhe
 }
 
 /**
+ * Conversaciones reales con actividad desde `desde`, sin importar cuándo
+ * empezaron. Es el alcance del listado de chats: la cookie de sesión dura un
+ * año, así que un consultante que vuelve escribe en su conversación vieja, y
+ * filtrar por `createdAt` lo esconde. Las métricas de volumen ("conversaciones
+ * iniciadas en el período") siguen usando `conversacionesReales`.
+ */
+export function conversacionesActivas(desde: Date | null): Prisma.ConversationWhereInput {
+  return { ...conversacionesReales(null), ...(desde ? { ultimaActividad: { gte: desde } } : {}) };
+}
+
+/**
  * Alcance para queries que parten de `Caso` en vez de `Conversation`. Compone
  * sobre `conversacionesReales` en vez de repetir la condición: si algún día
  * "real" pasa a significar algo más, este helper lo hereda solo.
@@ -56,3 +67,4 @@ export const JOIN_CASO_REAL = Prisma.sql`
  * outer-joined.
  */
 export const WHERE_REALES = Prisma.sql`c."esRevision" = false`;
+

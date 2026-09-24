@@ -13,14 +13,13 @@ import { construirBusquedas } from "@/lib/revision/busquedas";
 import type { BusquedaCorpus } from "@/lib/revision/fuentes";
 
 import { fechaDesde } from "./rango";
-import { conversacionesReales } from "./scope";
+import { conversacionesActivas, conversacionesReales } from "./scope";
 
 export interface ChatResumen {
   id: string;
   fecha: string;
-  /** MAX(createdAt) de mastra_messages; cae a `fecha` si el thread no tiene
-   * mensajes persistidos todavía. Es el campo que gobierna el orden de la
-   * página — ver el comentario en `listarConversaciones`. */
+  /** `Conversation.ultimaActividad`: inicio del último turno. Gobierna el
+   * rango y el orden del listado. */
   ultimaActividad: string;
   categoria: string | null;
   estadoCaso: string | null;
@@ -48,9 +47,6 @@ const filaResumenSchema = z.object({
   threadId: z.string(),
   mensajes: z.coerce.number(),
   preview: z.string(),
-  // Ausente en threads sin mensajes persistidos (no hay fila GROUP BY que
-  // devolver); el mapeo cae a fila.createdAt en ese caso.
-  ultimaActividad: z.coerce.date().optional(),
 });
 
 const filaThreadSchema = z.object({ threadId: z.string() });
@@ -76,7 +72,7 @@ export async function listarConversaciones(filtros: FiltrosChats): Promise<Pagin
   }
 
   const where: Prisma.ConversationWhereInput = {
-    ...conversacionesReales(desde),
+    ...conversacionesActivas(desde),
     ...(filtros.categoria ? { categoria: filtros.categoria } : {}),
     ...(filtros.estado ? { casos: { some: { estado: filtros.estado } } } : {}),
     ...(threadsCoincidentes ? { threadId: { in: threadsCoincidentes } } : {}),
@@ -89,12 +85,15 @@ export async function listarConversaciones(filtros: FiltrosChats): Promise<Pagin
       threadId: true,
       categoria: true,
       createdAt: true,
+      ultimaActividad: true,
       casos: { select: { estado: true } },
       _count: { select: { notas: true } },
       intentosExtraccion: true,
       reglasExtraccion: true,
     },
-    orderBy: { createdAt: "desc" },
+    // El id desempata: el cursor de Prisma necesita un orden total, y dos
+    // turnos pueden estampar el mismo milisegundo.
+    orderBy: [{ ultimaActividad: "desc" }, { id: "desc" }],
     take: POR_PAGINA,
     ...(filtros.cursor ? { skip: 1, cursor: { id: filtros.cursor } } : {}),
   });
@@ -107,7 +106,6 @@ export async function listarConversaciones(filtros: FiltrosChats): Promise<Pagin
           await prisma.$queryRaw`
             SELECT m.thread_id AS "threadId",
                    COUNT(*)::float8 AS mensajes,
-                   MAX(m."createdAt") AS "ultimaActividad",
                    COALESCE(
                      (ARRAY_AGG(m.content::text ORDER BY m."createdAt" ASC)
                       FILTER (WHERE m.role = 'user'))[1],
@@ -120,38 +118,26 @@ export async function listarConversaciones(filtros: FiltrosChats): Promise<Pagin
 
   const porThread = new Map(resumenes.map((resumen) => [resumen.threadId, resumen]));
 
-  const chats = filas
-    .map((fila) => {
-      const resumen = porThread.get(fila.threadId);
-      const ultimaActividad = resumen?.ultimaActividad ?? fila.createdAt;
-      return {
-        id: fila.id,
-        fecha: fila.createdAt.toISOString(),
-        ultimaActividad: ultimaActividad.toISOString(),
-        categoria: fila.categoria,
-        // Con varios Caso por conversación, "CAPTADO" gana si alguno de los N
-        // lo está — conserva el sentido que le da el equipo legal a la
-        // columna ("¿este chat produjo lead?"). Sin ningún CAPTADO, se
-        // muestra el estado del primero; sin casos, null.
-        estadoCaso: fila.casos.find((caso) => caso.estado === "CAPTADO")?.estado ?? fila.casos[0]?.estado ?? null,
-        casos: fila.casos.length,
-        mensajes: resumen?.mensajes ?? 0,
-        preview: recortar(resumen?.preview ?? ""),
-        notas: fila._count.notas,
-        intentosExtraccion: fila.intentosExtraccion,
-        reglasExtraccion: fila.reglasExtraccion,
-      };
-    })
-    // Orden real de la página: última actividad, no creación — una
-    // conversación vieja que recibe un mensaje hoy tiene que subir, si no el
-    // equipo legal "no ve" sus propias pruebas (ver motivación de esta Task).
-    // LIMITACIÓN DELIBERADA: este es un reorden INTRA-página. El cursor de
-    // paginación (`orderBy` del findMany, más abajo) sigue siendo por
-    // createdAt, así que una conversación vieja con actividad nueva sube
-    // dentro de la página en la que cayó por fecha de creación, pero no
-    // salta a una página anterior. Ordenar globalmente por actividad
-    // requiere materializar la columna — spec aparte, no esta Task.
-    .sort((a, b) => new Date(b.ultimaActividad).getTime() - new Date(a.ultimaActividad).getTime());
+  const chats = filas.map((fila) => {
+    const resumen = porThread.get(fila.threadId);
+    return {
+      id: fila.id,
+      fecha: fila.createdAt.toISOString(),
+      ultimaActividad: fila.ultimaActividad.toISOString(),
+      categoria: fila.categoria,
+      // Con varios Caso por conversación, "CAPTADO" gana si alguno de los N
+      // lo está — conserva el sentido que le da el equipo legal a la
+      // columna ("¿este chat produjo lead?"). Sin ningún CAPTADO, se
+      // muestra el estado del primero; sin casos, null.
+      estadoCaso: fila.casos.find((caso) => caso.estado === "CAPTADO")?.estado ?? fila.casos[0]?.estado ?? null,
+      casos: fila.casos.length,
+      mensajes: resumen?.mensajes ?? 0,
+      preview: recortar(resumen?.preview ?? ""),
+      notas: fila._count.notas,
+      intentosExtraccion: fila.intentosExtraccion,
+      reglasExtraccion: fila.reglasExtraccion,
+    };
+  });
 
   return {
     chats,
