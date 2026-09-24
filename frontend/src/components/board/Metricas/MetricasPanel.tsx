@@ -88,6 +88,11 @@ export function MetricasPanel() {
       ) : (
         <>
           <div className={styles.kpis}>
+            <TarjetaKpi etiqueta="Visitantes únicos" valor={String(data.visitas.visitantes)} />
+            <TarjetaKpi
+              etiqueta="Visitantes que escribieron"
+              valor={porcentaje(data.visitas.escribieron, data.visitas.visitantes)}
+            />
             <TarjetaKpi etiqueta="Conversaciones" valor={String(data.funnel.iniciadas)} />
             <TarjetaKpi
               etiqueta="Tasa de captación"
@@ -114,11 +119,44 @@ export function MetricasPanel() {
           <GraficoBarras
             titulo="Funnel de captación"
             datos={[
+              { nombre: "Visitantes", valor: data.visitas.visitantes },
               { nombre: "Iniciadas", valor: data.funnel.iniciadas },
               { nombre: "Clasificadas", valor: data.funnel.clasificadas },
               { nombre: "Captadas", valor: data.funnel.captadas },
             ]}
           />
+
+          <section className={styles.bloque}>
+            <h2 className={styles.subtitulo}>Visitas por origen</h2>
+            <p className={styles.ayuda}>
+              Quiénes cargaron la página y cuántos llegaron a escribir. El origen sale del utm_source del
+              link, o de la app que lo abrió.
+            </p>
+            {data.visitas.porOrigen.length === 0 ? (
+              <p className={styles.ayuda}>Sin visitas registradas en este rango.</p>
+            ) : (
+              <table className={styles.tabla}>
+                <thead>
+                  <tr>
+                    <th scope="col">Origen</th>
+                    <th scope="col">Visitantes</th>
+                    <th scope="col">Escribieron</th>
+                    <th scope="col">Conversión</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.visitas.porOrigen.map((fila) => (
+                    <tr key={fila.origen}>
+                      <td>{fila.origen}</td>
+                      <td>{miles(fila.visitantes)}</td>
+                      <td>{miles(fila.escribieron)}</td>
+                      <td>{porcentaje(fila.escribieron, fila.visitantes)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </section>
 
           <section className={styles.bloque}>
             <h2 className={styles.subtitulo}>Casos captados</h2>

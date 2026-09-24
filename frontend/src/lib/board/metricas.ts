@@ -3,10 +3,12 @@ import "server-only";
 import { listarCaptados, type CasoCaptado } from "./captados";
 import { calcularAgente, calcularVolumen, type Latencia, type UsoModelo, type UsoTool, type Volumen } from "./metricas-agente";
 import { calcularDemanda, calcularFunnel, type Demanda, type Funnel } from "./metricas-funnel";
+import { calcularVisitas, type Visitas } from "./metricas-visitas";
 import { fechaDesde, type Rango } from "./rango";
 
 export interface Metricas {
   rango: Rango;
+  visitas: Visitas;
   funnel: Funnel;
   demanda: Demanda;
   agente: { modelos: UsoModelo[]; tools: UsoTool[]; latencia: Latencia };
@@ -20,12 +22,13 @@ export interface Metricas {
  */
 export async function calcularMetricas(rango: Rango): Promise<Metricas> {
   const desde = fechaDesde(rango);
-  const [funnel, demanda, agente, volumen, captados] = await Promise.all([
+  const [visitas, funnel, demanda, agente, volumen, captados] = await Promise.all([
+    calcularVisitas(desde),
     calcularFunnel(desde),
     calcularDemanda(desde),
     calcularAgente(desde),
     calcularVolumen(desde),
     listarCaptados(desde),
   ]);
-  return { rango, funnel, demanda, agente, volumen, captados };
+  return { rango, visitas, funnel, demanda, agente, volumen, captados };
 }

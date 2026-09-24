@@ -1,0 +1,1 @@
+export { RegistroVisita } from "./RegistroVisita";

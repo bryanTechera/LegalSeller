@@ -17,6 +17,14 @@ function modelo(overrides: Partial<UsoModelo>): UsoModelo {
 
 const metricasBase: Metricas = {
   rango: "30d",
+  visitas: {
+    visitantes: 150,
+    escribieron: 3,
+    porOrigen: [
+      { origen: "instagram", visitantes: 140, escribieron: 2 },
+      { origen: "directo", visitantes: 10, escribieron: 1 },
+    ],
+  },
   funnel: { iniciadas: 10, clasificadas: 8, captadas: 2, fueraDeCobertura: 2 },
   demanda: {
     categorias: [],
@@ -70,6 +78,29 @@ describe("MetricasPanel", () => {
     render(<MetricasPanel />);
     const enlaces = await screen.findAllByRole("link", { name: /ver caso/i });
     expect(enlaces.some((enlace) => enlace.getAttribute("href") === "/board/casos/caso-2")).toBe(true);
+  });
+});
+
+describe("MetricasPanel — visitas", () => {
+  beforeEach(() => vi.resetAllMocks());
+
+  // El pedido original: 150 clicks de campaña y un board que "no se movía",
+  // porque solo contaba conversaciones. La visita sin mensaje tiene que verse.
+  it("muestra visitantes y la tasa de visita a mensaje", async () => {
+    mockMetricas(metricasBase);
+    render(<MetricasPanel />);
+    expect(await screen.findByText("Visitantes únicos")).toBeInTheDocument();
+    expect(screen.getByText("150")).toBeInTheDocument();
+    expect(screen.getByText("Visitantes que escribieron")).toBeInTheDocument();
+    expect(screen.getByText("2%")).toBeInTheDocument();
+  });
+
+  it("desglosa las visitas por origen", async () => {
+    mockMetricas(metricasBase);
+    render(<MetricasPanel />);
+    const fila = (await screen.findByRole("cell", { name: "instagram" })).closest("tr");
+    expect(fila).toHaveTextContent("140");
+    expect(fila).toHaveTextContent("1%");
   });
 });
 
