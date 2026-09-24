@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { BrandMark } from "@/components/brand/BrandMark";
 import { Wordmark } from "@/components/brand/Wordmark";
 import { ChatPanel } from "@/components/chat/ChatPanel";
+import { RegistroVisita } from "@/components/chat/RegistroVisita";
 import { MARCA } from "@/lib/marca";
 
 import styles from "./page.module.css";
@@ -22,6 +23,7 @@ export const metadata: Metadata = {
 export default function HomePage() {
   return (
     <div className={styles.shell}>
+      <RegistroVisita />
       <header className={styles.header}>
         <h1 className={styles.wordmark}>
           <BrandMark size={22} />

@@ -56,10 +56,14 @@ function esErrorDeUnicidad(error: unknown): error is { code: string } {
 export async function getOrCreateConversation(
   sessionId: string,
 ): Promise<{ id: string; categoria: string | null; casoActivoId: string | null }> {
+  // Cada turno pasa por acá, así que es el único punto que necesita estampar
+  // la actividad: la cookie dura un año y un consultante que vuelve escribe en
+  // su conversación vieja.
+  const ahora = new Date();
   return prisma.conversation.upsert({
     where: { sessionId },
-    create: { sessionId, threadId: threadIdForSession(sessionId) },
-    update: {},
+    create: { sessionId, threadId: threadIdForSession(sessionId), ultimaActividad: ahora },
+    update: { ultimaActividad: ahora },
     select: { id: true, categoria: true, casoActivoId: true },
   });
 }

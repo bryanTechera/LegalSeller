@@ -93,6 +93,12 @@ model Conversation {
   intentosExtraccion Int             @default(0)
   /// Ids de regla que saltaron (nunca el texto redactado).
   reglasExtraccion   String[]        @default([])
+  /// Inicio del último turno del consultante. La cookie de sesión dura un año,
+  /// así que una conversación creada hace meses puede recibir mensajes hoy: el
+  /// listado del board filtra y ordena por esta columna, no por `createdAt`.
+  /// No es `updatedAt` porque ese lo mueven también la clasificación, los
+  /// contadores de extracción y las ediciones de revisión.
+  ultimaActividad    DateTime        @default(now())
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
 
@@ -100,6 +106,7 @@ model Conversation {
   notas NotaRevision[]
 
   @@index([esRevision, createdAt(sort: Desc)])
+  @@index([esRevision, ultimaActividad(sort: Desc)])
 }
 
 /// The lead — THE deliverable of the system (vision §5). Built incrementally.
@@ -328,4 +335,25 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+/// Una carga de la home por un navegador real (los bots no se registran). Es
+/// la parte de arriba del funnel: sin esto, un visitante que entra por la
+/// campaña y se va sin escribir no deja rastro, porque la `Conversation` recién
+/// se crea con el primer mensaje. Se une a `Conversation` por `sessionId` para
+/// medir cuántos visitantes escribieron. No guarda IP ni user agent.
+model Visita {
+  id           String   @id @default(cuid())
+  sessionId    String
+  /// utm_source, o la app que abrió el link (instagram/facebook), o el
+  /// dominio del referrer, o "directo".
+  origen       String
+  utmSource    String?
+  utmMedium    String?
+  utmCampaign  String?
+  referrerHost String?
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([sessionId, createdAt])
 }

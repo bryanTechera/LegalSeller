@@ -512,12 +512,25 @@ describe("getOrCreateConversation", () => {
     const result = await getOrCreateConversation("s1");
 
     expect(result).toEqual({ id: "c1", categoria: null, casoActivoId: null });
-    expect(tx.conversation.upsert).toHaveBeenCalledWith({
-      where: { sessionId: "s1" },
-      create: { sessionId: "s1", threadId: "chat-s1" },
-      update: {},
-      select: { id: true, categoria: true, casoActivoId: true },
-    });
+    expect(tx.conversation.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { sessionId: "s1" },
+        select: { id: true, categoria: true, casoActivoId: true },
+      }),
+    );
+  });
+
+  // La cookie de sesión dura un año: un consultante que vuelve escribe en su
+  // conversación vieja. Sin estampar la actividad, el board la filtra por su
+  // fecha de creación y el mensaje de hoy no aparece en "últimos 7 días".
+  it("estampa la última actividad al crear y en cada turno sobre una conversación existente", async () => {
+    tx.conversation.upsert.mockResolvedValue({ id: "c1", categoria: null, casoActivoId: null });
+
+    await getOrCreateConversation("s1");
+
+    const args = tx.conversation.upsert.mock.calls[0][0];
+    expect(args.create).toMatchObject({ sessionId: "s1", threadId: "chat-s1", ultimaActividad: expect.any(Date) });
+    expect(args.update).toEqual({ ultimaActividad: expect.any(Date) });
   });
 });
 

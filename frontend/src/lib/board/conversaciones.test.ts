@@ -32,6 +32,7 @@ function filaConversacion(id: string) {
     threadId: `chat-${id}`,
     categoria: "laboral",
     createdAt: new Date("2026-07-30T10:00:00.000Z"),
+    ultimaActividad: new Date("2026-07-30T10:00:00.000Z"),
     casos: [{ estado: "CAPTADO" }],
     _count: { notas: 2 },
     intentosExtraccion: 0,
@@ -60,8 +61,6 @@ describe("listarConversaciones", () => {
       {
         id: "c1",
         fecha: "2026-07-30T10:00:00.000Z",
-        // Sin fila de mensajes con ultimaActividad (mock por defecto de este
-        // describe), cae al createdAt de la conversación.
         ultimaActividad: "2026-07-30T10:00:00.000Z",
         categoria: "laboral",
         estadoCaso: "CAPTADO",
@@ -86,29 +85,39 @@ describe("listarConversaciones", () => {
     expect(chats[0]).toMatchObject({ intentosExtraccion: 2, reglasExtraccion: ["proveedor", "infra"] });
   });
 
-  it("ordena por última actividad, no por creación", async () => {
+  // Regresión (2026-09-23): un "hola" escrito hoy en una conversación creada
+  // en agosto no aparecía en "últimos 7 días", porque el rango se aplicaba
+  // sobre la fecha de creación. La cookie de sesión dura un año, así que todo
+  // consultante que vuelve cae en ese caso.
+  it("el rango filtra por última actividad, no por creación", async () => {
+    await listarConversaciones({ rango: "7d" });
+    const where = prismaMock.prisma.conversation.findMany.mock.calls[0][0].where;
+    expect(where.ultimaActividad).toMatchObject({ gte: expect.any(Date) });
+    expect(where.createdAt).toBeUndefined();
+  });
+
+  it("el rango 'todo' no acota por fecha", async () => {
+    await listarConversaciones({ rango: "todo" });
+    const where = prismaMock.prisma.conversation.findMany.mock.calls[0][0].where;
+    expect(where.ultimaActividad).toBeUndefined();
+    expect(where.createdAt).toBeUndefined();
+  });
+
+  // El orden va en la query, no en un sort de JS sobre la página: reordenar
+  // dentro de la página dejaba una conversación vieja con actividad nueva
+  // enterrada en la página que le tocaba por fecha de creación.
+  it("pagina por última actividad, con el id como desempate estable", async () => {
+    await listarConversaciones({ rango: "30d" });
+    const args = prismaMock.prisma.conversation.findMany.mock.calls[0][0];
+    expect(args.orderBy).toEqual([{ ultimaActividad: "desc" }, { id: "desc" }]);
+  });
+
+  it("expone la última actividad de la conversación", async () => {
     prismaMock.prisma.conversation.findMany.mockResolvedValue([
-      { ...filaConversacion("nueva-inactiva"), createdAt: new Date("2026-08-04T10:00:00.000Z") },
-      { ...filaConversacion("vieja-activa"), createdAt: new Date("2026-08-01T10:00:00.000Z") },
+      { ...filaConversacion("c1"), ultimaActividad: new Date("2026-09-23T15:30:00.000Z") },
     ]);
-    prismaMock.prisma.$queryRaw.mockResolvedValue([
-      {
-        threadId: "chat-nueva-inactiva",
-        mensajes: 2,
-        preview: "hola",
-        ultimaActividad: new Date("2026-08-04T10:05:00.000Z"),
-      },
-      {
-        threadId: "chat-vieja-activa",
-        mensajes: 8,
-        preview: "me despidieron",
-        ultimaActividad: new Date("2026-08-05T13:08:00.000Z"),
-      },
-    ]);
-
-    const pagina = await listarConversaciones({ rango: "30d" });
-
-    expect(pagina.chats.map((chat) => chat.id)).toEqual(["vieja-activa", "nueva-inactiva"]);
+    const { chats } = await listarConversaciones({ rango: "30d" });
+    expect(chats[0]?.ultimaActividad).toBe("2026-09-23T15:30:00.000Z");
   });
 
   it("marca CAPTADO el chat que tiene al menos un caso captado", async () => {
